@@ -7,11 +7,18 @@ let package = Package(
     products: [
         .library(
             name: "DWARF",
-            targets: ["DWARF"]),
+            targets: ["DWARF"]
+        ),
     ],
     targets: [
         .target(
-            name: "DWARF"
+            name: "DWARF",
+            dependencies: [
+                "DWARFC"
+            ]
+        ),
+        .target(
+            name: "DWARFC"
         ),
         .testTarget(
             name: "DWARFTests",
