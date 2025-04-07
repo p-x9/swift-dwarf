@@ -65,7 +65,7 @@ public enum DWARFLanguage: CaseIterable {
 }
 
 extension DWARFLanguage: RawRepresentable {
-    public typealias RawValue = UInt64
+    public typealias RawValue = UInt16
 
     public init?(rawValue: RawValue) {
         switch rawValue {
