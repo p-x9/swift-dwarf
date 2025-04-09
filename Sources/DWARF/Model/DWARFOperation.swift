@@ -339,7 +339,7 @@ public enum DWARFOperation: CaseIterable {
 }
 
 extension DWARFOperation: RawRepresentable {
-    public typealias RawValue = UInt64
+    public typealias RawValue = UInt8
 
     public init?(rawValue: RawValue) {
         switch rawValue {
