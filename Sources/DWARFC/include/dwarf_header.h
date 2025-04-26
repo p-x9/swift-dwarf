@@ -17,30 +17,30 @@
 // DWARF5 p143
 struct dwarf_name_index_header64_t {
     struct dwarf_init_len64 unit_length;
-    dwarf_uhalf64 version;
-    dwarf_uword64 padding;
-    dwarf_uword64 comp_unit_count;
-    dwarf_uword64 local_type_unit_count;
-    dwarf_uword64 foreign_type_unit_count;
-    dwarf_uword64 bucket_count;
-    dwarf_uword64 name_count;
-    dwarf_uword64 abbrev_table_size;
-    dwarf_uword64 augmentation_string_size;
-    dwarf_uword64 augmentation_string;
+    dwarf_uhalf version;
+    dwarf_uhalf padding;
+    dwarf_uword comp_unit_count;
+    dwarf_uword local_type_unit_count;
+    dwarf_uword foreign_type_unit_count;
+    dwarf_uword bucket_count;
+    dwarf_uword name_count;
+    dwarf_uword abbrev_table_size;
+    dwarf_uword augmentation_string_size;
+    uint64_t augmentation_string;
 };
 
 struct dwarf_name_index_header32_t {
     struct dwarf_init_len32 unit_length;
-    dwarf_uhalf32 version;
-    dwarf_uword32 padding;
-    dwarf_uword32 comp_unit_count;
-    dwarf_uword32 local_type_unit_count;
-    dwarf_uword32 foreign_type_unit_count;
-    dwarf_uword32 bucket_count;
-    dwarf_uword32 name_count;
-    dwarf_uword32 abbrev_table_size;
-    dwarf_uword32 augmentation_string_size;
-    dwarf_uword32 augmentation_string;
+    dwarf_uhalf version;
+    dwarf_uhalf padding;
+    dwarf_uword comp_unit_count;
+    dwarf_uword local_type_unit_count;
+    dwarf_uword foreign_type_unit_count;
+    dwarf_uword bucket_count;
+    dwarf_uword name_count;
+    dwarf_uword abbrev_table_size;
+    dwarf_uword augmentation_string_size;
+    uint32_t augmentation_string;
 };
 
 #endif /* dwarf_header_h */
