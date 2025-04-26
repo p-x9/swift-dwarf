@@ -11,6 +11,8 @@
 
 #include <stdint.h>
 
+#pragma pack(push, 1)
+
 struct dwarf_init_len64 {
     uint32_t _pad;
     uint64_t value;
@@ -22,11 +24,9 @@ struct dwarf_init_len32 {
 
 typedef int8_t dwarf_sbyte;
 typedef uint8_t dwarf_ubyte;
+typedef uint16_t dwarf_uhalf;
+typedef uint32_t dwarf_uword;
 
-typedef uint32_t dwarf_uhalf64;
-typedef uint16_t dwarf_uhalf32;
-
-typedef uint64_t dwarf_uword64;
-typedef uint32_t dwarf_uword32;
+#pragma pack(pop)
 
 #endif /* dwarf_types_h */
