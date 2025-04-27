@@ -109,4 +109,20 @@ struct dwarf_line_header32_t {
     uint32_t file_names; // sequence of file names
 };
 
+// .debug_macro .debug_macinfo section
+// DWARF5 p165
+struct dwarf_macro_header64_t {
+    dwarf_uhalf version;
+    dwarf_ubyte flags;
+    uint64_t debug_line_offset;
+    uint64_t opcode_operands_table; // leb128
+};
+
+struct dwarf_macro_header32_t {
+    dwarf_uhalf version;
+    dwarf_ubyte flags;
+    uint32_t debug_line_offset;
+    uint32_t opcode_operands_table; //leb128
+};
+
 #endif /* dwarf_header_h */
