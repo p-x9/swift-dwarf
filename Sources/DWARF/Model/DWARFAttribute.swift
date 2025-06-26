@@ -525,7 +525,7 @@ public enum DWARFAttribute: CaseIterable {
     /// DW_AT_SUN_f90_pointer
     case sun_f90_pointer
     /// DW_AT_SUN_90_pointer
-    case sun_90_pointer
+//    case sun_90_pointer
     /// DW_AT_SUN_pass_by_ref
     case sun_pass_by_ref
     /// DW_AT_SUN_f90_allocatable
@@ -645,23 +645,23 @@ public enum DWARFAttribute: CaseIterable {
     /// DW_AT_LLVM_apinotes
     case llvm_apinotes
     /// DW_AT_LLVM_active_lane
-    case llvm_active_lane
+//    case llvm_active_lane
     /// DW_AT_LLVM_ptrauth_isa_pointer
     case llvm_ptrauth_isa_pointer
     /// DW_AT_LLVM_augmentation
-    case llvm_augmentation
+//    case llvm_augmentation
     /// DW_AT_LLVM_ptrauth_authenticates_null_values
     case llvm_ptrauth_authenticates_null_values
     /// DW_AT_LLVM_lanes
-    case llvm_lanes
+//    case llvm_lanes
     /// DW_AT_LLVM_ptrauth_authentication_mode
     case llvm_ptrauth_authentication_mode
     /// DW_AT_LLVM_lane_pc
-    case llvm_lane_pc
+//    case llvm_lane_pc
     /// DW_AT_LLVM_num_extra_inhabitants
     case llvm_num_extra_inhabitants
     /// DW_AT_LLVM_vector_size
-    case llvm_vector_size
+//    case llvm_vector_size
     /// DW_AT_LLVM_stmt_sequence
     case llvm_stmt_sequence
     /// DW_AT_APPLE_optimized
@@ -962,7 +962,7 @@ extension DWARFAttribute: RawRepresentable {
         case numericCast(DW_AT_SUN_return_with_const): self = .sun_return_with_const
         case numericCast(DW_AT_SUN_import_by_name): self = .sun_import_by_name
         case numericCast(DW_AT_SUN_f90_pointer): self = .sun_f90_pointer
-        case numericCast(DW_AT_SUN_90_pointer): self = .sun_90_pointer
+//        case numericCast(DW_AT_SUN_90_pointer): self = .sun_90_pointer
         case numericCast(DW_AT_SUN_pass_by_ref): self = .sun_pass_by_ref
         case numericCast(DW_AT_SUN_f90_allocatable): self = .sun_f90_allocatable
         case numericCast(DW_AT_SUN_f90_assumed_shape_array): self = .sun_f90_assumed_shape_array
@@ -1022,15 +1022,15 @@ extension DWARFAttribute: RawRepresentable {
         case numericCast(DW_AT_LLVM_ptrauth_address_discriminated): self = .llvm_ptrauth_address_discriminated
         case numericCast(DW_AT_LLVM_ptrauth_extra_discriminator): self = .llvm_ptrauth_extra_discriminator
         case numericCast(DW_AT_LLVM_apinotes): self = .llvm_apinotes
-        case numericCast(DW_AT_LLVM_active_lane): self = .llvm_active_lane
+//        case numericCast(DW_AT_LLVM_active_lane): self = .llvm_active_lane
         case numericCast(DW_AT_LLVM_ptrauth_isa_pointer): self = .llvm_ptrauth_isa_pointer
-        case numericCast(DW_AT_LLVM_augmentation): self = .llvm_augmentation
+//        case numericCast(DW_AT_LLVM_augmentation): self = .llvm_augmentation
         case numericCast(DW_AT_LLVM_ptrauth_authenticates_null_values): self = .llvm_ptrauth_authenticates_null_values
-        case numericCast(DW_AT_LLVM_lanes): self = .llvm_lanes
+//        case numericCast(DW_AT_LLVM_lanes): self = .llvm_lanes
         case numericCast(DW_AT_LLVM_ptrauth_authentication_mode): self = .llvm_ptrauth_authentication_mode
-        case numericCast(DW_AT_LLVM_lane_pc): self = .llvm_lane_pc
+//        case numericCast(DW_AT_LLVM_lane_pc): self = .llvm_lane_pc
         case numericCast(DW_AT_LLVM_num_extra_inhabitants): self = .llvm_num_extra_inhabitants
-        case numericCast(DW_AT_LLVM_vector_size): self = .llvm_vector_size
+//        case numericCast(DW_AT_LLVM_vector_size): self = .llvm_vector_size
         case numericCast(DW_AT_LLVM_stmt_sequence): self = .llvm_stmt_sequence
         case numericCast(DW_AT_APPLE_optimized): self = .apple_optimized
         case numericCast(DW_AT_APPLE_flags): self = .apple_flags
@@ -1312,7 +1312,7 @@ extension DWARFAttribute: RawRepresentable {
         case .sun_return_with_const: numericCast(DW_AT_SUN_return_with_const)
         case .sun_import_by_name: numericCast(DW_AT_SUN_import_by_name)
         case .sun_f90_pointer: numericCast(DW_AT_SUN_f90_pointer)
-        case .sun_90_pointer: numericCast(DW_AT_SUN_90_pointer)
+//        case .sun_90_pointer: numericCast(DW_AT_SUN_90_pointer)
         case .sun_pass_by_ref: numericCast(DW_AT_SUN_pass_by_ref)
         case .sun_f90_allocatable: numericCast(DW_AT_SUN_f90_allocatable)
         case .sun_f90_assumed_shape_array: numericCast(DW_AT_SUN_f90_assumed_shape_array)
@@ -1372,15 +1372,15 @@ extension DWARFAttribute: RawRepresentable {
         case .llvm_ptrauth_address_discriminated: numericCast(DW_AT_LLVM_ptrauth_address_discriminated)
         case .llvm_ptrauth_extra_discriminator: numericCast(DW_AT_LLVM_ptrauth_extra_discriminator)
         case .llvm_apinotes: numericCast(DW_AT_LLVM_apinotes)
-        case .llvm_active_lane: numericCast(DW_AT_LLVM_active_lane)
+//        case .llvm_active_lane: numericCast(DW_AT_LLVM_active_lane)
         case .llvm_ptrauth_isa_pointer: numericCast(DW_AT_LLVM_ptrauth_isa_pointer)
-        case .llvm_augmentation: numericCast(DW_AT_LLVM_augmentation)
+//        case .llvm_augmentation: numericCast(DW_AT_LLVM_augmentation)
         case .llvm_ptrauth_authenticates_null_values: numericCast(DW_AT_LLVM_ptrauth_authenticates_null_values)
-        case .llvm_lanes: numericCast(DW_AT_LLVM_lanes)
+//        case .llvm_lanes: numericCast(DW_AT_LLVM_lanes)
         case .llvm_ptrauth_authentication_mode: numericCast(DW_AT_LLVM_ptrauth_authentication_mode)
-        case .llvm_lane_pc: numericCast(DW_AT_LLVM_lane_pc)
+//        case .llvm_lane_pc: numericCast(DW_AT_LLVM_lane_pc)
         case .llvm_num_extra_inhabitants: numericCast(DW_AT_LLVM_num_extra_inhabitants)
-        case .llvm_vector_size: numericCast(DW_AT_LLVM_vector_size)
+//        case .llvm_vector_size: numericCast(DW_AT_LLVM_vector_size)
         case .llvm_stmt_sequence: numericCast(DW_AT_LLVM_stmt_sequence)
         case .apple_optimized: numericCast(DW_AT_APPLE_optimized)
         case .apple_flags: numericCast(DW_AT_APPLE_flags)
@@ -1663,7 +1663,7 @@ extension DWARFAttribute: CustomStringConvertible {
         case .sun_return_with_const: "DW_AT_SUN_return_with_const"
         case .sun_import_by_name: "DW_AT_SUN_import_by_name"
         case .sun_f90_pointer: "DW_AT_SUN_f90_pointer"
-        case .sun_90_pointer: "DW_AT_SUN_90_pointer"
+//        case .sun_90_pointer: "DW_AT_SUN_90_pointer"
         case .sun_pass_by_ref: "DW_AT_SUN_pass_by_ref"
         case .sun_f90_allocatable: "DW_AT_SUN_f90_allocatable"
         case .sun_f90_assumed_shape_array: "DW_AT_SUN_f90_assumed_shape_array"
@@ -1723,15 +1723,15 @@ extension DWARFAttribute: CustomStringConvertible {
         case .llvm_ptrauth_address_discriminated: "DW_AT_LLVM_ptrauth_address_discriminated"
         case .llvm_ptrauth_extra_discriminator: "DW_AT_LLVM_ptrauth_extra_discriminator"
         case .llvm_apinotes: "DW_AT_LLVM_apinotes"
-        case .llvm_active_lane: "DW_AT_LLVM_active_lane"
+//        case .llvm_active_lane: "DW_AT_LLVM_active_lane"
         case .llvm_ptrauth_isa_pointer: "DW_AT_LLVM_ptrauth_isa_pointer"
-        case .llvm_augmentation: "DW_AT_LLVM_augmentation"
+//        case .llvm_augmentation: "DW_AT_LLVM_augmentation"
         case .llvm_ptrauth_authenticates_null_values: "DW_AT_LLVM_ptrauth_authenticates_null_values"
-        case .llvm_lanes: "DW_AT_LLVM_lanes"
+//        case .llvm_lanes: "DW_AT_LLVM_lanes"
         case .llvm_ptrauth_authentication_mode: "DW_AT_LLVM_ptrauth_authentication_mode"
-        case .llvm_lane_pc: "DW_AT_LLVM_lane_pc"
+//        case .llvm_lane_pc: "DW_AT_LLVM_lane_pc"
         case .llvm_num_extra_inhabitants: "DW_AT_LLVM_num_extra_inhabitants"
-        case .llvm_vector_size: "DW_AT_LLVM_vector_size"
+//        case .llvm_vector_size: "DW_AT_LLVM_vector_size"
         case .llvm_stmt_sequence: "DW_AT_LLVM_stmt_sequence"
         case .apple_optimized: "DW_AT_APPLE_optimized"
         case .apple_flags: "DW_AT_APPLE_flags"
