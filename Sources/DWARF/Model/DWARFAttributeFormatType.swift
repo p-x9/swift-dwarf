@@ -3,7 +3,7 @@
 //  swift-dwarf
 //
 //  Created by p-x9 on 2025/06/22
-//  
+//
 //
 
 import Foundation
@@ -61,6 +61,14 @@ public enum DWARFAttributeFormatType: CaseIterable {
     case strx
     /// DW_FORM_addrx
     case addrx
+    /// DW_FORM_ref_sup4
+    case ref_sup4
+    /// DW_FORM_strp_sup
+    case strp_sup
+    /// DW_FORM_data16
+    case data16
+    /// DW_FORM_line_strp
+    case line_strp
     /// DW_FORM_ref_sig8
     case ref_sig8
     /// DW_FORM_implicit_const
@@ -69,6 +77,8 @@ public enum DWARFAttributeFormatType: CaseIterable {
     case loclistx
     /// DW_FORM_rnglistx
     case rnglistx
+    /// DW_FORM_ref_sup8
+    case ref_sup8
     /// DW_FORM_strx1
     case strx1
     /// DW_FORM_strx2
@@ -85,10 +95,20 @@ public enum DWARFAttributeFormatType: CaseIterable {
     case addrx3
     /// DW_FORM_addrx4
     case addrx4
+    /// DW_FORM_GNU_addr_index
+    case gnu_addr_index
+    /// DW_FORM_GNU_str_index
+    case gnu_str_index
+    /// DW_FORM_GNU_ref_alt
+    case gnu_ref_alt
+    /// DW_FORM_GNU_strp_alt
+    case gnu_strp_alt
+    /// DW_FORM_LLVM_addrx_offset
+    case llvm_addrx_offset
 }
 
 extension DWARFAttributeFormatType: RawRepresentable {
-    public typealias RawValue = UInt8
+    public typealias RawValue = UInt16
 
     public init?(rawValue: RawValue) {
         switch rawValue {
@@ -118,10 +138,15 @@ extension DWARFAttributeFormatType: RawRepresentable {
         case numericCast(DW_FORM_flag_present): self = .flag_present
         case numericCast(DW_FORM_strx): self = .strx
         case numericCast(DW_FORM_addrx): self = .addrx
+        case numericCast(DW_FORM_ref_sup4): self = .ref_sup4
+        case numericCast(DW_FORM_strp_sup): self = .strp_sup
+        case numericCast(DW_FORM_data16): self = .data16
+        case numericCast(DW_FORM_line_strp): self = .line_strp
         case numericCast(DW_FORM_ref_sig8): self = .ref_sig8
         case numericCast(DW_FORM_implicit_const): self = .implicit_const
         case numericCast(DW_FORM_loclistx): self = .loclistx
         case numericCast(DW_FORM_rnglistx): self = .rnglistx
+        case numericCast(DW_FORM_ref_sup8): self = .ref_sup8
         case numericCast(DW_FORM_strx1): self = .strx1
         case numericCast(DW_FORM_strx2): self = .strx2
         case numericCast(DW_FORM_strx3): self = .strx3
@@ -130,9 +155,15 @@ extension DWARFAttributeFormatType: RawRepresentable {
         case numericCast(DW_FORM_addrx2): self = .addrx2
         case numericCast(DW_FORM_addrx3): self = .addrx3
         case numericCast(DW_FORM_addrx4): self = .addrx4
+        case numericCast(DW_FORM_GNU_addr_index): self = .gnu_addr_index
+        case numericCast(DW_FORM_GNU_str_index): self = .gnu_str_index
+        case numericCast(DW_FORM_GNU_ref_alt): self = .gnu_ref_alt
+        case numericCast(DW_FORM_GNU_strp_alt): self = .gnu_strp_alt
+        case numericCast(DW_FORM_LLVM_addrx_offset): self = .llvm_addrx_offset
         default: return nil
         }
     }
+
     public var rawValue: RawValue {
         switch self {
         case .addr: numericCast(DW_FORM_addr)
@@ -161,10 +192,15 @@ extension DWARFAttributeFormatType: RawRepresentable {
         case .flag_present: numericCast(DW_FORM_flag_present)
         case .strx: numericCast(DW_FORM_strx)
         case .addrx: numericCast(DW_FORM_addrx)
+        case .ref_sup4: numericCast(DW_FORM_ref_sup4)
+        case .strp_sup: numericCast(DW_FORM_strp_sup)
+        case .data16: numericCast(DW_FORM_data16)
+        case .line_strp: numericCast(DW_FORM_line_strp)
         case .ref_sig8: numericCast(DW_FORM_ref_sig8)
         case .implicit_const: numericCast(DW_FORM_implicit_const)
         case .loclistx: numericCast(DW_FORM_loclistx)
         case .rnglistx: numericCast(DW_FORM_rnglistx)
+        case .ref_sup8: numericCast(DW_FORM_ref_sup8)
         case .strx1: numericCast(DW_FORM_strx1)
         case .strx2: numericCast(DW_FORM_strx2)
         case .strx3: numericCast(DW_FORM_strx3)
@@ -173,9 +209,15 @@ extension DWARFAttributeFormatType: RawRepresentable {
         case .addrx2: numericCast(DW_FORM_addrx2)
         case .addrx3: numericCast(DW_FORM_addrx3)
         case .addrx4: numericCast(DW_FORM_addrx4)
+        case .gnu_addr_index: numericCast(DW_FORM_GNU_addr_index)
+        case .gnu_str_index: numericCast(DW_FORM_GNU_str_index)
+        case .gnu_ref_alt: numericCast(DW_FORM_GNU_ref_alt)
+        case .gnu_strp_alt: numericCast(DW_FORM_GNU_strp_alt)
+        case .llvm_addrx_offset: numericCast(DW_FORM_LLVM_addrx_offset)
         }
     }
 }
+
 extension DWARFAttributeFormatType: CustomStringConvertible {
     public var description: String {
         switch self {
@@ -205,10 +247,15 @@ extension DWARFAttributeFormatType: CustomStringConvertible {
         case .flag_present: "DW_FORM_flag_present"
         case .strx: "DW_FORM_strx"
         case .addrx: "DW_FORM_addrx"
+        case .ref_sup4: "DW_FORM_ref_sup4"
+        case .strp_sup: "DW_FORM_strp_sup"
+        case .data16: "DW_FORM_data16"
+        case .line_strp: "DW_FORM_line_strp"
         case .ref_sig8: "DW_FORM_ref_sig8"
         case .implicit_const: "DW_FORM_implicit_const"
         case .loclistx: "DW_FORM_loclistx"
         case .rnglistx: "DW_FORM_rnglistx"
+        case .ref_sup8: "DW_FORM_ref_sup8"
         case .strx1: "DW_FORM_strx1"
         case .strx2: "DW_FORM_strx2"
         case .strx3: "DW_FORM_strx3"
@@ -217,6 +264,11 @@ extension DWARFAttributeFormatType: CustomStringConvertible {
         case .addrx2: "DW_FORM_addrx2"
         case .addrx3: "DW_FORM_addrx3"
         case .addrx4: "DW_FORM_addrx4"
+        case .gnu_addr_index: "DW_FORM_GNU_addr_index"
+        case .gnu_str_index: "DW_FORM_GNU_str_index"
+        case .gnu_ref_alt: "DW_FORM_GNU_ref_alt"
+        case .gnu_strp_alt: "DW_FORM_GNU_strp_alt"
+        case .llvm_addrx_offset: "DW_FORM_LLVM_addrx_offset"
         }
     }
 }
