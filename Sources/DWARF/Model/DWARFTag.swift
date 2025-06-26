@@ -247,7 +247,7 @@ public enum DWARFTag: CaseIterable {
     /// DW_TAG_upc_relaxed_type
     case upc_relaxed_type
     /// DW_TAG_UPC_relaxed
-    case upc_relaxed
+//    case upc_relaxed
     /// DW_TAG_PGI_kanji_type
     case pgi_kanji_type
     /// DW_TAG_PGI_interface_block
@@ -389,7 +389,7 @@ extension DWARFTag: RawRepresentable {
         case numericCast(DW_TAG_upc_shared_type): self = .upc_shared_type
         case numericCast(DW_TAG_upc_strict_type): self = .upc_strict_type
         case numericCast(DW_TAG_upc_relaxed_type): self = .upc_relaxed_type
-        case numericCast(DW_TAG_UPC_relaxed): self = .upc_relaxed
+//        case numericCast(DW_TAG_UPC_relaxed): self = .upc_relaxed
         case numericCast(DW_TAG_PGI_kanji_type): self = .pgi_kanji_type
         case numericCast(DW_TAG_PGI_interface_block): self = .pgi_interface_block
         case numericCast(DW_TAG_BORLAND_property): self = .borland_property
@@ -522,7 +522,7 @@ extension DWARFTag: RawRepresentable {
         case .upc_shared_type: numericCast(DW_TAG_upc_shared_type)
         case .upc_strict_type: numericCast(DW_TAG_upc_strict_type)
         case .upc_relaxed_type: numericCast(DW_TAG_upc_relaxed_type)
-        case .upc_relaxed: numericCast(DW_TAG_UPC_relaxed)
+//        case .upc_relaxed: numericCast(DW_TAG_UPC_relaxed)
         case .pgi_kanji_type: numericCast(DW_TAG_PGI_kanji_type)
         case .pgi_interface_block: numericCast(DW_TAG_PGI_interface_block)
         case .borland_property: numericCast(DW_TAG_BORLAND_property)
@@ -656,7 +656,7 @@ extension DWARFTag: CustomStringConvertible {
         case .upc_shared_type: "DW_TAG_upc_shared_type"
         case .upc_strict_type: "DW_TAG_upc_strict_type"
         case .upc_relaxed_type: "DW_TAG_upc_relaxed_type"
-        case .upc_relaxed: "DW_TAG_UPC_relaxed"
+//        case .upc_relaxed: "DW_TAG_UPC_relaxed"
         case .pgi_kanji_type: "DW_TAG_PGI_kanji_type"
         case .pgi_interface_block: "DW_TAG_PGI_interface_block"
         case .borland_property: "DW_TAG_BORLAND_property"
