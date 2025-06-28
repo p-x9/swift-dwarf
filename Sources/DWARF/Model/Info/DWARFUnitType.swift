@@ -25,7 +25,7 @@ public enum DWARFUnitType: CaseIterable {
 }
 
 extension DWARFUnitType: RawRepresentable {
-    public typealias RawValue = UInt64
+    public typealias RawValue = UInt8
 
     public init?(rawValue: RawValue) {
         switch rawValue {
