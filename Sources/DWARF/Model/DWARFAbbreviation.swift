@@ -15,7 +15,7 @@ public struct DWARFAbbreviation {
     public let hasChildren: Bool
     public let attributes: [(DWARFAttribute, DWARFAttributeFormat)]
 
-    public let size: Int
+    public let layoutSize: Int
 }
 
 extension DWARFAbbreviation {
@@ -24,8 +24,8 @@ extension DWARFAbbreviation {
         from machO: MachOFile,
         isTerminater: inout Bool
     ) -> Self? {
-        let initialOffset = offset
-        var offset = offset
+        let initialOffset = offset + machO.headerStartOffset
+        var offset = offset + machO.headerStartOffset
 
         let (code, codeSize) = UnsafeRawPointer(machO.fileHandle.ptr)
             .advanced(by: offset)
@@ -83,7 +83,7 @@ extension DWARFAbbreviation {
             tag: .init(rawValue: .init(tag))!,
             hasChildren: hasChildren,
             attributes: attributes,
-            size: offset - initialOffset
+            layoutSize: offset - initialOffset
         )
     }
 }
