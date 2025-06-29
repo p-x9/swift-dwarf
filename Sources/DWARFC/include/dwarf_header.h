@@ -12,6 +12,7 @@
 #include <stdint.h>
 #include <dwarf_types.h>
 
+#pragma pack(push, 1)
 
 // .debug_names section
 // DWARF5 p143
@@ -118,11 +119,82 @@ struct dwarf_macro_header64_t {
     uint64_t opcode_operands_table; // leb128
 };
 
-struct dwarf_macro_header32_t {
-    dwarf_uhalf version;
-    dwarf_ubyte flags;
-    uint32_t debug_line_offset;
-    uint32_t opcode_operands_table; //leb128
+/* ------- .debug_info section ------- */
+
+struct dwarf4_cu_header64_t {
+    struct dwarf_init_len64 unit_length;
+    dwarf_uhalf version; // 3-4
+    uint64_t debug_abbrev_offset;
+    dwarf_ubyte address_size;
 };
+
+struct dwarf4_cu_header32_t {
+    struct dwarf_init_len32 unit_length;
+    dwarf_uhalf version; // 3-4
+    uint32_t debug_abbrev_offset;
+    dwarf_ubyte address_size;
+};
+
+struct dwarf4_tu_header64_t {
+    struct dwarf_init_len64 unit_length;
+    dwarf_uhalf version; // 4
+    uint64_t debug_abbrev_offset;
+    dwarf_ubyte address_size;
+    uint64_t type_signature;
+    uint64_t type_offset;
+};
+
+struct dwarf4_tu_header32_t {
+    struct dwarf_init_len32 unit_length;
+    dwarf_uhalf version; // 4
+    uint32_t debug_abbrev_offset;
+    dwarf_ubyte address_size;
+    uint64_t type_signature;
+    uint32_t type_offset;
+};
+
+// DWARF Version 5 Compilation Unit Header (Full, Partial, Skeleton Unit)
+// (ref: DWARF5.pdf Sections 7.5.1.1, 7.5.1.2)
+struct dwarf5_cu_header64_t {
+    struct dwarf_init_len64 unit_length;
+    dwarf_uhalf version; // 5
+    dwarf_ubyte unit_type;
+    dwarf_ubyte address_size;
+    uint64_t debug_abbrev_offset;
+    uint8_t dwo_id ; // skelton only
+};
+
+struct dwarf5_cu_header32_t {
+    struct dwarf_init_len32 unit_length;
+    dwarf_uhalf version; // 5
+    dwarf_ubyte unit_type;
+    dwarf_ubyte address_size;
+    uint32_t debug_abbrev_offset;
+    uint8_t dwo_id ; // skelton only
+};
+
+// DWARF Version 5 Type Unit Header
+// (ref: DWARF5.pdf Section 7.5.1.3)
+struct dwarf5_tu_header64_t {
+    struct dwarf_init_len64 unit_length;
+    dwarf_uhalf version; // 5
+    dwarf_ubyte unit_type;
+    dwarf_ubyte address_size;
+    uint64_t debug_abbrev_offset;
+    uint64_t type_signature;
+    uint64_t type_offset;
+};
+
+struct dwarf5_tu_header32_t {
+    struct dwarf_init_len32 unit_length;
+    dwarf_uhalf version; // 5
+    dwarf_ubyte unit_type;
+    dwarf_ubyte address_size;
+    uint32_t debug_abbrev_offset;
+    uint64_t type_signature;
+    uint32_t type_offset;
+};
+
+#pragma pack(pop)
 
 #endif /* dwarf_header_h */
