@@ -13,6 +13,15 @@ public enum DWARFFormat {
     case _32bit
 }
 
+extension DWARFFormat {
+    public var addressSize: Int {
+        switch self {
+        case ._64bit: 8
+        case ._32bit: 4
+        }
+    }
+}
+
 extension DWARFFormat: CustomStringConvertible {
     public var description: String {
         switch self {
