@@ -631,3 +631,148 @@ extension DWARFAttributeValue {
         }
     }
 }
+
+extension DWARFAttributeValue {
+    public func value(in machO: MachOFile) -> Any? {
+        switch self {
+        case .addr(let uInt64):
+            return uInt64
+        case .block2(let block):
+            return block.data
+        case .block4(let block):
+            return block.data
+        case .data2(let constant):
+            return constant.value
+        case .data4(let constant):
+            return constant.value
+        case .data8(let constant):
+            return constant.value
+        case .string(let string):
+            return string
+        case .block(let block):
+            return block.data
+        case .block1(let block):
+            return block.data
+        case .data1(let constant):
+            return constant.value
+        case .flag(let flag):
+            return flag.value
+        case .sdata(let constant):
+            return constant.value
+        case .strp(let refString):
+            guard let dwarf = machO.dwarfSegment,
+                  let __debug_str = dwarf.__debug_str(in: machO) else {
+                return nil
+            }
+           return machO.fileHandle
+                .readString(
+                    offset: numericCast(__debug_str.offset + machO.headerStartOffset) + refString.offset
+                )
+        case .udata(let constant):
+            return constant.value
+        case .ref_addr(let reference):
+            return nil
+        case .ref1(let reference):
+            return nil
+        case .ref2(let reference):
+            return nil
+        case .ref4(let reference):
+            return nil
+        case .ref8(let reference):
+            return nil
+        case .ref_udata(let reference):
+            return nil
+        case .indirect(let dWARFAttributeValue):
+            return nil
+        case .sec_offset(let ptr):
+            return nil
+        case .exprloc(let exprLoc):
+            return nil
+        case .flag_present:
+            return true
+        case .strx(let indexedString):
+            return nil
+        case .addrx(let indexedAddress):
+            return nil
+        case .ref_sup4(let reference):
+            return nil
+        case .strp_sup(let refString):
+            return nil
+        case .data16(let constant):
+            return constant.value
+        case .line_strp(let refString):
+            guard let dwarf = machO.dwarfSegment,
+                  let __debug_line_str = dwarf.__debug_line_str(in: machO) else {
+                return nil
+            }
+            return machO.fileHandle
+                .readString(
+                    offset: numericCast(__debug_line_str.offset + machO.headerStartOffset) + refString.offset
+                )
+        case .ref_sig8(let reference):
+            return nil
+        case .implicit_const(let constant):
+            return constant
+        case .loclistx(let locList):
+            return nil
+        case .rnglistx(let rngList):
+            return nil
+        case .ref_sup8(let reference):
+            return nil
+        case .strx1(let indexedString):
+            return nil
+        case .strx2(let indexedString):
+            return nil
+        case .strx3(let indexedString):
+            return nil
+        case .strx4(let indexedString):
+            return nil
+        case .addrx1(let indexedAddress):
+            return nil
+        case .addrx2(let indexedAddress):
+            return nil
+        case .addrx3(let indexedAddress):
+            return nil
+        case .addrx4(let indexedAddress):
+            return nil
+        case .gnu_addr_index(let indexedAddress):
+            return nil
+        case .gnu_str_index(let indexedAddress):
+            return nil
+        case .gnu_ref_alt(let uInt64):
+            return nil
+        case .gnu_strp_alt(let uInt64):
+            return nil
+        case .llvm_addrx_offset(let uInt64):
+            return nil
+        }
+    }
+}
+
+extension DWARFAttributeValue {
+    public func readString<T: FixedWidthInteger>(
+        at index: T,
+        in machO: MachOFile,
+        dwarfFormat: DWARFFormat
+    ) -> String? {
+        guard let dwarf = machO.dwarfSegment,
+              let __debug_str_offs = dwarf.__debug_str_offs(in: machO),
+              let __debug_str = dwarf.__debug_str(in: machO) else {
+            return nil
+        }
+        let entrySize = (dwarfFormat == ._32bit) ? MemoryLayout<UInt32>.size : MemoryLayout<UInt64>.size
+        let entryOffset = __debug_str_offs.offset + entrySize * numericCast(index)
+        switch dwarfFormat {
+        case ._32bit:
+            let offset: UInt32 = try! machO.fileHandle.read(offset: entryOffset)
+            return machO.fileHandle.readString(
+                offset: numericCast(__debug_str.offset) + numericCast(offset)
+            )
+        case ._64bit:
+            let offset: UInt64 = try! machO.fileHandle.read(offset: entryOffset)
+            return machO.fileHandle.readString(
+                offset: numericCast(__debug_str.offset) + numericCast(offset)
+            )
+        }
+    }
+}
