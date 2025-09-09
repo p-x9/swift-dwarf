@@ -16,6 +16,18 @@ extension SegmentCommandProtocol {
     func __debug_info(in machO: MachOFile) -> SectionType? {
         section(for: .__debug_info, in: machO)
     }
+
+    func __debug_str(in machO: MachOFile) -> SectionType? {
+        section(for: .__debug_str, in: machO)
+    }
+
+    func __debug_line_str(in machO: MachOFile) -> SectionType? {
+        section(for: .__debug_line_str, in: machO)
+    }
+
+    func __debug_str_offs(in machO: MachOFile) -> SectionType? {
+        section(for: .__debug_str_offs, in: machO)
+    }
 }
 
 extension SegmentCommandProtocol {

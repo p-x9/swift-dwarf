@@ -195,6 +195,20 @@ struct dwarf5_tu_header32_t {
     uint32_t type_offset;
 };
 
+// DWARF Version 5 String Offsets Table Header
+// (ref: DWARF5.pdf Section 7.26)
+struct dwarf5_str_offsets_header64_t {
+    struct dwarf_init_len64 unit_length;
+    dwarf_uhalf version; // 5
+    dwarf_uhalf padding;
+};
+
+struct dwarf5_str_offsets_header32_t {
+    struct dwarf_init_len32 unit_length;
+    dwarf_uhalf version; // 5
+    dwarf_uhalf padding;
+};
+
 #pragma pack(pop)
 
 #endif /* dwarf_header_h */
