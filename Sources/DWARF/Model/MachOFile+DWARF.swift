@@ -24,6 +24,7 @@ extension MachOFile {
 }
 
 extension MachOFile.DWARF {
+    // dwarfdump --debug-abbrev a.out
     public var abbreviationsSets: [DWARFAbbreviationsSet] {
         guard let dwarf = machO.dwarfSegment,
               let __debug_abbrev = dwarf.__debug_abbrev(in: machO) else {
@@ -42,5 +43,20 @@ extension MachOFile.DWARF {
             pos += abbrevSet.layoutSize
         }
         return sets
+    }
+}
+
+extension MachOFile.DWARF {
+    // dwarfdump --debug-str-offsets
+    public var stringOffsetsTable: DWARFStringOffsetsTable? {
+        guard let dwarf = machO.dwarfSegment,
+              let __debug_str_offs = dwarf.__debug_str_offs(in: machO) else {
+            return nil
+        }
+        return try? .load(
+            at: __debug_str_offs.offset,
+            size: __debug_str_offs.size,
+            from: machO
+        )
     }
 }
