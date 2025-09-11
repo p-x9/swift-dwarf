@@ -47,6 +47,36 @@ extension MachOFile.DWARF {
 }
 
 extension MachOFile.DWARF {
+    // __debug_str
+    public var strings: MachOFile.Strings? {
+        guard let dwarf = machO.dwarfSegment,
+              let __debug_str = dwarf.__debug_str(in: machO) else {
+            return nil
+        }
+        return .init(
+            machO: machO,
+            offset: __debug_str.offset + machO.headerStartOffset,
+            size: __debug_str.size,
+            isSwapped: machO.isSwapped
+        )
+    }
+
+    // __debug_line_str
+    public var lineStrings: MachOFile.Strings? {
+        guard let dwarf = machO.dwarfSegment,
+              let __debug_line_str = dwarf.__debug_line_str(in: machO) else {
+            return nil
+        }
+        return .init(
+            machO: machO,
+            offset: __debug_line_str.offset + machO.headerStartOffset,
+            size: __debug_line_str.size,
+            isSwapped: machO.isSwapped
+        )
+    }
+}
+
+extension MachOFile.DWARF {
     // dwarfdump --debug-str-offsets
     public var stringOffsetsTable: DWARFStringOffsetsTable? {
         guard let dwarf = machO.dwarfSegment,
