@@ -90,3 +90,18 @@ extension MachOFile.DWARF {
         )
     }
 }
+
+extension MachOFile.DWARF {
+    // __debug_addr
+    public var addresses: DWARFAddressTable? {
+        guard let dwarf = machO.dwarfSegment,
+              let __debug_addr = dwarf.__debug_addr(in: machO) else {
+            return nil
+        }
+        return try? .load(
+            at: __debug_addr.offset,
+            size: __debug_addr.size,
+            from: machO
+        )
+    }
+}
