@@ -209,6 +209,22 @@ struct dwarf5_str_offsets_header32_t {
     dwarf_uhalf padding;
 };
 
+// DWARF Version 5 Address Table Header
+// (ref: DWARF5.pdf Section 7.27)
+struct dwarf5_addrs_header64_t {
+    struct dwarf_init_len64 unit_length;
+    dwarf_uhalf version; // 5
+    dwarf_ubyte address_size;
+    dwarf_ubyte segment_selector_size;
+};
+
+struct dwarf5_addrs_header32_t {
+    struct dwarf_init_len32 unit_length;
+    dwarf_uhalf version; // 5
+    dwarf_ubyte address_size;
+    dwarf_ubyte segment_selector_size;
+};
+
 #pragma pack(pop)
 
 #endif /* dwarf_header_h */
