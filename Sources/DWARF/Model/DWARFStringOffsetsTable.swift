@@ -40,6 +40,31 @@ extension DWARFStringOffsetsTable {
             return offsets.map { numericCast($0) }
         }
     }
+
+    public func offset(
+        at index: Int,
+        in machO: MachOFile
+    ) -> UInt64? {
+        let offset = offset + header.layoutSize
+        switch header.format {
+        case ._32bit:
+            let entrySize = MemoryLayout<UInt32>.size
+            guard header.layoutSize + entrySize * index < size else { return nil }
+            let offset: UInt32 = try! machO.fileHandle
+                .read(
+                    offset: offset + entrySize * index + machO.headerStartOffset
+                )
+            return numericCast(offset)
+        case ._64bit:
+            let entrySize = MemoryLayout<UInt64>.size
+            guard header.layoutSize + entrySize * index < size else { return nil }
+            let offset: UInt64 = try! machO.fileHandle
+                .read(
+                    offset: offset + entrySize * index + machO.headerStartOffset
+                )
+            return offset
+        }
+    }
 }
 
 extension DWARFStringOffsetsTable {
