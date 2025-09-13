@@ -55,19 +55,12 @@ extension DWARFAddresses {
             guard let next = sequence.next() else {
                 return nil
             }
-            if segmentSelectorSize > 0 {
-                return .init(
-                    segmentSelector: next[0..<segmentSelectorSize]
-                        .uintValue(endian: endian),
-                    address: next[segmentSelectorSize ..< segmentSelectorSize + addressSize]
-                        .uintValue(endian: endian)
-                )
-            } else {
-                return .init(
-                    segmentSelector: nil,
-                    address: next.uintValue(endian: endian)
-                )
-            }
+            return .init(
+                data: next,
+                addressSize: addressSize,
+                segmentSelectorSize: segmentSelectorSize,
+                endian: endian
+            )
         }
     }
 }

@@ -34,6 +34,24 @@ extension DWARFAddressTable {
             endian: machO.endian
         )
     }
+
+    public func address(
+        at index: Int,
+        in machO: MachOFile
+    ) -> DWARFAddress? {
+        let chunkSize = header.addressSize + header.segmentSelectorSize
+        guard offset + chunkSize * (index + 1) <= size else { return nil }
+        let data = try! machO.fileHandle.readData(
+            offset: offset + chunkSize * index + machO.headerStartOffset,
+            length: chunkSize
+        )
+        return .init(
+            data: data,
+            addressSize: header.addressSize,
+            segmentSelectorSize: header.segmentSelectorSize,
+            endian: machO.endian
+        )
+    }
 }
 
 extension DWARFAddressTable {
