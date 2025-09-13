@@ -112,6 +112,18 @@ extension DWARFCompilationUnitHeader {
             numericCast(header.debug_abbrev_offset)
         }
     }
+
+    public func abbreviationsSet(in machO: MachOFile) -> DWARFAbbreviationsSet? {
+        guard let dwarf = machO.dwarfSegment,
+              let __debug_abbrev = dwarf.__debug_abbrev(in: machO) else {
+            return nil
+        }
+        return .load(
+            at: __debug_abbrev.offset + debugAbbrevOffset,
+            from: machO,
+            abbrevSectionStartOffset: __debug_abbrev.offset
+        )
+    }
 }
 
 extension DWARFCompilationUnitHeader {
