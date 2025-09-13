@@ -444,11 +444,11 @@ extension DWARFAttributeValue {
         case .ref1:
             return .ref1(.init(_offset: try! machO.fileHandle.read(offset: offset)))
         case .ref2:
-            return .ref1(.init(_offset: try! machO.fileHandle.read(offset: offset)))
+            return .ref2(.init(_offset: try! machO.fileHandle.read(offset: offset)))
         case .ref4:
-            return .ref1(.init(_offset: try! machO.fileHandle.read(offset: offset)))
+            return .ref4(.init(_offset: try! machO.fileHandle.read(offset: offset)))
         case .ref8:
-            return .ref1(.init(_offset: try! machO.fileHandle.read(offset: offset)))
+            return .ref8(.init(_offset: try! machO.fileHandle.read(offset: offset)))
         case .ref_udata:
             let (data, _) = machO.fileHandle.readULEB128(
                 baseOffset: numericCast(offset)
