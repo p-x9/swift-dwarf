@@ -3,7 +3,7 @@
 //  swift-dwarf
 //
 //  Created by p-x9 on 2025/06/23
-//  
+//
 //
 
 import Foundation
@@ -100,7 +100,7 @@ public indirect enum DWARFAttributeValue {
     /// DW_FORM_GNU_addr_index
     case gnu_addr_index(IndexedAddress)
     /// DW_FORM_GNU_str_index
-    case gnu_str_index(IndexedAddress)
+    case gnu_str_index(IndexedString)
     /// DW_FORM_GNU_ref_alt
     case gnu_ref_alt(UInt64)
     /// DW_FORM_GNU_strp_alt
@@ -215,11 +215,11 @@ extension DWARFAttributeValue {
     }
 
     public struct IndexedString {
-        public let offset: UInt64
+        public let index: UInt64
     }
 
     public struct IndexedAddress {
-        public let offset: UInt64
+        public let index: UInt64
     }
 }
 
@@ -282,9 +282,9 @@ extension DWARFAttributeValue {
         case .flag_present:
             0
         case .strx(let indexedString):
-            indexedString.offset.uleb128Size
+            indexedString.index.uleb128Size
         case .addrx(let indexedAddress):
-            indexedAddress.offset.uleb128Size
+            indexedAddress.index.uleb128Size
         case .ref_sup4:
             MemoryLayout<UInt32>.size
         case .strp_sup:
@@ -320,9 +320,9 @@ extension DWARFAttributeValue {
         case .addrx4:
             MemoryLayout<UInt32>.size
         case .gnu_addr_index(let indexedAddress):
-            indexedAddress.offset.uleb128Size
+            indexedAddress.index.uleb128Size
         case .gnu_str_index(let indexedAddress):
-            indexedAddress.offset.uleb128Size
+            indexedAddress.index.uleb128Size
         case .gnu_ref_alt:
             dwarfFormat.addressSize
         case .gnu_strp_alt:
@@ -493,12 +493,12 @@ extension DWARFAttributeValue {
             let (index, _) = machO.fileHandle.readULEB128(
                 baseOffset: numericCast(offset)
             )
-            return .strx(.init(offset: numericCast(index)))
+            return .strx(.init(index: numericCast(index)))
         case .addrx:
             let (index, _) = machO.fileHandle.readULEB128(
                 baseOffset: numericCast(offset)
             )
-            return .addrx(.init(offset: numericCast(index)))
+            return .addrx(.init(index: numericCast(index)))
         case .ref_sup4:
             return .ref_sup4(.init(_offset: try! machO.fileHandle.read(offset: offset)))
         case .strp_sup:
@@ -541,10 +541,10 @@ extension DWARFAttributeValue {
             return .ref_sup8(.init(_offset: try! machO.fileHandle.read(offset: offset)))
         case .strx1:
             let index: UInt8 = try! machO.fileHandle.read(offset: offset)
-            return .strx1(.init(offset: numericCast(index)))
+            return .strx1(.init(index: numericCast(index)))
         case .strx2:
             let index: UInt16 = try! machO.fileHandle.read(offset: offset)
-            return .strx2(.init(offset: numericCast(index)))
+            return .strx2(.init(index: numericCast(index)))
         case .strx3:
             // ref: https://github.com/llvm/llvm-project/blob/f205e354ae3e002158060c830778d8c5409a9984/llvm/include/llvm/Support/DataExtractor.h#L28
             let bytes: (UInt8, UInt8, UInt8) = try! machO.fileHandle.read(
@@ -553,25 +553,25 @@ extension DWARFAttributeValue {
             if machO.endian == .little {
                 return .strx3(
                     .init(
-                        offset: numericCast(bytes.0) + (numericCast(bytes.1) << 8) + (numericCast(bytes.2) << 16)
+                        index: numericCast(bytes.0) + (numericCast(bytes.1) << 8) + (numericCast(bytes.2) << 16)
                     )
                 )
             } else {
                 return .strx3(
                     .init(
-                        offset: numericCast(bytes.2) + (numericCast(bytes.1) << 8) + (numericCast(bytes.0) << 16)
+                        index: numericCast(bytes.2) + (numericCast(bytes.1) << 8) + (numericCast(bytes.0) << 16)
                     )
                 )
             }
         case .strx4:
             let index: UInt32 = try! machO.fileHandle.read(offset: offset)
-            return .strx4(.init(offset: numericCast(index)))
+            return .strx4(.init(index: numericCast(index)))
         case .addrx1:
             let index: UInt8 = try! machO.fileHandle.read(offset: offset)
-            return .addrx1(.init(offset: numericCast(index)))
+            return .addrx1(.init(index: numericCast(index)))
         case .addrx2:
             let index: UInt16 = try! machO.fileHandle.read(offset: offset)
-            return .addrx2(.init(offset: numericCast(index)))
+            return .addrx2(.init(index: numericCast(index)))
         case .addrx3:
             let bytes: (UInt8, UInt8, UInt8) = try! machO.fileHandle.read(
                 offset: offset
@@ -579,29 +579,29 @@ extension DWARFAttributeValue {
             if machO.endian == .little {
                 return .addrx3(
                     .init(
-                        offset: numericCast(bytes.0) + (numericCast(bytes.1) << 8) + (numericCast(bytes.2) << 16)
+                        index: numericCast(bytes.0) + (numericCast(bytes.1) << 8) + (numericCast(bytes.2) << 16)
                     )
                 )
             } else {
                 return .addrx3(
                     .init(
-                        offset: numericCast(bytes.2) + (numericCast(bytes.1) << 8) + (numericCast(bytes.0) << 16)
+                        index: numericCast(bytes.2) + (numericCast(bytes.1) << 8) + (numericCast(bytes.0) << 16)
                     )
                 )
             }
         case .addrx4:
             let index: UInt32 = try! machO.fileHandle.read(offset: offset)
-            return .addrx4(.init(offset: numericCast(index)))
+            return .addrx4(.init(index: numericCast(index)))
         case .gnu_addr_index:
             let (index, _) = machO.fileHandle.readULEB128(
                 baseOffset: numericCast(offset)
             )
-            return .gnu_addr_index(.init(offset: numericCast(index)))
+            return .gnu_addr_index(.init(index: numericCast(index)))
         case .gnu_str_index:
             let (offset, _) = machO.fileHandle.readULEB128(
                 baseOffset: numericCast(offset)
             )
-            return .gnu_str_index(.init(offset: numericCast(offset)))
+            return .gnu_str_index(.init(index: numericCast(offset)))
         case .gnu_ref_alt:
             switch dwarfFormat {
             case ._32bit:
@@ -660,14 +660,12 @@ extension DWARFAttributeValue {
         case .sdata(let constant):
             return constant.value
         case .strp(let refString):
-            guard let dwarf = machO.dwarfSegment,
-                  let __debug_str = dwarf.__debug_str(in: machO) else {
+            guard let strings = machO.dwarf.strings else {
                 return nil
             }
-           return machO.fileHandle
-                .readString(
-                    offset: numericCast(__debug_str.offset + machO.headerStartOffset) + refString.offset
-                )
+            return strings.string(
+                at: numericCast(refString.offset)
+            )?.string
         case .udata(let constant):
             return constant.value
         case .ref_addr(let reference):
@@ -683,7 +681,7 @@ extension DWARFAttributeValue {
         case .ref_udata(let reference):
             return nil
         case .indirect(let dWARFAttributeValue):
-            return nil
+            return dWARFAttributeValue.value(in: machO)
         case .sec_offset(let ptr):
             return nil
         case .exprloc(let exprLoc):
@@ -691,9 +689,9 @@ extension DWARFAttributeValue {
         case .flag_present:
             return true
         case .strx(let indexedString):
-            return nil
+            return string(from: indexedString, in: machO)
         case .addrx(let indexedAddress):
-            return nil
+            return address(from: indexedAddress, in: machO)
         case .ref_sup4(let reference):
             return nil
         case .strp_sup(let refString):
@@ -701,14 +699,12 @@ extension DWARFAttributeValue {
         case .data16(let constant):
             return constant.value
         case .line_strp(let refString):
-            guard let dwarf = machO.dwarfSegment,
-                  let __debug_line_str = dwarf.__debug_line_str(in: machO) else {
+            guard let strings = machO.dwarf.lineStrings else {
                 return nil
             }
-            return machO.fileHandle
-                .readString(
-                    offset: numericCast(__debug_line_str.offset + machO.headerStartOffset) + refString.offset
-                )
+            return strings.string(
+                at: numericCast(refString.offset)
+            )?.string
         case .ref_sig8(let reference):
             return nil
         case .implicit_const(let constant):
@@ -720,59 +716,69 @@ extension DWARFAttributeValue {
         case .ref_sup8(let reference):
             return nil
         case .strx1(let indexedString):
-            return nil
+            return string(from: indexedString, in: machO)
         case .strx2(let indexedString):
-            return nil
+            return string(from: indexedString, in: machO)
         case .strx3(let indexedString):
-            return nil
+            return string(from: indexedString, in: machO)
         case .strx4(let indexedString):
-            return nil
+            return string(from: indexedString, in: machO)
         case .addrx1(let indexedAddress):
-            return nil
+            return address(from: indexedAddress, in: machO)
         case .addrx2(let indexedAddress):
-            return nil
+            return address(from: indexedAddress, in: machO)
         case .addrx3(let indexedAddress):
-            return nil
+            return address(from: indexedAddress, in: machO)
         case .addrx4(let indexedAddress):
-            return nil
+            return address(from: indexedAddress, in: machO)
         case .gnu_addr_index(let indexedAddress):
-            return nil
-        case .gnu_str_index(let indexedAddress):
-            return nil
+            return address(from: indexedAddress, in: machO)
+        case .gnu_str_index(let indexedString):
+            return string(from: indexedString, in: machO)
         case .gnu_ref_alt(let uInt64):
             return nil
         case .gnu_strp_alt(let uInt64):
             return nil
         case .llvm_addrx_offset(let uInt64):
-            return nil
+            let index = uInt64 >> 32
+            let offset = uInt64 & 0xffffffff
+            guard let address = address(from: .init(index: index), in: machO) else {
+                return nil
+            }
+            return DWARFAddress(
+                segmentSelector: address.segmentSelector,
+                address: address.address + offset
+            )
         }
     }
 }
 
 extension DWARFAttributeValue {
-    public func readString<T: FixedWidthInteger>(
-        at index: T,
-        in machO: MachOFile,
-        dwarfFormat: DWARFFormat
+    fileprivate func string(
+        from indexedString: IndexedString,
+        in machO: MachOFile
     ) -> String? {
-        guard let dwarf = machO.dwarfSegment,
-              let __debug_str_offs = dwarf.__debug_str_offs(in: machO),
-              let __debug_str = dwarf.__debug_str(in: machO) else {
+        let dwarf = machO.dwarf
+        guard let offset = dwarf.stringOffsetsTable?.offset(
+            at: numericCast(indexedString.index),
+            in: machO
+        ) else { return nil }
+        guard let strings = dwarf.strings,
+              let string = strings.string(at: numericCast(offset)) else {
             return nil
         }
-        let entrySize = (dwarfFormat == ._32bit) ? MemoryLayout<UInt32>.size : MemoryLayout<UInt64>.size
-        let entryOffset = __debug_str_offs.offset + entrySize * numericCast(index)
-        switch dwarfFormat {
-        case ._32bit:
-            let offset: UInt32 = try! machO.fileHandle.read(offset: entryOffset)
-            return machO.fileHandle.readString(
-                offset: numericCast(__debug_str.offset) + numericCast(offset)
-            )
-        case ._64bit:
-            let offset: UInt64 = try! machO.fileHandle.read(offset: entryOffset)
-            return machO.fileHandle.readString(
-                offset: numericCast(__debug_str.offset) + numericCast(offset)
-            )
-        }
+        return string.string
+    }
+
+    fileprivate func address(
+        from indexedAddress: IndexedAddress,
+        in machO: MachOFile
+    ) -> DWARFAddress? {
+        let dwarf = machO.dwarf
+        guard let address = dwarf.addresses?.address(
+            at: numericCast(indexedAddress.index),
+            in: machO
+        ) else { return nil }
+        return address
     }
 }
