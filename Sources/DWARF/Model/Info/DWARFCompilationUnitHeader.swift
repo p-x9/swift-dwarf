@@ -116,6 +116,7 @@ extension DWARFCompilationUnitHeader {
 
 extension DWARFCompilationUnitHeader {
     public static func load(at offset: Int, in machO: MachOFile) throws -> Self? {
+        let offset = offset + machO.headerStartOffset
         let length: UInt32 = try machO.fileHandle.read(offset: offset)
         let is64Bit = length == 0xffffffff
 
@@ -128,33 +129,32 @@ extension DWARFCompilationUnitHeader {
             return .upToVersion4(
                 .init(
                     layout: try machO.fileHandle.read(offset: offset),
-                    offset: offset
+                    offset: offset - machO.headerStartOffset
                 )
             )
         case (false, _) where version <= 4:
             return .upToVersion4_32(
                 .init(
                     layout: try machO.fileHandle.read(offset: offset),
-                    offset: offset
+                    offset: offset - machO.headerStartOffset
                 )
             )
         case (true, 5):
             return .version5(
                 .init(
                     layout: try machO.fileHandle.read(offset: offset),
-                    offset: offset
+                    offset: offset - machO.headerStartOffset
                 )
             )
         case (false, 5):
             return .version5_32(
                 .init(
                     layout: try machO.fileHandle.read(offset: offset),
-                    offset: offset
+                    offset: offset - machO.headerStartOffset
                 )
             )
         default: return nil
         }
-
     }
 }
 
