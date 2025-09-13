@@ -37,16 +37,12 @@ extension DWARFCompilationUnitHeader {
         case .upToVersion4(let header):
             header.layoutSize
         case .version5(let header):
-            header.actualLayoutSize
+            header.layoutSize
         case .upToVersion4_32(let header):
             header.layoutSize
         case .version5_32(let header):
-            header.actualLayoutSize
+            header.layoutSize
         }
-    }
-
-    public var unitLayoutSize: Int {
-        length + (format == ._64bit ? 12 : 4)
     }
 }
 
@@ -191,9 +187,9 @@ extension DWARF5CompilationUnitHeader32 {
         .init(rawValue: layout.unit_type)!
     }
 
-    public var actualLayoutSize: Int {
+    public var layoutSize: Int {
         // `dwo_id` is present only in the skeleton compilation unit.
-        layoutSize - (unitType == .skeleton ? 0 : 1)
+        MemoryLayout<Layout>.size - (unitType == .skeleton ? 0 : 1)
     }
 }
 
@@ -202,8 +198,8 @@ extension DWARF5CompilationUnitHeader64 {
         .init(rawValue: layout.unit_type)!
     }
 
-    public var actualLayoutSize: Int {
+    public var layoutSize: Int {
         // `dwo_id` is present only in the skeleton compilation unit.
-        layoutSize - (unitType == .skeleton ? 0 : 1)
+        MemoryLayout<Layout>.size - (unitType == .skeleton ? 0 : 1)
     }
 }

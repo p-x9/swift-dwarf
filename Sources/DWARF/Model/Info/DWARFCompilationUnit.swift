@@ -15,6 +15,12 @@ public struct DWARFCompilationUnit {
 }
 
 extension DWARFCompilationUnit {
+    public var layoutSize: Int {
+        header.length + (header.format == ._64bit ? 12 : 4)
+    }
+}
+
+extension DWARFCompilationUnit {
     public func abbreviationsSet(in machO: MachOFile) -> DWARFAbbreviationsSet? {
         guard let dwarf = machO.dwarfSegment,
               let __debug_abbrev = dwarf.__debug_abbrev(in: machO) else {
