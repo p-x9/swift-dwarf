@@ -32,6 +32,31 @@ extension DWARFCompilationUnit {
             abbrevSectionStartOffset: __debug_abbrev.offset
         )
     }
+
+    public func debugInfoEntries(in machO: MachOFile) -> [DWARFDebugInfoEntry] {
+        guard let abbreviationsSet = abbreviationsSet(in: machO) else {
+            return []
+        }
+
+        var pos = header.actualLayoutSize
+        var entries: [DWARFDebugInfoEntry] = []
+        while pos < layoutSize {
+            guard let entry: DWARFDebugInfoEntry = .load(
+                at: offset + machO.headerStartOffset + pos,
+                from: machO,
+                dwarfFormat: header.format,
+                abbreviationsSet: abbreviationsSet,
+                addressSize: header.addressSize
+            ) else { fatalError() }
+            entries.append(entry)
+            pos += entry.layoutSize(
+                dwarfFoarmat: header.format,
+                addressSize: header.addressSize
+            )
+        }
+
+        return entries
+    }
 }
 
 extension DWARFCompilationUnit {
