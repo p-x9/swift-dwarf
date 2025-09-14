@@ -44,6 +44,26 @@ extension MachOFile.DWARF {
         }
         return sets
     }
+
+    // dwarfdump --debug-info a.out
+    public var compilationUnits: [DWARFCompilationUnit] {
+        guard let dwarf = machO.dwarfSegment,
+              let __debug_info = dwarf.__debug_info(in: machO) else {
+            return []
+        }
+        var units: [DWARFCompilationUnit] = []
+        var pos = 0
+        while pos < __debug_info.size {
+            let unit: DWARFCompilationUnit? = try? .load(
+                at: __debug_info.offset + pos,
+                in: machO
+            )
+            guard let unit else { break }
+            units.append(unit)
+            pos += unit.layoutSize
+        }
+        return units
+    }
 }
 
 extension MachOFile.DWARF {
