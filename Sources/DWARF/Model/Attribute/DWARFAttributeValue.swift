@@ -633,7 +633,10 @@ extension DWARFAttributeValue {
 }
 
 extension DWARFAttributeValue {
-    public func value(in machO: MachOFile) -> Any? {
+    public func value(
+        for unit: DWARFCompilationUnit,
+        in machO: MachOFile
+    ) -> Any? {
         switch self {
         case .addr(let uInt64):
             return uInt64
@@ -669,19 +672,19 @@ extension DWARFAttributeValue {
         case .udata(let constant):
             return constant.value
         case .ref_addr(let reference):
-            return nil
+            return debugInfoEntry(reference, for: unit, in: machO, isInSameUnit: false)
         case .ref1(let reference):
-            return nil
+            return debugInfoEntry(reference, for: unit, in: machO, isInSameUnit: true)
         case .ref2(let reference):
-            return nil
+            return debugInfoEntry(reference, for: unit, in: machO, isInSameUnit: true)
         case .ref4(let reference):
-            return nil
+            return debugInfoEntry(reference, for: unit, in: machO, isInSameUnit: true)
         case .ref8(let reference):
-            return nil
+            return debugInfoEntry(reference, for: unit, in: machO, isInSameUnit: true)
         case .ref_udata(let reference):
-            return nil
+            return debugInfoEntry(reference, for: unit, in: machO, isInSameUnit: true)
         case .indirect(let dWARFAttributeValue):
-            return dWARFAttributeValue.value(in: machO)
+            return dWARFAttributeValue.value(for: unit, in: machO)
         case .sec_offset(let ptr):
             return nil
         case .exprloc(let exprLoc):
@@ -780,5 +783,37 @@ extension DWARFAttributeValue {
             in: machO
         ) else { return nil }
         return address
+    }
+
+    fileprivate func debugInfoEntry<T>(
+        _ reference: Reference<T>,
+        for unit: DWARFCompilationUnit,
+        in machO: MachOFile,
+        isInSameUnit: Bool
+    ) -> DWARFDebugInfoEntry? {
+        guard let abbreviationsSet = unit.abbreviationsSet(in: machO) else {
+            return nil
+        }
+        if isInSameUnit {
+            return .load(
+                at: unit.offset + numericCast(reference.offset),
+                from: machO,
+                dwarfFormat: unit.header.format,
+                abbreviationsSet: abbreviationsSet,
+                addressSize: unit.header.addressSize
+            )
+        } else {
+            guard let dwarfSegment = machO.dwarfSegment,
+                  let __debug_info = dwarfSegment.__debug_info(in: machO) else {
+                return nil
+            }
+            return .load(
+                at: __debug_info.offset + numericCast(reference.offset),
+                from: machO,
+                dwarfFormat: unit.header.format,
+                abbreviationsSet: abbreviationsSet,
+                addressSize: unit.header.addressSize
+            )
+        }
     }
 }
