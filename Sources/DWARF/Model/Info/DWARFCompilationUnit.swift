@@ -62,7 +62,7 @@ extension DWARFCompilationUnit {
 extension DWARFCompilationUnit {
     public static func load(at offset: Int, in machO: MachOFile) throws -> Self? {
         guard let header: DWARFCompilationUnitHeader = try .load(
-            at: offset,
+            at: offset + machO.headerStartOffset,
             in: machO
         ) else { return nil }
         return .init(
