@@ -10,18 +10,18 @@ import Foundation
 @testable @_spi(Support) import MachOKit
 import DWARFC
 
-public struct DWARFDirectoryEntryFormat {
+public struct DWARFFileEntryFormat {
     public let type: DWARFLineContentType
     public let format: DWARFAttributeFormat
 }
 
-extension DWARFDirectoryEntryFormat {
+extension DWARFFileEntryFormat {
     public var layoutSize: Int {
         type.rawValue.uleb128Size + format.size
     }
 }
 
-extension DWARFDirectoryEntryFormat {
+extension DWARFFileEntryFormat {
     public static func load(at offset: Int, in machO: MachOFile) throws -> Self? {
         let offset = offset + machO.headerStartOffset
 

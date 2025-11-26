@@ -10,17 +10,17 @@ import Foundation
 @testable @_spi(Support) import MachOKit
 import DWARFC
 
-public struct DWARFDirectoryEntryValue {
+public struct DWARFFileEntryValue {
     public let type: DWARFLineContentType
     public let value: DWARFAttributeValue
 
     public let layoutSize: Int
 }
 
-extension DWARFDirectoryEntryValue {
+extension DWARFFileEntryValue {
     public static func load(
         at offset: Int,
-        for format: DWARFDirectoryEntryFormat,
+        for format: DWARFFileEntryFormat,
         in machO: MachOFile,
         dwarfFormat: DWARFFormat,
         addressSize: Int
