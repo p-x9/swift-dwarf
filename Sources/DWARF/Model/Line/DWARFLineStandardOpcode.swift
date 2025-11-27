@@ -67,6 +67,7 @@ extension DWARFLineStandardOpcode: RawRepresentable {
         default: return nil
         }
     }
+
     public var rawValue: RawValue {
         switch self {
         case .copy: numericCast(DW_LNS_copy)
@@ -88,6 +89,7 @@ extension DWARFLineStandardOpcode: RawRepresentable {
         }
     }
 }
+
 extension DWARFLineStandardOpcode: CustomStringConvertible {
     public var description: String {
         switch self {
