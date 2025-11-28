@@ -33,18 +33,18 @@ public enum DWARFLineStandardOpcode: CaseIterable {
     case set_epilogue_begin
     /// DW_LNS_set_isa
     case set_isa
-    /// DW_LNS_set_address_from_logical
-    case set_address_from_logical
-    /// DW_LNS_set_subprogram
-    case set_subprogram
-    /// DW_LNS_inlined_call
-    case inlined_call
-    /// DW_LNS_pop_context
-    case pop_context
+//    /// DW_LNS_set_address_from_logical
+//    case set_address_from_logical
+//    /// DW_LNS_set_subprogram
+//    case set_subprogram
+//    /// DW_LNS_inlined_call
+//    case inlined_call
+//    /// DW_LNS_pop_context
+//    case pop_context
 }
 
 extension DWARFLineStandardOpcode: RawRepresentable {
-    public typealias RawValue = UInt64
+    public typealias RawValue = UInt8
 
     public init?(rawValue: RawValue) {
         switch rawValue {
@@ -60,10 +60,10 @@ extension DWARFLineStandardOpcode: RawRepresentable {
         case numericCast(DW_LNS_set_prologue_end): self = .set_prologue_end
         case numericCast(DW_LNS_set_epilogue_begin): self = .set_epilogue_begin
         case numericCast(DW_LNS_set_isa): self = .set_isa
-        case numericCast(DW_LNS_set_address_from_logical): self = .set_address_from_logical
-        case numericCast(DW_LNS_set_subprogram): self = .set_subprogram
-        case numericCast(DW_LNS_inlined_call): self = .inlined_call
-        case numericCast(DW_LNS_pop_context): self = .pop_context
+//        case numericCast(DW_LNS_set_address_from_logical): self = .set_address_from_logical
+//        case numericCast(DW_LNS_set_subprogram): self = .set_subprogram
+//        case numericCast(DW_LNS_inlined_call): self = .inlined_call
+//        case numericCast(DW_LNS_pop_context): self = .pop_context
         default: return nil
         }
     }
@@ -82,10 +82,10 @@ extension DWARFLineStandardOpcode: RawRepresentable {
         case .set_prologue_end: numericCast(DW_LNS_set_prologue_end)
         case .set_epilogue_begin: numericCast(DW_LNS_set_epilogue_begin)
         case .set_isa: numericCast(DW_LNS_set_isa)
-        case .set_address_from_logical: numericCast(DW_LNS_set_address_from_logical)
-        case .set_subprogram: numericCast(DW_LNS_set_subprogram)
-        case .inlined_call: numericCast(DW_LNS_inlined_call)
-        case .pop_context: numericCast(DW_LNS_pop_context)
+//        case .set_address_from_logical: numericCast(DW_LNS_set_address_from_logical)
+//        case .set_subprogram: numericCast(DW_LNS_set_subprogram)
+//        case .inlined_call: numericCast(DW_LNS_inlined_call)
+//        case .pop_context: numericCast(DW_LNS_pop_context)
         }
     }
 }
@@ -105,10 +105,10 @@ extension DWARFLineStandardOpcode: CustomStringConvertible {
         case .set_prologue_end: "DW_LNS_set_prologue_end"
         case .set_epilogue_begin: "DW_LNS_set_epilogue_begin"
         case .set_isa: "DW_LNS_set_isa"
-        case .set_address_from_logical: "DW_LNS_set_address_from_logical"
-        case .set_subprogram: "DW_LNS_set_subprogram"
-        case .inlined_call: "DW_LNS_inlined_call"
-        case .pop_context: "DW_LNS_pop_context"
+//        case .set_address_from_logical: "DW_LNS_set_address_from_logical"
+//        case .set_subprogram: "DW_LNS_set_subprogram"
+//        case .inlined_call: "DW_LNS_inlined_call"
+//        case .pop_context: "DW_LNS_pop_context"
         }
     }
 }
