@@ -34,6 +34,21 @@ extension DWARFLineHeader {
 }
 
 extension DWARFLineHeader {
+    public var layoutSize: Int {
+        switch self {
+        case .upToVersion4(let header):
+            header.layoutSize
+        case .version5(let header):
+            header.layoutSize
+        case .upToVersion4_32(let header):
+            header.layoutSize
+        case .version5_32(let header):
+            header.layoutSize
+        }
+    }
+}
+
+extension DWARFLineHeader {
     public var format: DWARFFormat {
         switch self {
         case .upToVersion4, .version5:
@@ -80,6 +95,86 @@ extension DWARFLineHeader {
             MemoryLayout<UInt32>.size
         case .version5_32(let header):
             numericCast(header.address_size)
+        }
+    }
+}
+
+extension DWARFLineHeader {
+    public var opecodeBase: UInt8 {
+        switch self {
+        case .upToVersion4(let header):
+            header.opcode_base
+        case .version5(let header):
+            header.opcode_base
+        case .upToVersion4_32(let header):
+            header.opcode_base
+        case .version5_32(let header):
+            header.opcode_base
+        }
+    }
+
+    public var lineBase: Int8 {
+        switch self {
+        case .upToVersion4(let header):
+            header.line_base
+        case .version5(let header):
+            header.line_base
+        case .upToVersion4_32(let header):
+            header.line_base
+        case .version5_32(let header):
+            header.line_base
+        }
+    }
+
+    public var lineRange: UInt8 {
+        switch self {
+        case .upToVersion4(let header):
+            header.line_range
+        case .version5(let header):
+            header.line_range
+        case .upToVersion4_32(let header):
+            header.line_range
+        case .version5_32(let header):
+            header.line_range
+        }
+    }
+
+    public var defaultOfIsStmt: Bool {
+        switch self {
+        case .upToVersion4(let header):
+            header.default_is_stmt > 0
+        case .version5(let header):
+            header.default_is_stmt > 0
+        case .upToVersion4_32(let header):
+            header.default_is_stmt > 0
+        case .version5_32(let header):
+            header.default_is_stmt > 0
+        }
+    }
+
+    public var minimumInstructionLength: UInt8 {
+        switch self {
+        case .upToVersion4(let header):
+            header.minimum_instruction_length
+        case .version5(let header):
+            header.minimum_instruction_length
+        case .upToVersion4_32(let header):
+            header.minimum_instruction_length
+        case .version5_32(let header):
+            header.minimum_instruction_length
+        }
+    }
+
+    public var maximumOperationsPerInstruction: UInt8 {
+        switch self {
+        case .upToVersion4(let header):
+            header.maximum_operations_per_instruction
+        case .version5(let header):
+            header.maximum_operations_per_instruction
+        case .upToVersion4_32(let header):
+            header.maximum_operations_per_instruction
+        case .version5_32(let header):
+            header.maximum_operations_per_instruction
         }
     }
 }
@@ -137,6 +232,7 @@ public struct DWARF5LineHeader64: LayoutWrapper {
     public let file_names: [DWARFFileEntry]
 
     public let offset: Int
+    public let layoutSize: Int
 }
 
 extension DWARF5LineHeader64 {
@@ -212,7 +308,8 @@ extension DWARF5LineHeader64 {
             file_name_entry_format: file_name_entry_format,
             file_names_count: numericCast(file_names_count),
             file_names: file_names,
-            offset: offset - machO.headerStartOffset
+            offset: offset - machO.headerStartOffset,
+            layoutSize: numericCast(pos) - offset
         )
     }
 }
@@ -234,6 +331,7 @@ public struct DWARF5LineHeader32: LayoutWrapper {
     public let file_names: [DWARFFileEntry]
 
     public let offset: Int
+    public let layoutSize: Int
 }
 
 extension DWARF5LineHeader32 {
@@ -309,7 +407,8 @@ extension DWARF5LineHeader32 {
             file_name_entry_format: file_name_entry_format,
             file_names_count: numericCast(file_names_count),
             file_names: file_names,
-            offset: offset - machO.headerStartOffset
+            offset: offset - machO.headerStartOffset,
+            layoutSize: numericCast(pos) - offset
         )
     }
 }
@@ -323,6 +422,7 @@ public struct DWARF4LineHeader64: LayoutWrapper {
     public let file_names: [DWARF4FileEntry]
 
     public let offset: Int
+    public let layoutSize: Int
 }
 
 extension DWARF4LineHeader64 {
@@ -353,7 +453,8 @@ extension DWARF4LineHeader64 {
             standard_opcode_lengths: standard_opcode_lengths,
             include_directories: include_directories,
             file_names: file_names,
-            offset: offset - machO.headerStartOffset
+            offset: offset - machO.headerStartOffset,
+            layoutSize: numericCast(pos) - offset
         )
     }
 }
@@ -367,6 +468,7 @@ public struct DWARF4LineHeader32: LayoutWrapper {
     public let file_names: [DWARF4FileEntry]
 
     public let offset: Int
+    public let layoutSize: Int
 }
 
 extension DWARF4LineHeader32 {
@@ -397,7 +499,8 @@ extension DWARF4LineHeader32 {
             standard_opcode_lengths: standard_opcode_lengths,
             include_directories: include_directories,
             file_names: file_names,
-            offset: offset - machO.headerStartOffset
+            offset: offset - machO.headerStartOffset,
+            layoutSize: numericCast(pos) - offset
         )
     }
 }
