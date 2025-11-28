@@ -67,6 +67,28 @@ extension MachOFile.DWARF {
 }
 
 extension MachOFile.DWARF {
+    // dwarfdump --debug-info a.out
+    public var lineTables: [DWARFLineTable] {
+        guard let dwarf = machO.dwarfSegment,
+              let __debug_line = dwarf.__debug_line(in: machO) else {
+            return []
+        }
+        var tables: [DWARFLineTable] = []
+        var pos = 0
+        while pos < __debug_line.size {
+            let table: DWARFLineTable? = try? .load(
+                at: __debug_line.offset + pos,
+                in: machO
+            )
+            guard let table else { break }
+            tables.append(table)
+            pos += table.layoutSize
+        }
+        return tables
+    }
+}
+
+extension MachOFile.DWARF {
     // __debug_str
     public var strings: MachOFile.Strings? {
         guard let dwarf = machO.dwarfSegment,

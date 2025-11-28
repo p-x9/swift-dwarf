@@ -11,6 +11,7 @@ import Foundation
 enum DWARFMachOSection: String {
     case __debug_abbrev
     case __debug_info
+    case __debug_line
     case __debug_str
     case __debug_line_str
     case __debug_str_offs
