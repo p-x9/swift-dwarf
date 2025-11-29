@@ -773,16 +773,21 @@ extension DWARFAttributeValue {
         return string.string
     }
 
+    // FIXME: performance & logic
+    // addr_base == list.offset - __debug_addr.offset + header.layoutSize
     fileprivate func address(
         from indexedAddress: IndexedAddress,
         in machO: MachOFile
     ) -> DWARFAddress? {
         let dwarf = machO.dwarf
-        guard let address = dwarf.addresses?.address(
-            at: numericCast(indexedAddress.index),
-            in: machO
-        ) else { return nil }
-        return address
+        let index: Int = numericCast(indexedAddress.index)
+
+        guard let list = dwarf.addresses.first else { return nil }
+        let addresses = Array(list.addresses(in: machO))
+        if addresses.indices.contains(index) {
+            return addresses[index]
+        }
+        return nil
     }
 
     fileprivate func debugInfoEntry<T>(

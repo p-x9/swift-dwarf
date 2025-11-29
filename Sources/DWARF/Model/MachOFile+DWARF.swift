@@ -135,15 +135,22 @@ extension MachOFile.DWARF {
 
 extension MachOFile.DWARF {
     // __debug_addr
-    public var addresses: DWARFAddressTable? {
+    public var addresses: [DWARFAddressTable] {
         guard let dwarf = machO.dwarfSegment,
               let __debug_addr = dwarf.__debug_addr(in: machO) else {
-            return nil
+            return []
         }
-        return try? .load(
-            at: __debug_addr.offset,
-            size: __debug_addr.size,
-            from: machO
-        )
+        var lists: [DWARFAddressTable] = []
+        var pos = 0
+        while pos < __debug_addr.size {
+            let list: DWARFAddressTable? = try? .load(
+                at: __debug_addr.offset + pos,
+                from: machO
+            )
+            guard let list else { break }
+            lists.append(list)
+            pos += list.layoutSize
+        }
+        return lists
     }
 }

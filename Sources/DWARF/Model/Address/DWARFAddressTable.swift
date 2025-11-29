@@ -13,7 +13,12 @@ import DWARFC
 public struct DWARFAddressTable {
     public let header: DWARFAddressTableHeader
     public let offset: Int
-    public let size: Int
+}
+
+extension DWARFAddressTable {
+    public var layoutSize: Int {
+        header.length + (header.format == ._64bit ? 12 : 4)
+    }
 }
 
 extension DWARFAddressTable {
@@ -21,8 +26,8 @@ extension DWARFAddressTable {
         in machO: MachOFile
     ) -> DWARFAddresses {
         let data = try! machO.fileHandle.readData(
-            offset: offset + machO.headerStartOffset,
-            length: size - header.layoutSize
+            offset: offset + header.layoutSize + machO.headerStartOffset,
+            length: layoutSize - header.layoutSize
         )
         return .init(
             addressSize: header.addressSize,
@@ -34,30 +39,11 @@ extension DWARFAddressTable {
             endian: machO.endian
         )
     }
-
-    public func address(
-        at index: Int,
-        in machO: MachOFile
-    ) -> DWARFAddress? {
-        let chunkSize = header.addressSize + header.segmentSelectorSize
-        guard offset + chunkSize * (index + 1) <= size else { return nil }
-        let data = try! machO.fileHandle.readData(
-            offset: offset + chunkSize * index + machO.headerStartOffset,
-            length: chunkSize
-        )
-        return .init(
-            data: data,
-            addressSize: header.addressSize,
-            segmentSelectorSize: header.segmentSelectorSize,
-            endian: machO.endian
-        )
-    }
 }
 
 extension DWARFAddressTable {
     public static func load(
         at offset: Int,
-        size: Int,
         from machO: MachOFile
     ) throws -> Self? {
         let offset = offset + machO.headerStartOffset
@@ -67,14 +53,12 @@ extension DWARFAddressTable {
         if is64Bit {
             return .init(
                 header: .version5(try machO.fileHandle.read(offset: offset)),
-                offset: offset - machO.headerStartOffset,
-                size: size
+                offset: offset - machO.headerStartOffset
             )
         } else {
             return .init(
                 header: .version5_32(try machO.fileHandle.read(offset: offset)),
-                offset: offset - machO.headerStartOffset,
-                size: size
+                offset: offset - machO.headerStartOffset
             )
         }
     }
