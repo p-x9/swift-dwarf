@@ -228,7 +228,7 @@ struct dwarf5_tu_header32_t {
 };
 
 // DWARF Version 5 String Offsets Table Header
-// (ref: DWARF5.pdf Section 7.26)
+// (ref: DWARF5.pdf Section 7.26, p240)
 struct dwarf5_str_offsets_header64_t {
     struct dwarf_init_len64 unit_length;
     dwarf_uhalf version; // 5
@@ -242,7 +242,7 @@ struct dwarf5_str_offsets_header32_t {
 };
 
 // DWARF Version 5 Address Table Header
-// (ref: DWARF5.pdf Section 7.27)
+// (ref: DWARF5.pdf Section 7.27, p241)
 struct dwarf5_addrs_header64_t {
     struct dwarf_init_len64 unit_length;
     dwarf_uhalf version; // 5
@@ -268,6 +268,22 @@ struct dwarf5_rnglist_header64_t {
 };
 
 struct dwarf5_rnglist_header32_t {
+    struct dwarf_init_len32 unit_length;
+    dwarf_uhalf version; // 5
+    dwarf_ubyte address_size;
+    dwarf_ubyte segment_selector_size;
+    dwarf_uword offset_entry_count;
+};
+
+struct dwarf5_loclist_header64_t {
+    struct dwarf_init_len64 unit_length;
+    dwarf_uhalf version; // 5
+    dwarf_ubyte address_size;
+    dwarf_ubyte segment_selector_size;
+    dwarf_uword offset_entry_count;
+};
+
+struct dwarf5_loclist_header32_t {
     struct dwarf_init_len32 unit_length;
     dwarf_uhalf version; // 5
     dwarf_ubyte address_size;
