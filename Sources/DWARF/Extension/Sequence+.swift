@@ -7,7 +7,9 @@
 //
 
 import Foundation
+import MachOKit
 
+// MARK: - DWARFLineOperation
 extension Sequence<DWARFLineOperation> {
     public func lines(
         header: DWARFLineHeader
@@ -101,5 +103,89 @@ extension Sequence<DWARFLineOperation> {
             }
         }
         return lines
+    }
+}
+
+// MARK: - DWARFRangeOperation
+fileprivate struct RangeOperationsState {
+    var base: DWARFAddress = .init(segmentSelector: nil, address: 0)
+    var ranges: [DWARFRange] = []
+}
+
+extension Sequence<DWARFRangeOperation> {
+    public func ranges(
+        addressTable: DWARFAddressTable,
+        in machO: MachOFile
+    ) -> [[DWARFRange]] {
+        var rangeLists: [[DWARFRange]] = []
+        var state: RangeOperationsState = .init()
+
+        let addresses = Array(addressTable.addresses(in: machO))
+
+        for operation in self {
+            switch operation {
+            case .end_of_list:
+                rangeLists.append(state.ranges)
+                state = .init()
+
+            case .base_addressx(let addressIndex):
+                state.base = addresses[numericCast(addressIndex)]
+
+            case .startx_endx(let startIndex, let endIndex):
+                state.ranges.append(
+                    .init(
+                        start: addresses[numericCast(startIndex)],
+                        end: addresses[numericCast(endIndex)]
+                    )
+                )
+
+            case .startx_length(let startIndex, let length):
+                let start = addresses[numericCast(startIndex)]
+                state.ranges.append(
+                    .init(
+                        start: start,
+                        end: .init(
+                            segmentSelector: start.segmentSelector,
+                            address: start.address + numericCast(length)
+                        )
+                    )
+                )
+
+            case .offset_pair(let startOffset, let endOffset):
+                state.ranges.append(
+                    .init(
+                        start: .init(
+                            segmentSelector: state.base.segmentSelector,
+                            address: state.base.address + startOffset
+                        ),
+                        end: .init(
+                            segmentSelector: state.base.segmentSelector,
+                            address: state.base.address + endOffset
+                        )
+                    )
+                )
+
+            case .base_address(let address):
+                state.base = address
+
+            case .start_end(let start, let end):
+                state.ranges.append(
+                    .init(start: start, end: end)
+                )
+
+            case .start_length(let start, let length):
+                state.ranges.append(
+                    .init(
+                        start: start,
+                        end: .init(
+                            segmentSelector: start.segmentSelector,
+                            address: start.address + length
+                        )
+                    )
+                )
+            }
+        }
+
+        return rangeLists
     }
 }
