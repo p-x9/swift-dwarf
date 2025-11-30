@@ -154,3 +154,25 @@ extension MachOFile.DWARF {
         return lists
     }
 }
+
+extension MachOFile.DWARF {
+    // __debug_rnglists
+    public var rangeLists: [DWARFRangeList] {
+        guard let dwarf = machO.dwarfSegment,
+              let __debug_rnglists = dwarf.__debug_rnglists(in: machO) else {
+            return []
+        }
+        var lists: [DWARFRangeList] = []
+        var pos = 0
+        while pos < __debug_rnglists.size {
+            let list: DWARFRangeList? = try? .load(
+                at: __debug_rnglists.offset + pos,
+                in: machO
+            )
+            guard let list else { break }
+            lists.append(list)
+            pos += list.layoutSize
+        }
+        return lists
+    }
+}

@@ -16,4 +16,5 @@ enum DWARFMachOSection: String {
     case __debug_line_str
     case __debug_str_offs
     case __debug_addr
+    case __debug_rnglists
 }
