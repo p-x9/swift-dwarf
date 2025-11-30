@@ -87,12 +87,12 @@ extension DWARFLineHeader {
 
     public var addressSize: Int {
         switch self {
-        case .upToVersion4:
-            MemoryLayout<UInt64>.size
+        case .upToVersion4(let header):
+            header.addressSize
         case .version5(let header):
             numericCast(header.address_size)
-        case .upToVersion4_32:
-            MemoryLayout<UInt32>.size
+        case .upToVersion4_32(let header):
+            header.addressSize
         case .version5_32(let header):
             numericCast(header.address_size)
         }
@@ -421,6 +421,8 @@ public struct DWARF4LineHeader64: LayoutWrapper {
     public let include_directories: [String]
     public let file_names: [DWARF4FileEntry]
 
+    public let addressSize: Int
+
     public let offset: Int
     public let layoutSize: Int
 }
@@ -453,6 +455,7 @@ extension DWARF4LineHeader64 {
             standard_opcode_lengths: standard_opcode_lengths,
             include_directories: include_directories,
             file_names: file_names,
+            addressSize: machO.is64Bit ? 8 : 4,
             offset: offset - machO.headerStartOffset,
             layoutSize: numericCast(pos) - offset
         )
@@ -466,6 +469,8 @@ public struct DWARF4LineHeader32: LayoutWrapper {
     public let standard_opcode_lengths: [UInt8]
     public let include_directories: [String]
     public let file_names: [DWARF4FileEntry]
+
+    public let addressSize: Int
 
     public let offset: Int
     public let layoutSize: Int
@@ -499,6 +504,7 @@ extension DWARF4LineHeader32 {
             standard_opcode_lengths: standard_opcode_lengths,
             include_directories: include_directories,
             file_names: file_names,
+            addressSize: machO.is64Bit ? 8 : 4,
             offset: offset - machO.headerStartOffset,
             layoutSize: numericCast(pos) - offset
         )
