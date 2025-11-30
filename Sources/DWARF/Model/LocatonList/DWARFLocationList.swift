@@ -1,26 +1,26 @@
 //
-//  DWARFRangeList.swift
+//  DWARFLocationList.swift
 //  swift-dwarf
 //
 //  Created by p-x9 on 2025/11/30
-//  
+//
 //
 
 import Foundation
 @testable @_spi(Support) import MachOKit
 
-public struct DWARFRangeList {
-    public let header: DWARFRangeListHeader
+public struct DWARFLocationList {
+    public let header: DWARFLocationListHeader
     public let offset: Int
 }
 
-extension DWARFRangeList {
+extension DWARFLocationList {
     public var layoutSize: Int {
         header.length + (header.format == ._64bit ? 12 : 4)
     }
 }
 
-extension DWARFRangeList {
+extension DWARFLocationList {
     public func offsets(for machO: MachOFile) throws -> [Int] {
         guard header.offsetEntryCount > 0 else { return [] }
         let offset = offset + header.layoutSize + machO.headerStartOffset
@@ -42,7 +42,7 @@ extension DWARFRangeList {
     }
 }
 
-extension DWARFRangeList {
+extension DWARFLocationList {
     public struct Operations: Sequence {
         public let data: Data
         let addressSize: Int
@@ -86,9 +86,9 @@ extension DWARFRangeList {
     }
 }
 
-extension DWARFRangeList.Operations {
+extension DWARFLocationList.Operations {
     public struct Iterator: IteratorProtocol {
-        public typealias Element = DWARFRangeOperation
+        public typealias Element = DWARFLocationOperation
 
         private let data: Data
         private let addressSize: Int
@@ -107,7 +107,7 @@ extension DWARFRangeList.Operations {
             return data.withUnsafeBytes {
                 guard let basePointer = $0.baseAddress else { return nil }
 
-                return DWARFRangeOperation.readNext(
+                return Element.readNext(
                     basePointer: basePointer.assumingMemoryBound(to: UInt8.self),
                     operaionsSize: data.count,
                     addressSize: addressSize,
@@ -120,9 +120,9 @@ extension DWARFRangeList.Operations {
     }
 }
 
-extension DWARFRangeList {
+extension DWARFLocationList {
     public static func load(at offset: Int, in machO: MachOFile) throws -> Self? {
-        guard let header: DWARFRangeListHeader = try .load(
+        guard let header: DWARFLocationListHeader = try .load(
             at: offset + machO.headerStartOffset,
             in: machO
         ) else { return nil }
