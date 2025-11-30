@@ -257,6 +257,24 @@ struct dwarf5_addrs_header32_t {
     dwarf_ubyte segment_selector_size;
 };
 
+// DWARF Version 5 Range List Header
+// (ref: DWARF5.pdf Section 7.28, p242)
+struct dwarf5_rnglist_header64_t {
+    struct dwarf_init_len64 unit_length;
+    dwarf_uhalf version; // 5
+    dwarf_ubyte address_size;
+    dwarf_ubyte segment_selector_size;
+    dwarf_uword offset_entry_count;
+};
+
+struct dwarf5_rnglist_header32_t {
+    struct dwarf_init_len32 unit_length;
+    dwarf_uhalf version; // 5
+    dwarf_ubyte address_size;
+    dwarf_ubyte segment_selector_size;
+    dwarf_uword offset_entry_count;
+};
+
 #pragma pack(pop)
 
 #endif /* dwarf_header_h */
