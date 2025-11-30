@@ -13,7 +13,12 @@ import DWARFC
 public struct DWARFStringOffsetsTable {
     public let header: DWARFStringOffsetsTableHeader
     public let offset: Int
-    public let size: Int
+}
+
+extension DWARFStringOffsetsTable {
+    public var layoutSize: Int {
+        header.length + (header.format == ._64bit ? 12 : 4)
+    }
 }
 
 extension DWARFStringOffsetsTable {
@@ -27,7 +32,7 @@ extension DWARFStringOffsetsTable {
             let offsets: DataSequence<UInt32> = machO.fileHandle.readDataSequence(
                 offset: numericCast(offset + machO.headerStartOffset),
                 entrySize: entrySize,
-                numberOfElements: (size - header.layoutSize) / entrySize
+                numberOfElements: (layoutSize - header.layoutSize) / entrySize
             )
             return offsets.map { numericCast($0) }
         case ._64bit:
@@ -35,34 +40,9 @@ extension DWARFStringOffsetsTable {
             let offsets: DataSequence<UInt64> = machO.fileHandle.readDataSequence(
                 offset: numericCast(offset + machO.headerStartOffset),
                 entrySize: entrySize,
-                numberOfElements: (size - header.layoutSize) / entrySize
+                numberOfElements: (layoutSize - header.layoutSize) / entrySize
             )
             return offsets.map { numericCast($0) }
-        }
-    }
-
-    public func offset(
-        at index: Int,
-        in machO: MachOFile
-    ) -> UInt64? {
-        let offset = offset + header.layoutSize
-        switch header.format {
-        case ._32bit:
-            let entrySize = MemoryLayout<UInt32>.size
-            guard header.layoutSize + entrySize * index < size else { return nil }
-            let offset: UInt32 = try! machO.fileHandle
-                .read(
-                    offset: offset + entrySize * index + machO.headerStartOffset
-                )
-            return numericCast(offset)
-        case ._64bit:
-            let entrySize = MemoryLayout<UInt64>.size
-            guard header.layoutSize + entrySize * index < size else { return nil }
-            let offset: UInt64 = try! machO.fileHandle
-                .read(
-                    offset: offset + entrySize * index + machO.headerStartOffset
-                )
-            return offset
         }
     }
 }
@@ -70,7 +50,6 @@ extension DWARFStringOffsetsTable {
 extension DWARFStringOffsetsTable {
     public static func load(
         at offset: Int,
-        size: Int,
         from machO: MachOFile
     ) throws -> Self? {
         let offset = offset + machO.headerStartOffset
@@ -80,14 +59,12 @@ extension DWARFStringOffsetsTable {
         if is64Bit {
             return .init(
                 header: .version5(try machO.fileHandle.read(offset: offset)),
-                offset: offset - machO.headerStartOffset,
-                size: size
+                offset: offset - machO.headerStartOffset
             )
         } else {
             return .init(
                 header: .version5_32(try machO.fileHandle.read(offset: offset)),
-                offset: offset - machO.headerStartOffset,
-                size: size
+                offset: offset - machO.headerStartOffset
             )
         }
     }

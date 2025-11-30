@@ -757,20 +757,26 @@ extension DWARFAttributeValue {
 }
 
 extension DWARFAttributeValue {
+    // FIXME: performance & logic
+    // addr_base == list.offset - __debug_str_offs.offset + header.layoutSize
     fileprivate func string(
         from indexedString: IndexedString,
         in machO: MachOFile
     ) -> String? {
         let dwarf = machO.dwarf
-        guard let offset = dwarf.stringOffsetsTable?.offset(
-            at: numericCast(indexedString.index),
-            in: machO
-        ) else { return nil }
-        guard let strings = dwarf.strings,
-              let string = strings.string(at: numericCast(offset)) else {
-            return nil
+        let index: Int = numericCast(indexedString.index)
+
+        guard let list = dwarf.stringOffsetsTables.first else { return nil }
+        let offsets = Array(list.offsets(in: machO))
+        if offsets.indices.contains(index) {
+            let offset = offsets[index]
+            guard let strings = dwarf.strings,
+                  let string = strings.string(at: numericCast(offset)) else {
+                return nil
+            }
+            return string.string
         }
-        return string.string
+        return nil
     }
 
     // FIXME: performance & logic

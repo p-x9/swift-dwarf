@@ -120,16 +120,23 @@ extension MachOFile.DWARF {
 
 extension MachOFile.DWARF {
     // dwarfdump --debug-str-offsets
-    public var stringOffsetsTable: DWARFStringOffsetsTable? {
+    public var stringOffsetsTables: [DWARFStringOffsetsTable] {
         guard let dwarf = machO.dwarfSegment,
               let __debug_str_offs = dwarf.__debug_str_offs(in: machO) else {
-            return nil
+            return []
         }
-        return try? .load(
-            at: __debug_str_offs.offset,
-            size: __debug_str_offs.size,
-            from: machO
-        )
+        var lists: [DWARFStringOffsetsTable] = []
+        var pos = 0
+        while pos < __debug_str_offs.size {
+            let list: DWARFStringOffsetsTable? = try? .load(
+                at: __debug_str_offs.offset + pos,
+                from: machO
+            )
+            guard let list else { break }
+            lists.append(list)
+            pos += list.layoutSize
+        }
+        return lists
     }
 }
 
