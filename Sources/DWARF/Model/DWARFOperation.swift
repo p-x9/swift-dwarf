@@ -9,7 +9,7 @@
 import Foundation
 import DWARFC
 
-public enum DWARFOperation: CaseIterable {
+public enum DWARFOperation: CaseIterable, Sendable {
     /// DW_OP_addr
     case addr
     /// DW_OP_deref

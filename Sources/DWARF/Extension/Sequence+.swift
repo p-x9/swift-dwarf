@@ -189,3 +189,113 @@ extension Sequence<DWARFRangeOperation> {
         return rangeLists
     }
 }
+
+// MARK: - DWARFLocationOperation
+fileprivate struct LocationOperationsState {
+    var base: DWARFAddress = .init(segmentSelector: nil, address: 0)
+    var locations: [DWARFLocation] = []
+}
+
+extension Sequence<DWARFLocationOperation> {
+    public func locations(
+        addressTable: DWARFAddressTable,
+        in machO: MachOFile
+    ) -> [[DWARFLocation]] {
+        var locationLists: [[DWARFLocation]] = []
+        var state: LocationOperationsState = .init()
+
+        let addresses = Array(addressTable.addresses(in: machO))
+
+        for operation in self {
+            switch operation {
+            case .end_of_list:
+                locationLists.append(state.locations)
+                state = .init()
+
+            case .base_addressx(let addressIndex):
+                state.base = addresses[numericCast(addressIndex)]
+
+            case .startx_endx(let startIndex, let endIndex, let descriptions):
+                state.locations.append(
+                    .init(
+                        range: .init(
+                            start: addresses[numericCast(startIndex)],
+                            end: addresses[numericCast(endIndex)]
+                        ),
+                        descriptions: descriptions
+                    )
+                )
+
+            case .startx_length(let startIndex, let length, let descriptions):
+                let start = addresses[numericCast(startIndex)]
+                state.locations.append(
+                    .init(
+                        range: .init(
+                            start: start,
+                            end: .init(
+                                segmentSelector: start.segmentSelector,
+                                address: start.address + numericCast(length)
+                            )
+                        ),
+                        descriptions: descriptions
+                    )
+                )
+
+            case .offset_pair(let startOffset, let endOffset, let descriptions):
+                state.locations.append(
+                    .init(
+                        range: .init(
+                            start: .init(
+                                segmentSelector: state.base.segmentSelector,
+                                address: state.base.address + startOffset
+                            ),
+                            end: .init(
+                                segmentSelector: state.base.segmentSelector,
+                                address: state.base.address + endOffset
+                            )
+                        ),
+                        descriptions: descriptions
+                    )
+                )
+
+            case .default_location(let descriptions):
+                state.locations.append(
+                    .init(
+                        range: .init(
+                            start: .init(address: 0),
+                            end: .init(address: 0)
+                        ), // dummy
+                        descriptions: descriptions
+                    )
+                )
+
+            case .base_address(let address):
+                state.base = address
+
+            case .start_end(let start, let end, let descriptions):
+                state.locations.append(
+                    .init(
+                        range: .init(start: start, end: end),
+                        descriptions: descriptions
+                    )
+                )
+
+            case .start_length(let start, let length, let descriptions):
+                state.locations.append(
+                    .init(
+                        range: .init(
+                            start: start,
+                            end: .init(
+                                segmentSelector: start.segmentSelector,
+                                address: start.address + length
+                            )
+                        ),
+                        descriptions: descriptions
+                    )
+                )
+            }
+        }
+
+        return locationLists
+    }
+}

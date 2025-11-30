@@ -9,7 +9,7 @@
 import Foundation
 import MachOKit
 
-public struct DWARFAddress {
+public struct DWARFAddress: Sendable, Equatable {
     public var segmentSelector: UInt64?
     public var address: UInt64
 }

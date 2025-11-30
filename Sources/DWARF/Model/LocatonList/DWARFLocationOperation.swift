@@ -35,8 +35,7 @@ public enum DWARFLocationOperation {
     case default_location(descriptions: [DWARFOperation])
     /// DW_LLE_base_address
     case base_address(
-        address: DWARFAddress,
-        descriptions: [DWARFOperation]
+        address: DWARFAddress
     )
     /// DW_LLE_start_end
     case start_end(
@@ -174,11 +173,7 @@ extension DWARFLocationOperation {
                 endian: .little // FIXME: endian
             ) else { return nil }
             return .base_address(
-                address: address,
-                descriptions: readDescriptions(
-                    basePointer: basePointer,
-                    nextOffset: &nextOffset
-                )
+                address: address
             )
 
         case .start_end:
