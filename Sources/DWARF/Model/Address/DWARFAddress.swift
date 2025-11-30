@@ -10,8 +10,8 @@ import Foundation
 import MachOKit
 
 public struct DWARFAddress {
-    public let segmentSelector: UInt64?
-    public let address: UInt64
+    public var segmentSelector: UInt64?
+    public var address: UInt64
 }
 
 extension DWARFAddress {
@@ -35,5 +35,26 @@ extension DWARFAddress {
                 address: data.uintValue(endian: endian)
             )
         }
+    }
+}
+
+extension DWARFAddress {
+    internal static func load(
+        basePointer: UnsafeRawPointer,
+        nextOffset: inout Int,
+        addressSize: Int,
+        segmentSelectorSize: Int,
+        endian: Endian
+    ) -> Self? {
+        let data = Data(
+            bytes: basePointer,
+            count: addressSize + segmentSelectorSize
+        )
+        return .init(
+            data: data,
+            addressSize: addressSize,
+            segmentSelectorSize: segmentSelectorSize,
+            endian: endian
+        )
     }
 }
