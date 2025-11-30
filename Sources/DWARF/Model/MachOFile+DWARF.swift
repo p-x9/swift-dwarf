@@ -182,4 +182,24 @@ extension MachOFile.DWARF {
         }
         return lists
     }
+
+    // __debug_loclists
+    public var locationLists: [DWARFLocationList] {
+        guard let dwarf = machO.dwarfSegment,
+              let __debug_loclists = dwarf.__debug_loclists(in: machO) else {
+            return []
+        }
+        var lists: [DWARFLocationList] = []
+        var pos = 0
+        while pos < __debug_loclists.size {
+            let list: DWARFLocationList? = try? .load(
+                at: __debug_loclists.offset + pos,
+                in: machO
+            )
+            guard let list else { break }
+            lists.append(list)
+            pos += list.layoutSize
+        }
+        return lists
+    }
 }
