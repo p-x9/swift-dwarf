@@ -48,7 +48,7 @@ struct dwarf_name_index_header32_t {
 // DWARF5 p147, p235
 struct dwarf_aranges_header64_t {
     struct dwarf_init_len64 unit_length;
-    dwarf_uhalf version;
+    dwarf_uhalf version; // ~5
     uint64_t debug_info_offset;
     dwarf_ubyte address_size;
     dwarf_ubyte segment_selector_size;
@@ -56,7 +56,7 @@ struct dwarf_aranges_header64_t {
 
 struct dwarf_aranges_header32_t {
     struct dwarf_init_len32 unit_length;
-    dwarf_uhalf version;
+    dwarf_uhalf version; // ~5
     uint32_t debug_info_offset;
     dwarf_ubyte address_size;
     dwarf_ubyte segment_selector_size;

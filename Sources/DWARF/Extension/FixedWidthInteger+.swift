@@ -43,3 +43,11 @@ extension FixedWidthInteger where Self: SignedInteger {
         return result
     }
 }
+
+extension FixedWidthInteger {
+    @inline(__always)
+    func alignedUp(to alignment: Self) -> Self {
+        precondition(alignment > 0 && (alignment & (alignment &- 1)) == 0, "alignment must be a power of two")
+        return (self &+ alignment &- 1) & ~(alignment &- 1)
+    }
+}
