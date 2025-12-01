@@ -44,6 +44,10 @@ extension SegmentCommandProtocol {
     func __debug_loclists(in machO: MachOFile) -> SectionType? {
         section(for: .__debug_loclists, in: machO)
     }
+
+    func __debug_aranges(in machO: MachOFile) -> SectionType? {
+        section(for: .__debug_aranges, in: machO)
+    }
 }
 
 extension SegmentCommandProtocol {

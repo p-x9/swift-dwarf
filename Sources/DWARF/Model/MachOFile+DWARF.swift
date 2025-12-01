@@ -160,6 +160,26 @@ extension MachOFile.DWARF {
         }
         return lists
     }
+
+    // __debug_aranges
+    public var addressRanges: [DWARFAddressRangeTable] {
+        guard let dwarf = machO.dwarfSegment,
+              let __debug_aranges = dwarf.__debug_aranges(in: machO) else {
+            return []
+        }
+        var lists: [DWARFAddressRangeTable] = []
+        var pos = 0
+        while pos < __debug_aranges.size {
+            let list: DWARFAddressRangeTable? = try? .load(
+                at: __debug_aranges.offset + pos,
+                from: machO
+            )
+            guard let list else { break }
+            lists.append(list)
+            pos += list.layoutSize
+        }
+        return lists
+    }
 }
 
 extension MachOFile.DWARF {
