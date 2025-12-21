@@ -27,7 +27,7 @@ struct dwarf_name_index_header64_t {
     dwarf_uword name_count;
     dwarf_uword abbrev_table_size;
     dwarf_uword augmentation_string_size;
-    uint64_t augmentation_string;
+//    uint64_t augmentation_string;
 };
 
 struct dwarf_name_index_header32_t {
@@ -41,7 +41,7 @@ struct dwarf_name_index_header32_t {
     dwarf_uword name_count;
     dwarf_uword abbrev_table_size;
     dwarf_uword augmentation_string_size;
-    uint32_t augmentation_string;
+//    uint32_t augmentation_string;
 };
 
 // .debug_aranges section
