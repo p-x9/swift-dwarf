@@ -20,6 +20,15 @@ extension DWARFFormat {
         case ._32bit: 4
         }
     }
+
+    public var unitLengthSize: Int {
+        switch self {
+        case ._64bit:
+            MemoryLayout<dwarf_init_len64>.size
+        case ._32bit:
+            MemoryLayout<dwarf_init_len32>.size
+        }
+    }
 }
 
 extension DWARFFormat: CustomStringConvertible {

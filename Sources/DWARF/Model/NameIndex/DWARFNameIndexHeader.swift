@@ -11,7 +11,7 @@ import Foundation
 import DWARFC
 
 public enum DWARFNameIndexHeader {
-    case _64(DWARFNameIndexHeade64)
+    case _64(DWARFNameIndexHeader64)
     case _32(DWARFNameIndexHeader32)
 }
 
@@ -182,7 +182,7 @@ extension DWARFNameIndexHeader32 {
     }
 }
 
-public struct DWARFNameIndexHeade64: LayoutWrapper {
+public struct DWARFNameIndexHeader64: LayoutWrapper {
     public typealias Layout = dwarf_name_index_header64_t
 
     public var layout: Layout
@@ -190,7 +190,7 @@ public struct DWARFNameIndexHeade64: LayoutWrapper {
     public let offset: Int
 }
 
-extension DWARFNameIndexHeade64 {
+extension DWARFNameIndexHeader64 {
     public var layoutSize: Int {
         MemoryLayout<Layout>.size + numericCast(layout.augmentation_string_size)
     }
