@@ -223,3 +223,25 @@ extension MachOFile.DWARF {
         return lists
     }
 }
+
+extension MachOFile.DWARF {
+    // __debug_names
+    public var nameIndices: [DWARFNameIndex] {
+        guard let dwarf = machO.dwarfSegment,
+              let __debug_names = dwarf.__debug_names(in: machO) else {
+            return []
+        }
+        var lists: [DWARFNameIndex] = []
+        var pos = 0
+        while pos < __debug_names.size {
+            let list: DWARFNameIndex? = try? .load(
+                at: __debug_names.offset + pos,
+                from: machO
+            )
+            guard let list else { break }
+            lists.append(list)
+            pos += list.layoutSize
+        }
+        return lists
+    }
+}

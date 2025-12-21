@@ -8,7 +8,7 @@
 
 import Foundation
 
-enum DWARFMachOSection: String {
+public enum DWARFMachOSection: String {
     case __debug_abbrev
     case __debug_info
     case __debug_line
@@ -19,4 +19,5 @@ enum DWARFMachOSection: String {
     case __debug_rnglists
     case __debug_loclists
     case __debug_aranges
+    case __debug_names
 }
