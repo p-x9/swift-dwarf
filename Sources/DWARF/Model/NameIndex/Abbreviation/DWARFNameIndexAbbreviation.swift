@@ -12,7 +12,6 @@ import Foundation
 public struct DWARFNameIndexAbbreviation {
     public let code: UInt
     public let tag: DWARFTag
-    public let hasChildren: Bool
     public let attributes: [(DWARFNameIndexAttribute, DWARFAttributeFormat)]
 
     public let layoutSize: Int
@@ -42,11 +41,6 @@ extension DWARFNameIndexAbbreviation {
             .assumingMemoryBound(to: UInt8.self)
             .readULEB128()
         offset += numericCast(tagSize)
-
-        let hasChildren = machO.fileHandle.ptr
-            .advanced(by: offset)
-            .load(as: UInt8.self) != 0
-        offset += 1
 
         var attributes: [(DWARFNameIndexAttribute, DWARFAttributeFormat)] = []
         while true {
@@ -81,7 +75,6 @@ extension DWARFNameIndexAbbreviation {
         return .init(
             code: numericCast(code),
             tag: .init(rawValue: .init(tag))!,
-            hasChildren: hasChildren,
             attributes: attributes,
             layoutSize: offset - initialOffset
         )
