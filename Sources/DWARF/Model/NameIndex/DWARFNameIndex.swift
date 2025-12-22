@@ -163,6 +163,64 @@ extension DWARFNameIndex {
 }
 
 extension DWARFNameIndex {
+    public func entries(
+        at offset: Int, // offset from entries list starts in .debug_names section
+        in machO: MachOFile
+    ) -> [DWARFNameIndexEntry] {
+        guard let abbreviationsSet = abbreviationsSet(in: machO) else {
+            return []
+        }
+
+        var pos = header.layoutSize + machO.headerStartOffset
+        let leadingCount = header.numberOfCompirationUnits + header.numberOfLocalTypeUnits + header.numberOfForeignTypeUnits + 2 * header.numberOfNames
+
+        pos += header.format.addressSize * leadingCount
+
+        pos += MemoryLayout<UInt32>.size * (header.numberOfNames + header.numberOfBuckets)
+
+        pos += numericCast(header.abbreviationsTableSize)
+
+        var result: [DWARFNameIndexEntry] = []
+        while pos + offset < layoutSize {
+            let entry: DWARFNameIndexEntry? = .load(
+                at: self.offset + pos + offset,
+                from: machO,
+                dwarfFormat: header.format,
+                abbreviationsSet: abbreviationsSet,
+                addressSize: header.format.addressSize
+            )
+            guard let entry else { break }
+            if entry.tag == .null { break }
+            result.append(entry)
+            pos += entry.layoutSize(
+                dwarfFoarmat: header.format,
+                addressSize: header.format.addressSize
+            )
+        }
+
+        return result
+    }
+}
+
+extension DWARFNameIndex {
+    // ref: DWARF5 p268 (Page 250) 7.33 Name Table Hash Function
+    public func hash(for name: String) -> UInt32 {
+        let name = name
+            .replacingOccurrences(of: "\u{0130}", with: "i")
+            .replacingOccurrences(of: "\u{0131}", with: "i")
+            .folding(
+                options: [.caseInsensitive],
+                locale: nil
+            )
+        var h: UInt32 = 5381
+        for c in name.utf8 {
+            h = h &* 33 &+ UInt32(c)
+        }
+        return h
+    }
+}
+
+extension DWARFNameIndex {
     private func _loadOffsets(
         in machO: MachOFile,
         offsetFromHeaderTrail: Int,
