@@ -7,7 +7,7 @@
 //
 
 import Foundation
-@testable @_spi(Support) import MachOKit
+@_spi(Support) import MachOKit
 
 public struct DWARFAddressRangeTable {
     public let header: DWARFAddressRangeTableHeader

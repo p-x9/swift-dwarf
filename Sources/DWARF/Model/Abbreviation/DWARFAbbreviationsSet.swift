@@ -7,7 +7,7 @@
 //
 
 import Foundation
-@testable import MachOKit // FIXME: FileIO
+import MachOKit
 
 public struct DWARFAbbreviationsSet {
     /// offset from the start of `debug_abbrev` secton

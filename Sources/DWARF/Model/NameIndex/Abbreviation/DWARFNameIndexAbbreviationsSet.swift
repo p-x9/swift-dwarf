@@ -7,7 +7,7 @@
 //
 
 import Foundation
-@testable import MachOKit // FIXME: FileIO
+import MachOKit
 
 public struct DWARFNameIndexAbbreviationsSet {
     public let offset: Int

@@ -7,7 +7,7 @@
 //
 
 import Foundation
-@testable import MachOKit // FIXME: FileIO
+import MachOKit
 
 // ref: https://github.com/llvm/llvm-project/blob/357297c0f2839ffb3c6b814ab3276580c7eae90d/llvm/lib/DebugInfo/DWARF/DWARFFormValue.cpp
 public indirect enum DWARFAttributeValue {

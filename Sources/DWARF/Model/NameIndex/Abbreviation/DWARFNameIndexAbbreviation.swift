@@ -7,7 +7,7 @@
 //
 
 import Foundation
-@testable import MachOKit // FIXME: FileIO
+import MachOKit
 
 public struct DWARFNameIndexAbbreviation {
     public let code: UInt
