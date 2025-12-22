@@ -17,7 +17,7 @@ let package = Package(
         ),
     ],
     dependencies: [
-        .package(url: "https://github.com/p-x9/MachOKit.git", branch: "main"),
+        .package(url: "https://github.com/p-x9/MachOKit.git", from: "0.44.0"),
         .package(url: "https://github.com/p-x9/swift-fileio.git", from: "0.12.0")
     ],
     targets: [
