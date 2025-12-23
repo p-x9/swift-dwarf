@@ -10,7 +10,7 @@ import Foundation
 import MachOKit
 
 // ref: https://github.com/llvm/llvm-project/blob/357297c0f2839ffb3c6b814ab3276580c7eae90d/llvm/lib/DebugInfo/DWARF/DWARFFormValue.cpp
-public indirect enum DWARFAttributeValue {
+public indirect enum DWARFAttributeValue: Sendable {
     /// DW_FORM_addr
     case addr(UInt64) // address_size 4 or 8
     /// DW_FORM_block2
@@ -169,32 +169,32 @@ extension DWARFAttributeValue {
 }
 
 extension DWARFAttributeValue {
-    public struct Block {
+    public struct Block: Sendable {
         public let length: UInt64
         public let data: Data
     }
 
-    public struct Constant<V> {
+    public struct Constant<V: Sendable>: Sendable {
         public let value: V
     }
 
-    public struct Flag {
+    public struct Flag: Sendable {
         public let _value: UInt8
         public var value: Bool {
             return _value != 0
         }
     }
 
-    public struct ExprLoc {
+    public struct ExprLoc: Sendable {
         public let length: UInt64
         public let data: Data
     }
 
-    public struct Ptr {
+    public struct Ptr: Sendable {
         public let address: UInt64
     }
 
-    public struct Reference<Raw: FixedWidthInteger> {
+    public struct Reference<Raw: FixedWidthInteger & Sendable>: Sendable {
         public let _offset: Raw
 
         public var offset: UInt64 {
@@ -202,23 +202,23 @@ extension DWARFAttributeValue {
         }
     }
 
-    public struct LocList {
+    public struct LocList: Sendable {
         public let index: UInt64
     }
 
-    public struct RngList {
+    public struct RngList: Sendable {
         public let index: UInt64
     }
 
-    public struct RefString {
+    public struct RefString: Sendable {
         public let offset: UInt64
     }
 
-    public struct IndexedString {
+    public struct IndexedString: Sendable {
         public let index: UInt64
     }
 
-    public struct IndexedAddress {
+    public struct IndexedAddress: Sendable {
         public let index: UInt64
     }
 }

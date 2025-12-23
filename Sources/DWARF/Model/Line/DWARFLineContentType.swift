@@ -8,7 +8,7 @@
 
 import DWARFC
 
-public enum DWARFLineContentType: CaseIterable {
+public enum DWARFLineContentType: Sendable, CaseIterable {
     /// DW_LNCT_path
     case path
     /// DW_LNCT_directory_index

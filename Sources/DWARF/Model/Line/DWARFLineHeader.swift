@@ -10,7 +10,7 @@ import Foundation
 @_spi(Support) import MachOKit
 import DWARFC
 
-public enum DWARFLineHeader {
+public enum DWARFLineHeader: Sendable {
     case upToVersion4(DWARF4LineHeader64)
     case version5(DWARF5LineHeader64)
 
@@ -215,7 +215,7 @@ extension DWARFLineHeader {
     }
 }
 
-public struct DWARF5LineHeader64: LayoutWrapper {
+public struct DWARF5LineHeader64: LayoutWrapper, Sendable {
     public typealias Layout = dwarf5_line_header64_t
 
     public var layout: Layout
@@ -314,7 +314,7 @@ extension DWARF5LineHeader64 {
     }
 }
 
-public struct DWARF5LineHeader32: LayoutWrapper {
+public struct DWARF5LineHeader32: LayoutWrapper, Sendable {
     public typealias Layout = dwarf5_line_header32_t
 
     public var layout: Layout
@@ -413,7 +413,7 @@ extension DWARF5LineHeader32 {
     }
 }
 
-public struct DWARF4LineHeader64: LayoutWrapper {
+public struct DWARF4LineHeader64: LayoutWrapper, Sendable {
     public typealias Layout = dwarf4_line_header64_t
 
     public var layout: Layout
@@ -462,7 +462,7 @@ extension DWARF4LineHeader64 {
     }
 }
 
-public struct DWARF4LineHeader32: LayoutWrapper {
+public struct DWARF4LineHeader32: LayoutWrapper, Sendable {
     public typealias Layout = dwarf4_line_header32_t
 
     public var layout: Layout

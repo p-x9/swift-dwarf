@@ -10,7 +10,7 @@ import Foundation
 @_spi(Support) import MachOKit
 import DWARFC
 
-public enum DWARFAddressRangeTableHeader {
+public enum DWARFAddressRangeTableHeader: Sendable {
     case _64(DWARFAddressRangeTableHeader64)
     case _32(DWARFAddressRangeTableHeader32)
 }
@@ -125,7 +125,7 @@ extension DWARFAddressRangeTableHeader {
     }
 }
 
-public struct DWARFAddressRangeTableHeader32: LayoutWrapper {
+public struct DWARFAddressRangeTableHeader32: LayoutWrapper, Sendable {
     public typealias Layout = dwarf_aranges_header32_t
 
     public var layout: Layout
@@ -133,7 +133,7 @@ public struct DWARFAddressRangeTableHeader32: LayoutWrapper {
     public let offset: Int
 }
 
-public struct DWARFAddressRangeTableHeader64: LayoutWrapper {
+public struct DWARFAddressRangeTableHeader64: LayoutWrapper, Sendable {
     public typealias Layout = dwarf_aranges_header64_t
 
     public var layout: Layout

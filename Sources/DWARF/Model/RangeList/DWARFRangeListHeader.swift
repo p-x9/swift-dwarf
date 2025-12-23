@@ -10,7 +10,7 @@ import Foundation
 @_spi(Support) import MachOKit
 import DWARFC
 
-public enum DWARFRangeListHeader {
+public enum DWARFRangeListHeader: Sendable {
     case version5(DWARF5RangeListHeader64)
     case version5_32(DWARF5RangeListHeader32)
 }
@@ -126,7 +126,7 @@ extension DWARFRangeListHeader {
     }
 }
 
-public struct DWARF5RangeListHeader32: LayoutWrapper {
+public struct DWARF5RangeListHeader32: LayoutWrapper, Sendable {
     public typealias Layout = dwarf5_rnglist_header32_t
 
     public var layout: Layout
@@ -134,7 +134,7 @@ public struct DWARF5RangeListHeader32: LayoutWrapper {
     public let offset: Int
 }
 
-public struct DWARF5RangeListHeader64: LayoutWrapper {
+public struct DWARF5RangeListHeader64: LayoutWrapper, Sendable {
     public typealias Layout = dwarf5_rnglist_header64_t
 
     public var layout: Layout

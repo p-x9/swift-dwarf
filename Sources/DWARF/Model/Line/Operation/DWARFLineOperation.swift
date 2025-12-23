@@ -7,7 +7,7 @@
 //
 
 
-public enum DWARFLineOperation {
+public enum DWARFLineOperation: Sendable {
     case specal(UInt8)
     case standard(DWARFLineStandardOperation)
     case extended(DWARFLineExtendedOperation)

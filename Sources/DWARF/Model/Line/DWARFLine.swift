@@ -11,8 +11,8 @@ import Foundation
 
 // DWARF4 6.2.2 State Machine Register p109
 // DWARF5 6.2.2 State Machine Register p150
-public struct DWARFLine: LayoutWrapper {
-    public struct Layout {
+public struct DWARFLine: LayoutWrapper, Sendable {
+    public struct Layout: Sendable {
         public var address: UInt64
         public var op_index: UInt64
         public var file: UInt64

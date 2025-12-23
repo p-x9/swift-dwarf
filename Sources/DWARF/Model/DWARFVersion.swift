@@ -8,7 +8,7 @@
 
 import Foundation
 
-public enum DWARFVersion: UInt16 {
+public enum DWARFVersion: UInt16, Sendable {
     case v1 = 1
     case v2
     case v3

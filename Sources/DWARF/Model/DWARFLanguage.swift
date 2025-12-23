@@ -9,7 +9,7 @@
 import Foundation
 import DWARFC
 
-public enum DWARFLanguage: CaseIterable {
+public enum DWARFLanguage: Sendable, CaseIterable {
     /// DW_LANG_C89
     case c89
     /// DW_LANG_C

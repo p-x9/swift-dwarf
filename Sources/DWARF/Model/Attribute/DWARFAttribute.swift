@@ -9,7 +9,7 @@
 import Foundation
 import DWARFC
 
-public enum DWARFAttribute: CaseIterable {
+public enum DWARFAttribute: Sendable, CaseIterable {
     /// DW_AT_sibling
     case sibling
     /// DW_AT_location

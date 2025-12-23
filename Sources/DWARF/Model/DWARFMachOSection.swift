@@ -8,7 +8,7 @@
 
 import Foundation
 
-public enum DWARFMachOSection: String {
+public enum DWARFMachOSection: String, Sendable {
     case __debug_abbrev
     case __debug_info
     case __debug_line

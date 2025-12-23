@@ -8,7 +8,7 @@
 
 import DWARFC
 
-public enum DWARFLocationOpcode: CaseIterable {
+public enum DWARFLocationOpcode: Sendable, CaseIterable {
     /// DW_LLE_end_of_list
     case end_of_list
     /// DW_LLE_base_addressx

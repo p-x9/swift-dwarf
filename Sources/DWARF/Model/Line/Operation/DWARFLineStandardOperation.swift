@@ -6,7 +6,7 @@
 //  
 //
 
-public enum DWARFLineStandardOperation {
+public enum DWARFLineStandardOperation: Sendable {
     /// DW_LNS_copy
     case copy
     /// DW_LNS_advance_pc

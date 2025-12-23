@@ -10,7 +10,7 @@ import Foundation
 @_spi(Support) import MachOKit
 import DWARFC
 
-public enum DWARFNameIndexHeader {
+public enum DWARFNameIndexHeader: Sendable {
     case _64(DWARFNameIndexHeader64)
     case _32(DWARFNameIndexHeader32)
 }
@@ -168,7 +168,7 @@ extension DWARFNameIndexHeader {
     }
 }
 
-public struct DWARFNameIndexHeader32: LayoutWrapper {
+public struct DWARFNameIndexHeader32: LayoutWrapper, Sendable {
     public typealias Layout = dwarf_name_index_header32_t
 
     public var layout: Layout
@@ -182,7 +182,7 @@ extension DWARFNameIndexHeader32 {
     }
 }
 
-public struct DWARFNameIndexHeader64: LayoutWrapper {
+public struct DWARFNameIndexHeader64: LayoutWrapper, Sendable {
     public typealias Layout = dwarf_name_index_header64_t
 
     public var layout: Layout

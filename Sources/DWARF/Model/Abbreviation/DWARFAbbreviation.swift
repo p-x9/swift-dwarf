@@ -9,7 +9,7 @@
 import Foundation
 import MachOKit
 
-public struct DWARFAbbreviation {
+public struct DWARFAbbreviation: Sendable {
     public let code: UInt
     public let tag: DWARFTag
     public let hasChildren: Bool

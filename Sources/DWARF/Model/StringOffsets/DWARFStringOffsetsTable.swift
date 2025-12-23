@@ -10,7 +10,7 @@ import Foundation
 @_spi(Support) import MachOKit
 import DWARFC
 
-public struct DWARFStringOffsetsTable {
+public struct DWARFStringOffsetsTable: Sendable {
     public let header: DWARFStringOffsetsTableHeader
     public let offset: Int
 }

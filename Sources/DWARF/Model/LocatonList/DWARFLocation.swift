@@ -6,7 +6,7 @@
 //  
 //
 
-public struct DWARFLocation {
+public struct DWARFLocation: Sendable {
     public let range: DWARFRange
     public let descriptions: [DWARFOperation]
 }

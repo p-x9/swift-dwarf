@@ -10,7 +10,7 @@ import Foundation
 @_spi(Support) import MachOKit
 import DWARFC
 
-public struct DWARFAddressTable {
+public struct DWARFAddressTable: Sendable {
     public let header: DWARFAddressTableHeader
     public let offset: Int
 }

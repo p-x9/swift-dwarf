@@ -10,7 +10,7 @@ import Foundation
 @_spi(Support) import MachOKit
 import DWARFC
 
-public struct DWARFFileEntryValue {
+public struct DWARFFileEntryValue: Sendable {
     public let type: DWARFLineContentType
     public let value: DWARFAttributeValue
 

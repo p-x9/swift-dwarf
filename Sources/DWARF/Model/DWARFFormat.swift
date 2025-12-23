@@ -8,7 +8,7 @@
 
 import Foundation
 
-public enum DWARFFormat {
+public enum DWARFFormat: Sendable {
     case _64bit
     case _32bit
 }

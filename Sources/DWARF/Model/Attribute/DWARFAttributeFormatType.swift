@@ -8,7 +8,7 @@
 
 import Foundation
 
-public enum DWARFAttributeFormatType: CaseIterable {
+public enum DWARFAttributeFormatType: Sendable, CaseIterable {
     /// DW_FORM_addr
     case addr
     /// DW_FORM_block2

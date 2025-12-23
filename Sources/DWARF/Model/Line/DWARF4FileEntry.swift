@@ -9,7 +9,7 @@
 import Foundation
 @_spi(Support) import MachOKit
 
-public struct DWARF4FileEntry {
+public struct DWARF4FileEntry: Sendable {
     public let name: String
     public let dir_index: UInt64 // uleb128
     public let modification_time: UInt64 // uleb128

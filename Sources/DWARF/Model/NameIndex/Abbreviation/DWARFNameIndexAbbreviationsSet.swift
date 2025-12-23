@@ -9,7 +9,7 @@
 import Foundation
 import MachOKit
 
-public struct DWARFNameIndexAbbreviationsSet {
+public struct DWARFNameIndexAbbreviationsSet: Sendable {
     public let offset: Int
     public let abbreviations: [DWARFNameIndexAbbreviation]
 }

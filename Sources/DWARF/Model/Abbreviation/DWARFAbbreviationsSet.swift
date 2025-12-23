@@ -9,7 +9,7 @@
 import Foundation
 import MachOKit
 
-public struct DWARFAbbreviationsSet {
+public struct DWARFAbbreviationsSet: Sendable {
     /// offset from the start of `debug_abbrev` secton
     public let offset: Int
     public let abbreviations: [DWARFAbbreviation]

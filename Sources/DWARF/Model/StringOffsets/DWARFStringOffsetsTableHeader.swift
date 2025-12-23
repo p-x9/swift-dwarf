@@ -9,7 +9,7 @@
 import Foundation
 @_spi(Support) import MachOKit
 
-public enum DWARFStringOffsetsTableHeader {
+public enum DWARFStringOffsetsTableHeader: Sendable {
     case version5(DWARF5StringOffsetsTableHeader64)
     case version5_32(DWARF5StringOffsetsTableHeader32)
 }
@@ -53,13 +53,13 @@ extension DWARFStringOffsetsTableHeader {
     }
 }
 
-public struct DWARF5StringOffsetsTableHeader64: LayoutWrapper {
+public struct DWARF5StringOffsetsTableHeader64: LayoutWrapper, Sendable {
     public typealias Layout = dwarf5_str_offsets_header64_t
 
     public var layout: Layout
 }
 
-public struct DWARF5StringOffsetsTableHeader32: LayoutWrapper {
+public struct DWARF5StringOffsetsTableHeader32: LayoutWrapper, Sendable {
     public typealias Layout = dwarf5_str_offsets_header32_t
 
     public var layout: Layout

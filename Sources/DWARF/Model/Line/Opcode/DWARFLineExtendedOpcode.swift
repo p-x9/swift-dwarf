@@ -8,7 +8,7 @@
 
 import DWARFC
 
-public enum DWARFLineExtendedOpcode: CaseIterable {
+public enum DWARFLineExtendedOpcode: Sendable, CaseIterable {
     /// DW_LNE_end_sequence
     case end_sequence
     /// DW_LNE_set_address

@@ -9,7 +9,7 @@
 import Foundation
 @_spi(Support) import MachOKit
 
-public enum DWARFAddressTableHeader {
+public enum DWARFAddressTableHeader: Sendable {
     case version5(DWARF5AddressTableHeader64)
     case version5_32(DWARF5AddressTableHeader32)
 }
@@ -71,13 +71,13 @@ extension DWARFAddressTableHeader {
     }
 }
 
-public struct DWARF5AddressTableHeader64: LayoutWrapper {
+public struct DWARF5AddressTableHeader64: LayoutWrapper, Sendable {
     public typealias Layout = dwarf5_addrs_header64_t
 
     public var layout: Layout
 }
 
-public struct DWARF5AddressTableHeader32: LayoutWrapper {
+public struct DWARF5AddressTableHeader32: LayoutWrapper, Sendable {
     public typealias Layout = dwarf5_addrs_header32_t
 
     public var layout: Layout

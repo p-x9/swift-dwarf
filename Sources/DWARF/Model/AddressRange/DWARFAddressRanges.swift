@@ -9,7 +9,7 @@
 import Foundation
 import MachOKit
 
-public struct DWARFAddressRanges: Sequence {
+public struct DWARFAddressRanges: Sequence, Sendable {
     public typealias Element = DWARFAddressRange
 
     public let addressSize: Int

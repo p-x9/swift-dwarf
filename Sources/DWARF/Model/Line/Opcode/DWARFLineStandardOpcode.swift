@@ -8,7 +8,7 @@
 
 import DWARFC
 
-public enum DWARFLineStandardOpcode: CaseIterable {
+public enum DWARFLineStandardOpcode: Sendable, CaseIterable {
     /// DW_LNS_copy
     case copy
     /// DW_LNS_advance_pc

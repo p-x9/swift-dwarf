@@ -9,7 +9,7 @@
 import Foundation
 @_spi(Support) import MachOKit
 
-public struct DWARFRangeList {
+public struct DWARFRangeList: Sendable {
     public let header: DWARFRangeListHeader
     public let offset: Int
 }

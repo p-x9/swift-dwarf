@@ -6,7 +6,7 @@
 //  
 //
 
-public enum DWARFLineExtendedOperation {
+public enum DWARFLineExtendedOperation: Sendable {
     /// DW_LNE_end_sequence
     case end_sequence
     /// DW_LNE_set_address

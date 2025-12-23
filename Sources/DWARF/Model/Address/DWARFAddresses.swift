@@ -9,7 +9,7 @@
 import Foundation
 import MachOKit
 
-public struct DWARFAddresses: Sequence {
+public struct DWARFAddresses: Sequence, Sendable {
     public typealias Element = DWARFAddress
 
     public let addressSize: Int

@@ -8,7 +8,7 @@
 
 import Foundation
 
-public struct DataChunks: Sequence, IteratorProtocol {
+public struct DataChunks: Sequence, IteratorProtocol, Sendable {
     public let data: Data
     public let chunkSize: Int
 

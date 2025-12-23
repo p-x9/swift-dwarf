@@ -9,7 +9,7 @@
 import Foundation
 import DWARFC
 
-public enum DWARFUnitType: CaseIterable {
+public enum DWARFUnitType: Sendable, CaseIterable {
     /// DW_UT_compile
     case compile
     /// DW_UT_type

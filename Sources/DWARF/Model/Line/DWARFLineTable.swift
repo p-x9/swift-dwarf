@@ -9,7 +9,7 @@
 import Foundation
 @_spi(Support) import MachOKit
 
-public struct DWARFLineTable {
+public struct DWARFLineTable: Sendable {
     public let header: DWARFLineHeader
     public let offset: Int
 }

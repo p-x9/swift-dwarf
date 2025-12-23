@@ -9,7 +9,7 @@
 import Foundation
 import DWARFC
 
-public enum DWARFTag: CaseIterable {
+public enum DWARFTag: Sendable, CaseIterable {
     /// DW_TAG_null
     case null
     /// DW_TAG_array_type

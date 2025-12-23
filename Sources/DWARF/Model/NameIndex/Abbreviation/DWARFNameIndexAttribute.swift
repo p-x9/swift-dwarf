@@ -9,7 +9,7 @@
 import Foundation
 import DWARFC
 
-public enum DWARFNameIndexAttribute: CaseIterable {
+public enum DWARFNameIndexAttribute: Sendable, CaseIterable {
     /// DW_IDX_compile_unit
     case compile_unit
     /// DW_IDX_type_unit

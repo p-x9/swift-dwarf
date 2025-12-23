@@ -9,7 +9,7 @@
 import Foundation
 @_spi(Support) import MachOKit
 
-public struct DWARFCompilationUnit {
+public struct DWARFCompilationUnit: Sendable {
     public let header: DWARFCompilationUnitHeader
     public let offset: Int
 }

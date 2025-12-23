@@ -9,7 +9,7 @@
 import Foundation
 import MachOKit
 
-public struct DWARFNameIndexAbbreviation {
+public struct DWARFNameIndexAbbreviation: Sendable {
     public let code: UInt
     public let tag: DWARFTag
     public let attributes: [(DWARFNameIndexAttribute, DWARFAttributeFormat)]
