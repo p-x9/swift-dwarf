@@ -6,7 +6,7 @@
 //  
 //
 
-public enum DWARFLocationOperation {
+public enum DWARFLocationOperation: Sendable, Equatable {
     /// DW_LLE_end_of_list
     case end_of_list
     /// DW_LLE_base_addressx

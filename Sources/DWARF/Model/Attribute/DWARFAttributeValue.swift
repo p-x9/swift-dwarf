@@ -203,11 +203,11 @@ extension DWARFAttributeValue {
     }
 
     public struct LocList {
-        public let offset: UInt64
+        public let index: UInt64
     }
 
     public struct RngList {
-        public let offset: UInt64
+        public let index: UInt64
     }
 
     public struct RefString {
@@ -298,9 +298,9 @@ extension DWARFAttributeValue {
         case .implicit_const:
             0
         case .loclistx(let locList):
-            locList.offset.uleb128Size
+            locList.index.uleb128Size
         case .rnglistx(let rngList):
-            rngList.offset.uleb128Size
+            rngList.index.uleb128Size
         case .ref_sup8:
             MemoryLayout<UInt64>.size
         case .strx1:
@@ -329,6 +329,110 @@ extension DWARFAttributeValue {
             dwarfFormat.addressSize
         case .llvm_addrx_offset(let offset):
             (offset >> 32).uleb128Size + 4
+        }
+    }
+}
+
+extension DWARFAttributeValue {
+    public var constantUIntValue: UInt64? {
+        switch self {
+        case .addr(let addr):
+            addr
+        case .block2:
+            nil
+        case .block4:
+            nil
+        case .data2(let constant):
+            numericCast(constant.value)
+        case .data4(let constant):
+            numericCast(constant.value)
+        case .data8(let constant):
+            numericCast(constant.value)
+        case .string:
+            nil
+        case .block:
+            nil
+        case .block1:
+            nil
+        case .data1(let constant):
+            numericCast(constant.value)
+        case .flag:
+            nil
+        case .sdata(let constant):
+            // TODO numericCast(constant.value)
+            nil
+        case .strp:
+            nil
+        case .udata(let constant):
+            numericCast(constant.value)
+        case .ref_addr:
+            nil
+        case .ref1:
+            nil
+        case .ref2:
+            nil
+        case .ref4:
+            nil
+        case .ref8:
+            nil
+        case .ref_udata:
+            nil
+        case .indirect:
+            nil
+        case .sec_offset(let ptr):
+            ptr.address
+        case .exprloc:
+            nil
+        case .flag_present:
+            nil
+        case .strx:
+            nil
+        case .addrx:
+            nil
+        case .ref_sup4:
+            nil
+        case .strp_sup:
+            nil
+        case .data16:
+            nil // TODO UInt128
+        case .line_strp:
+            nil
+        case .ref_sig8:
+            nil
+        case .implicit_const:
+            nil // TODO Int64
+        case .loclistx:
+            nil
+        case .rnglistx:
+            nil
+        case .ref_sup8:
+            nil
+        case .strx1:
+            nil
+        case .strx2:
+            nil
+        case .strx3:
+            nil
+        case .strx4:
+            nil
+        case .addrx1:
+            nil
+        case .addrx2:
+            nil
+        case .addrx3:
+            nil
+        case .addrx4:
+            nil
+        case .gnu_addr_index:
+            nil
+        case .gnu_str_index:
+            nil
+        case .gnu_ref_alt:
+            nil
+        case .gnu_strp_alt:
+            nil
+        case .llvm_addrx_offset:
+            nil
         }
     }
 }
@@ -531,12 +635,12 @@ extension DWARFAttributeValue {
             let (offset, _) = machO.fileHandle.readULEB128(
                 baseOffset: numericCast(offset)
             )
-            return .loclistx(.init(offset: numericCast(offset)))
+            return .loclistx(.init(index: numericCast(offset)))
         case .rnglistx:
             let (offset, _) = machO.fileHandle.readULEB128(
                 baseOffset: numericCast(offset)
             )
-            return .rnglistx(.init(offset: numericCast(offset)))
+            return .rnglistx(.init(index: numericCast(offset)))
         case .ref_sup8:
             return .ref_sup8(.init(_offset: try! machO.fileHandle.read(offset: offset)))
         case .strx1:
@@ -686,15 +790,15 @@ extension DWARFAttributeValue {
         case .indirect(let dWARFAttributeValue):
             return dWARFAttributeValue.value(for: unit, in: machO)
         case .sec_offset(let ptr):
-            return nil
+            return ptr.address
         case .exprloc(let exprLoc):
             return nil
         case .flag_present:
             return true
         case .strx(let indexedString):
-            return string(from: indexedString, in: machO)
+            return string(from: indexedString, for: unit, in: machO)
         case .addrx(let indexedAddress):
-            return address(from: indexedAddress, in: machO)
+            return address(from: indexedAddress, for: unit, in: machO)
         case .ref_sup4(let reference):
             return nil
         case .strp_sup(let refString):
@@ -713,31 +817,31 @@ extension DWARFAttributeValue {
         case .implicit_const(let constant):
             return constant
         case .loclistx(let locList):
-            return nil
+            return locationList(from: locList, for: unit, in: machO)
         case .rnglistx(let rngList):
-            return nil
+            return rangeList(from: rngList, for: unit, in: machO)
         case .ref_sup8(let reference):
             return nil
         case .strx1(let indexedString):
-            return string(from: indexedString, in: machO)
+            return string(from: indexedString, for: unit, in: machO)
         case .strx2(let indexedString):
-            return string(from: indexedString, in: machO)
+            return string(from: indexedString, for: unit, in: machO)
         case .strx3(let indexedString):
-            return string(from: indexedString, in: machO)
+            return string(from: indexedString, for: unit, in: machO)
         case .strx4(let indexedString):
-            return string(from: indexedString, in: machO)
+            return string(from: indexedString, for: unit, in: machO)
         case .addrx1(let indexedAddress):
-            return address(from: indexedAddress, in: machO)
+            return address(from: indexedAddress, for: unit, in: machO)
         case .addrx2(let indexedAddress):
-            return address(from: indexedAddress, in: machO)
+            return address(from: indexedAddress, for: unit, in: machO)
         case .addrx3(let indexedAddress):
-            return address(from: indexedAddress, in: machO)
+            return address(from: indexedAddress, for: unit, in: machO)
         case .addrx4(let indexedAddress):
-            return address(from: indexedAddress, in: machO)
+            return address(from: indexedAddress, for: unit, in: machO)
         case .gnu_addr_index(let indexedAddress):
-            return address(from: indexedAddress, in: machO)
+            return address(from: indexedAddress, for: unit, in: machO)
         case .gnu_str_index(let indexedString):
-            return string(from: indexedString, in: machO)
+            return string(from: indexedString, for: unit, in: machO)
         case .gnu_ref_alt(let uInt64):
             return nil
         case .gnu_strp_alt(let uInt64):
@@ -745,7 +849,7 @@ extension DWARFAttributeValue {
         case .llvm_addrx_offset(let uInt64):
             let index = uInt64 >> 32
             let offset = uInt64 & 0xffffffff
-            guard let address = address(from: .init(index: index), in: machO) else {
+            guard let address = address(from: .init(index: index), for: unit, in: machO) else {
                 return nil
             }
             return DWARFAddress(
@@ -757,16 +861,18 @@ extension DWARFAttributeValue {
 }
 
 extension DWARFAttributeValue {
-    // FIXME: performance & logic
-    // addr_base == list.offset - __debug_str_offs.offset + header.layoutSize
     fileprivate func string(
         from indexedString: IndexedString,
+        for unit: DWARFCompilationUnit,
         in machO: MachOFile
     ) -> String? {
         let dwarf = machO.dwarf
         let index: Int = numericCast(indexedString.index)
 
-        guard let list = dwarf.stringOffsetsTables.first else { return nil }
+        guard let list = unit.stringOffsets(in: machO) else {
+            return nil
+        }
+
         let offsets = Array(list.offsets(in: machO))
         if offsets.indices.contains(index) {
             let offset = offsets[index]
@@ -779,21 +885,92 @@ extension DWARFAttributeValue {
         return nil
     }
 
-    // FIXME: performance & logic
-    // addr_base == list.offset - __debug_addr.offset + header.layoutSize
     fileprivate func address(
         from indexedAddress: IndexedAddress,
+        for unit: DWARFCompilationUnit,
         in machO: MachOFile
     ) -> DWARFAddress? {
-        let dwarf = machO.dwarf
         let index: Int = numericCast(indexedAddress.index)
 
-        guard let list = dwarf.addresses.first else { return nil }
+        guard let list = unit.addresses(in: machO) else {
+            return nil
+        }
+
         let addresses = Array(list.addresses(in: machO))
         if addresses.indices.contains(index) {
             return addresses[index]
         }
         return nil
+    }
+
+    fileprivate func rangeList(
+        from rngList: RngList,
+        for unit: DWARFCompilationUnit,
+        in machO: MachOFile
+    ) -> [DWARFRange]? {
+        let index: Int = numericCast(rngList.index)
+
+        guard let list = unit.rangeList(in: machO),
+              let offsets = try? list.offsets(for: machO) else {
+            return nil
+        }
+        guard let addressTable = unit.addresses(in: machO) else {
+            return nil
+        }
+        guard offsets.indices.contains(index) else {
+            return nil
+        }
+        let offset = offsets[index]
+        guard let _operations = try? list.operations(
+            for: machO,
+            entryOffset: offset
+        ) else {
+            return nil
+        }
+        var operations = Array(_operations)
+        guard let end = operations.firstIndex(where: { $0 == .end_of_list }) else {
+            return nil
+        }
+        operations = Array(operations[..<end])
+        return operations.ranges(
+            addressTable: addressTable,
+            in: machO
+        ).first
+    }
+
+    fileprivate func locationList(
+        from locList: LocList,
+        for unit: DWARFCompilationUnit,
+        in machO: MachOFile
+    ) -> [DWARFLocation]? {
+        let index: Int = numericCast(locList.index)
+
+        guard let list = unit.locationList(in: machO),
+              let offsets = try? list.offsets(for: machO) else {
+            return nil
+        }
+        guard let addressTable = unit.addresses(in: machO) else {
+            return nil
+        }
+        guard offsets.indices.contains(index) else {
+            return nil
+        }
+        let offset = offsets[index]
+        guard let _operations = try? list.operations(
+            for: machO,
+            entryOffset: offset
+        ) else {
+            return nil
+        }
+        var operations = Array(_operations)
+        guard let end = operations.firstIndex(where: { $0 == .end_of_list }) else {
+            return nil
+        }
+        operations = Array(operations[..<end])
+        return operations.locations(
+            addressTable: addressTable,
+            in: machO
+        ).first
     }
 
     fileprivate func debugInfoEntry<T>(

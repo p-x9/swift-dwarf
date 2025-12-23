@@ -8,7 +8,7 @@
 
 import DWARFC
 
-public enum DWARFRangeOperation {
+public enum DWARFRangeOperation: Sendable, Equatable {
     /// DW_RLE_end_of_list
     case end_of_list
     /// DW_RLE_base_addressx

@@ -63,8 +63,11 @@ extension DWARFRangeList {
         }
     }
 
-    public func operations(for machO: MachOFile) throws -> Operations {
-        var offset = machO.headerStartOffset + offset + header.layoutSize
+    public func operations(
+        for machO: MachOFile,
+        entryOffset: Int = 0
+    ) throws -> Operations {
+        var offset = machO.headerStartOffset + offset + header.layoutSize + entryOffset
         if header.offsetEntryCount > 0 {
             if header.addressSize == 4 {
                 offset += MemoryLayout<UInt32>.size * header.offsetEntryCount
