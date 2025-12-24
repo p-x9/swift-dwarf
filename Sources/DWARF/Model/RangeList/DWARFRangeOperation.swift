@@ -3,7 +3,7 @@
 //  swift-dwarf
 //
 //  Created by p-x9 on 2025/11/30
-//  
+//
 //
 
 import DWARFC
@@ -38,6 +38,36 @@ extension DWARFRangeOperation {
         case .base_address: return .base_address
         case .start_end: return .start_end
         case .start_length: return .start_length
+        }
+    }
+}
+
+extension DWARFRangeOperation: CustomStringConvertible {
+    public var description: String {
+        switch self {
+        case .end_of_list:
+            return opcode.description
+
+        case .base_addressx(let addressIndex):
+            return "\(opcode.description)(addressIndex: \(addressIndex))"
+
+        case .startx_endx(let startIndex, let endIndex):
+            return "\(opcode.description)(startIndex: \(startIndex), endIndex: \(endIndex))"
+
+        case .startx_length(let startIndex, let length):
+            return "\(opcode.description)(startIndex: \(startIndex), length: \(length))"
+
+        case .offset_pair(let startOffset, let endOffset):
+            return "\(opcode.description)(startOffset: \(startOffset), endOffset: \(endOffset))"
+
+        case .base_address(let address):
+            return "\(opcode.description)(address: \(address))"
+
+        case .start_end(let start, let end):
+            return "\(opcode.description)(start: \(start), end: \(end))"
+
+        case .start_length(let start, let length):
+            return "\(opcode.description)(start: \(start), length: \(length))"
         }
     }
 }
