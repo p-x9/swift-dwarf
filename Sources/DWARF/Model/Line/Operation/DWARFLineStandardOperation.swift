@@ -3,7 +3,7 @@
 //  swift-dwarf
 //
 //  Created by p-x9 on 2025/11/28
-//  
+//
 //
 
 public enum DWARFLineStandardOperation: Sendable {
@@ -60,6 +60,48 @@ extension DWARFLineStandardOperation {
 //        case .set_subprogram: .set_subprogram
 //        case .inlined_call: .inlined_call
 //        case .pop_context: .pop_context
+        }
+    }
+}
+
+extension DWARFLineStandardOperation: CustomStringConvertible {
+    public var description: String {
+        switch self {
+        case .copy:
+            return opcode.description
+
+        case .advance_pc(let pcOffset):
+            return "\(opcode.description)(pcOffset: \(pcOffset))"
+
+        case .advance_line(let lineOffset):
+            return "\(opcode.description)(lineOffset: \(lineOffset))"
+
+        case .set_file(let file):
+            return "\(opcode.description)(file: \(file))"
+
+        case .set_column(let column):
+            return "\(opcode.description)(column: \(column))"
+
+        case .negate_stmt:
+            return opcode.description
+
+        case .set_basic_block:
+            return opcode.description
+
+        case .const_add_pc:
+            return opcode.description
+
+        case .fixed_advance_pc(let pcOffset):
+            return "\(opcode.description)(pcOffset: \(pcOffset))"
+
+        case .set_prologue_end:
+            return opcode.description
+
+        case .set_epilogue_begin:
+            return opcode.description
+
+        case .set_isa(let isa):
+            return "\(opcode.description)(isa: \(isa))"
         }
     }
 }

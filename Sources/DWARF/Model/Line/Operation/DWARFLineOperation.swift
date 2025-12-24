@@ -13,6 +13,16 @@ public enum DWARFLineOperation: Sendable {
     case extended(DWARFLineExtendedOperation)
 }
 
+extension DWARFLineOperation: CustomStringConvertible {
+    public var description: String {
+        switch self {
+        case .specal(let v): v.description
+        case .standard(let v): v.description
+        case .extended(let v): v.description
+        }
+    }
+}
+
 extension DWARFLineOperation {
     internal static func readNext(
         basePointer: UnsafePointer<UInt8>,

@@ -3,7 +3,7 @@
 //  swift-dwarf
 //
 //  Created by p-x9 on 2025/11/28
-//  
+//
 //
 
 public enum DWARFLineExtendedOperation: Sendable {
@@ -57,6 +57,24 @@ extension DWARFLineExtendedOperation {
 //        case .hp_negate_front_end_logical: .hp_negate_front_end_logical
 //        case .hp_define_proc: .hp_define_proc
 //        case .hp_source_file_correlation: .hp_source_file_correlation
+        }
+    }
+}
+
+extension DWARFLineExtendedOperation: CustomStringConvertible {
+    public var description: String {
+        switch self {
+        case .end_sequence:
+            return opcode.description
+
+        case .set_address(let address):
+            return "\(opcode.description)(address: 0x\(String(address, radix: 16)))"
+
+        case .define_file(let entry):
+            return "\(opcode.description)(\(entry))"
+
+        case .set_discriminator(let discriminator):
+            return "\(opcode.description)(discriminator: \(discriminator))"
         }
     }
 }
