@@ -3,7 +3,7 @@
 //  swift-dwarf
 //
 //  Created by p-x9 on 2025/12/01
-//  
+//
 //
 
 public enum DWARFLocationOperation: Sendable, Equatable {
@@ -63,6 +63,39 @@ extension DWARFLocationOperation {
         case .base_address: .base_address
         case .start_end: .start_end
         case .start_length: .start_length
+        }
+    }
+}
+
+extension DWARFLocationOperation: CustomStringConvertible {
+    public var description: String {
+        switch self {
+        case .end_of_list:
+            return opcode.description
+
+        case .base_addressx(let addressIndex):
+            return "\(opcode.description)(addressIndex: \(addressIndex))"
+
+        case .startx_endx(let startIndex, let endIndex, let descriptions):
+            return "\(opcode.description)(startIndex: \(startIndex), endIndex: \(endIndex), descriptions: [\(descriptions.map { $0.description }.joined(separator: ", "))])"
+
+        case .startx_length(let startIndex, let length, let descriptions):
+            return "\(opcode.description)(startIndex: \(startIndex), length: \(length), descriptions: [\(descriptions.map { $0.description }.joined(separator: ", "))])"
+
+        case .offset_pair(let startOffset, let endOffset, let descriptions):
+            return "\(opcode.description)(startOffset: \(startOffset), endOffset: \(endOffset), descriptions: [\(descriptions.map { $0.description }.joined(separator: ", "))])"
+
+        case .default_location(let descriptions):
+            return "\(opcode.description)(descriptions: [\(descriptions.map { $0.description }.joined(separator: ", "))])"
+
+        case .base_address(let address):
+            return "\(opcode.description)(address: \(address))"
+
+        case .start_end(let start, let end, let descriptions):
+            return "\(opcode.description)(start: \(start), end: \(end), descriptions: [\(descriptions.map { $0.description }.joined(separator: ", "))])"
+
+        case .start_length(let start, let length, let descriptions):
+            return "\(opcode.description)(start: \(start), length: \(length), descriptions: [\(descriptions.map { $0.description }.joined(separator: ", "))])"
         }
     }
 }
