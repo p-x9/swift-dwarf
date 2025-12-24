@@ -537,6 +537,269 @@ extension DWARFOperation {
     }
 }
 
+extension DWARFOperation: CustomStringConvertible {
+    public var description: String {
+        switch self {
+        case .addr(let value):
+            return "\(opcode.description)(0x\(String(value, radix: 16)))"
+
+        case .deref:
+            return opcode.description
+
+        case .xderef:
+            return opcode.description
+
+        case .const1u(let v):
+            return "\(opcode.description)(\(v))"
+
+        case .const1s(let v):
+            return "\(opcode.description)(\(v))"
+
+        case .const2u(let v):
+            return "\(opcode.description)(\(v))"
+
+        case .const2s(let v):
+            return "\(opcode.description)(\(v))"
+
+        case .const4u(let v):
+            return "\(opcode.description)(\(v))"
+
+        case .const4s(let v):
+            return "\(opcode.description)(\(v))"
+
+        case .const8u(let v):
+            return "\(opcode.description)(\(v))"
+
+        case .const8s(let v):
+            return "\(opcode.description)(\(v))"
+
+        case .constu(let v):
+            return "\(opcode.description)(\(v))"
+
+        case .consts(let v):
+            return "\(opcode.description)(\(v))"
+
+        case .dup: return opcode.description
+        case .drop: return opcode.description
+        case .over: return opcode.description
+
+        case .pick(let index):
+            return "\(opcode.description)(index: \(index))"
+
+        case .swap: return opcode.description
+        case .rot: return opcode.description
+        case .abs: return opcode.description
+        case .and: return opcode.description
+        case .div: return opcode.description
+        case .minus: return opcode.description
+        case .mod: return opcode.description
+        case .mul: return opcode.description
+        case .neg: return opcode.description
+        case .not: return opcode.description
+        case .or: return opcode.description
+        case .plus: return opcode.description
+
+        case .plus_uconst(let v):
+            return "\(opcode.description)(\(v))"
+
+        case .shl: return opcode.description
+        case .shr: return opcode.description
+        case .shra: return opcode.description
+        case .xor: return opcode.description
+
+        case .bra(let offset):
+            return "\(opcode.description)(offset: \(offset))"
+
+        case .skip(let offset):
+            return "\(opcode.description)(offset: \(offset))"
+
+        case .eq: return opcode.description
+        case .ge: return opcode.description
+        case .gt: return opcode.description
+        case .le: return opcode.description
+        case .lt: return opcode.description
+        case .ne: return opcode.description
+
+        case .lit0:  return opcode.description
+        case .lit1:  return opcode.description
+        case .lit2:  return opcode.description
+        case .lit3:  return opcode.description
+        case .lit4:  return opcode.description
+        case .lit5:  return opcode.description
+        case .lit6:  return opcode.description
+        case .lit7:  return opcode.description
+        case .lit8:  return opcode.description
+        case .lit9:  return opcode.description
+        case .lit10: return opcode.description
+        case .lit11: return opcode.description
+        case .lit12: return opcode.description
+        case .lit13: return opcode.description
+        case .lit14: return opcode.description
+        case .lit15: return opcode.description
+        case .lit16: return opcode.description
+        case .lit17: return opcode.description
+        case .lit18: return opcode.description
+        case .lit19: return opcode.description
+        case .lit20: return opcode.description
+        case .lit21: return opcode.description
+        case .lit22: return opcode.description
+        case .lit23: return opcode.description
+        case .lit24: return opcode.description
+        case .lit25: return opcode.description
+        case .lit26: return opcode.description
+        case .lit27: return opcode.description
+        case .lit28: return opcode.description
+        case .lit29: return opcode.description
+        case .lit30: return opcode.description
+        case .lit31: return opcode.description
+
+        case .reg0:  return opcode.description
+        case .reg1:  return opcode.description
+        case .reg2:  return opcode.description
+        case .reg3:  return opcode.description
+        case .reg4:  return opcode.description
+        case .reg5:  return opcode.description
+        case .reg6:  return opcode.description
+        case .reg7:  return opcode.description
+        case .reg8:  return opcode.description
+        case .reg9:  return opcode.description
+        case .reg10: return opcode.description
+        case .reg11: return opcode.description
+        case .reg12: return opcode.description
+        case .reg13: return opcode.description
+        case .reg14: return opcode.description
+        case .reg15: return opcode.description
+        case .reg16: return opcode.description
+        case .reg17: return opcode.description
+        case .reg18: return opcode.description
+        case .reg19: return opcode.description
+        case .reg20: return opcode.description
+        case .reg21: return opcode.description
+        case .reg22: return opcode.description
+        case .reg23: return opcode.description
+        case .reg24: return opcode.description
+        case .reg25: return opcode.description
+        case .reg26: return opcode.description
+        case .reg27: return opcode.description
+        case .reg28: return opcode.description
+        case .reg29: return opcode.description
+        case .reg30: return opcode.description
+        case .reg31: return opcode.description
+
+        case .breg0(let o):  return "\(opcode.description)(offset: \(o))"
+        case .breg1(let o):  return "\(opcode.description)(offset: \(o))"
+        case .breg2(let o):  return "\(opcode.description)(offset: \(o))"
+        case .breg3(let o):  return "\(opcode.description)(offset: \(o))"
+        case .breg4(let o):  return "\(opcode.description)(offset: \(o))"
+        case .breg5(let o):  return "\(opcode.description)(offset: \(o))"
+        case .breg6(let o):  return "\(opcode.description)(offset: \(o))"
+        case .breg7(let o):  return "\(opcode.description)(offset: \(o))"
+        case .breg8(let o):  return "\(opcode.description)(offset: \(o))"
+        case .breg9(let o):  return "\(opcode.description)(offset: \(o))"
+        case .breg10(let o): return "\(opcode.description)(offset: \(o))"
+        case .breg11(let o): return "\(opcode.description)(offset: \(o))"
+        case .breg12(let o): return "\(opcode.description)(offset: \(o))"
+        case .breg13(let o): return "\(opcode.description)(offset: \(o))"
+        case .breg14(let o): return "\(opcode.description)(offset: \(o))"
+        case .breg15(let o): return "\(opcode.description)(offset: \(o))"
+        case .breg16(let o): return "\(opcode.description)(offset: \(o))"
+        case .breg17(let o): return "\(opcode.description)(offset: \(o))"
+        case .breg18(let o): return "\(opcode.description)(offset: \(o))"
+        case .breg19(let o): return "\(opcode.description)(offset: \(o))"
+        case .breg20(let o): return "\(opcode.description)(offset: \(o))"
+        case .breg21(let o): return "\(opcode.description)(offset: \(o))"
+        case .breg22(let o): return "\(opcode.description)(offset: \(o))"
+        case .breg23(let o): return "\(opcode.description)(offset: \(o))"
+        case .breg24(let o): return "\(opcode.description)(offset: \(o))"
+        case .breg25(let o): return "\(opcode.description)(offset: \(o))"
+        case .breg26(let o): return "\(opcode.description)(offset: \(o))"
+        case .breg27(let o): return "\(opcode.description)(offset: \(o))"
+        case .breg28(let o): return "\(opcode.description)(offset: \(o))"
+        case .breg29(let o): return "\(opcode.description)(offset: \(o))"
+        case .breg30(let o): return "\(opcode.description)(offset: \(o))"
+        case .breg31(let o): return "\(opcode.description)(offset: \(o))"
+
+        case .regx(let r):
+            return "\(opcode.description)(register: \(r))"
+
+        case .fbreg(let o):
+            return "\(opcode.description)(offset: \(o))"
+
+        case .bregx(let r, let o):
+            return "\(opcode.description)(register: \(r), offset: \(o))"
+
+        case .piece(let size):
+            return "\(opcode.description)(size: \(size))"
+
+        case .deref_size(let size):
+            return "\(opcode.description)(size: \(size))"
+
+        case .xderef_size(let size):
+            return "\(opcode.description)(size: \(size))"
+
+        case .nop:
+            return opcode.description
+
+        case .push_object_address:
+            return opcode.description
+
+        case .call2(let v):
+            return "\(opcode.description)(\(v))"
+
+        case .call4(let v):
+            return "\(opcode.description)(\(v))"
+
+        case .call_ref(let v):
+            return "\(opcode.description)(\(v))"
+
+        case .form_tls_address:
+            return opcode.description
+
+        case .call_frame_cfa:
+            return opcode.description
+
+        case .bit_piece(let size, let offset):
+            return "\(opcode.description)(size: \(size), offset: \(offset))"
+
+        case .implicit_value(let length, let bytes):
+            return "\(opcode.description)(length: \(length), bytes: \(bytes))"
+
+        case .stack_value:
+            return opcode.description
+
+        case .implicit_pointer(let die, let offset):
+            return "\(opcode.description)(die: \(die), offset: \(offset))"
+
+        case .addrx(let index):
+            return "\(opcode.description)(index: \(index))"
+
+        case .constx(let index):
+            return "\(opcode.description)(index: \(index))"
+
+        case .entry_value(let length, let block):
+            return "\(opcode.description)(length: \(length), block: \(block))"
+
+        case .const_type(let die, let size, let bytes):
+            return "\(opcode.description)(die: \(die), size: \(size), bytes: \(bytes))"
+
+        case .regval_type(let r, let die):
+            return "\(opcode.description)(register: \(r), die: \(die))"
+
+        case .deref_type(let size, let die):
+            return "\(opcode.description)(size: \(size), die: \(die))"
+
+        case .xderef_type(let size, let die):
+            return "\(opcode.description)(size: \(size), die: \(die))"
+
+        case .convert(let die):
+            return "\(opcode.description)(die: \(die))"
+
+        case .reinterpret(let die):
+            return "\(opcode.description)(die: \(die))"
+        }
+    }
+}
+
 extension DWARFOperation {
     internal static func readNext(
         basePointer: UnsafePointer<UInt8>,
