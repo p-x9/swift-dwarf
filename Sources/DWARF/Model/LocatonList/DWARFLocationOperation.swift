@@ -72,6 +72,7 @@ extension DWARFLocationOperation {
         basePointer: UnsafePointer<UInt8>,
         operaionsSize: Int,
         addressSize: Int,
+        format: DWARFFormat,
         segmentSelectorSize: Int,
         nextOffset: inout Int,
         done: inout Bool
@@ -112,6 +113,9 @@ extension DWARFLocationOperation {
                 endIndex: numericCast(endIndex),
                 descriptions: readDescriptions(
                     basePointer: basePointer,
+                    operaionsSize: operaionsSize,
+                    addressSize: addressSize,
+                    format: format,
                     nextOffset: &nextOffset
                 )
             )
@@ -132,6 +136,9 @@ extension DWARFLocationOperation {
                 length: numericCast(length),
                 descriptions: readDescriptions(
                     basePointer: basePointer,
+                    operaionsSize: operaionsSize,
+                    addressSize: addressSize,
+                    format: format,
                     nextOffset: &nextOffset
                 )
             )
@@ -152,6 +159,9 @@ extension DWARFLocationOperation {
                 endOffset: numericCast(endOffset),
                 descriptions: readDescriptions(
                     basePointer: basePointer,
+                    operaionsSize: operaionsSize,
+                    addressSize: addressSize,
+                    format: format,
                     nextOffset: &nextOffset
                 )
             )
@@ -160,6 +170,9 @@ extension DWARFLocationOperation {
             return .default_location(
                 descriptions: readDescriptions(
                     basePointer: basePointer,
+                    operaionsSize: operaionsSize,
+                    addressSize: addressSize,
+                    format: format,
                     nextOffset: &nextOffset
                 )
             )
@@ -196,6 +209,9 @@ extension DWARFLocationOperation {
                 end: end,
                 descriptions: readDescriptions(
                     basePointer: basePointer,
+                    operaionsSize: operaionsSize,
+                    addressSize: addressSize,
+                    format: format,
                     nextOffset: &nextOffset
                 )
             )
@@ -217,6 +233,9 @@ extension DWARFLocationOperation {
                 length: numericCast(length),
                 descriptions: readDescriptions(
                     basePointer: basePointer,
+                    operaionsSize: operaionsSize,
+                    addressSize: addressSize,
+                    format: format,
                     nextOffset: &nextOffset
                 )
             )
@@ -227,6 +246,9 @@ extension DWARFLocationOperation {
 extension DWARFLocationOperation {
     internal static func readDescriptions(
         basePointer: UnsafePointer<UInt8>,
+        operaionsSize: Int,
+        addressSize: Int,
+        format: DWARFFormat,
         nextOffset: inout Int
     ) -> [DWARFOperation] {
         let (numberOfDescriptions, size) = basePointer
@@ -234,17 +256,20 @@ extension DWARFLocationOperation {
             .readULEB128()
         nextOffset += size
 
-        let oprationRaws: [UInt8] = UnsafeBufferPointer(
-            start: basePointer
-                .advanced(by: nextOffset),
-            count: numericCast(numberOfDescriptions)
-        ).map { $0 }
+        var operations: [DWARFOperation] = []
+        for _ in 0 ..< numberOfDescriptions {
+            var done: Bool = false
+            guard let operation: DWARFOperation = .readNext(
+                basePointer: basePointer,
+                operaionsSize: operaionsSize,
+                addressSize: addressSize,
+                format: format,
+                nextOffset: &nextOffset,
+                done: &done
+            ) else { break }
+            operations.append(operation)
+        }
 
-        nextOffset += numericCast(numberOfDescriptions)
-
-        return oprationRaws
-            .compactMap {
-                DWARFOperation(rawValue: $0) // FIXME: unknown values
-            }
+        return operations
     }
 }

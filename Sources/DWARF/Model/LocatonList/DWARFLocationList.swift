@@ -46,11 +46,18 @@ extension DWARFLocationList {
     public struct Operations: Sequence {
         public let data: Data
         let addressSize: Int
+        let format: DWARFFormat
         let segmentSelectorSize: Int
 
-        init(data: Data, addressSize: Int, segmentSelectorSize: Int) {
+        init(
+            data: Data,
+            addressSize: Int,
+            format: DWARFFormat,
+            segmentSelectorSize: Int
+        ) {
             self.data = data
             self.addressSize = addressSize
+            self.format = format
             self.segmentSelectorSize = segmentSelectorSize
         }
 
@@ -58,6 +65,7 @@ extension DWARFLocationList {
             .init(
                 data: data,
                 addressSize: addressSize,
+                format: format,
                 segmentSelectorSize: segmentSelectorSize
             )
         }
@@ -84,6 +92,7 @@ extension DWARFLocationList {
         return .init(
             data: data,
             addressSize: numericCast(header.addressSize),
+            format: header.format,
             segmentSelectorSize: numericCast(header.segmentSelectorSize)
         )
     }
@@ -95,12 +104,19 @@ extension DWARFLocationList.Operations {
 
         private let data: Data
         private let addressSize: Int
+        private let format: DWARFFormat
         private let segmentSelectorSize: Int
         private var nextOffset: Int = 0
 
-        init(data: Data, addressSize: Int, segmentSelectorSize: Int) {
+        init(
+            data: Data,
+            addressSize: Int,
+            format: DWARFFormat,
+            segmentSelectorSize: Int
+        ) {
             self.data = data
             self.addressSize = addressSize
+            self.format = format
             self.segmentSelectorSize = segmentSelectorSize
         }
 
@@ -114,6 +130,7 @@ extension DWARFLocationList.Operations {
                     basePointer: basePointer.assumingMemoryBound(to: UInt8.self),
                     operaionsSize: data.count,
                     addressSize: addressSize,
+                    format: format,
                     segmentSelectorSize: segmentSelectorSize,
                     nextOffset: &nextOffset,
                     done: &done
