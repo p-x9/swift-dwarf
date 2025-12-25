@@ -740,41 +740,42 @@ extension DWARFAttributeValue {
     public func value(
         for unit: DWARFCompilationUnit,
         in machO: MachOFile
-    ) -> Any? {
+    ) -> DWARFAttributeResolvedValue? {
         switch self {
-        case .addr(let uInt64):
-            return uInt64
+        case .addr(let address):
+            return .address(.init(address: address))
         case .block2(let block):
-            return block.data
+            return .data(block.data)
         case .block4(let block):
-            return block.data
+            return .data(block.data)
         case .data2(let constant):
-            return constant.value
+            return .unsignedInteger(numericCast(constant.value))
         case .data4(let constant):
-            return constant.value
+            return .unsignedInteger(numericCast(constant.value))
         case .data8(let constant):
-            return constant.value
+            return .unsignedInteger(numericCast(constant.value))
         case .string(let string):
-            return string
+            return .string(string)
         case .block(let block):
-            return block.data
+            return .data(block.data)
         case .block1(let block):
-            return block.data
+            return .data(block.data)
         case .data1(let constant):
-            return constant.value
+            return .unsignedInteger(numericCast(constant.value))
         case .flag(let flag):
-            return flag.value
+            return .bool(flag.value)
         case .sdata(let constant):
-            return constant.value
+            return .signedInteger(constant.value)
         case .strp(let refString):
             guard let strings = machO.dwarf.strings else {
                 return nil
             }
-            return strings.string(
+            guard let string = strings.string(
                 at: numericCast(refString.offset)
-            )?.string
+            )?.string else { return nil }
+            return .string(string)
         case .udata(let constant):
-            return constant.value
+            return .unsignedInteger(constant.value)
         case .ref_addr(let reference):
             return debugInfoEntry(reference, for: unit, in: machO, isInSameUnit: false)
         case .ref1(let reference):
@@ -790,38 +791,51 @@ extension DWARFAttributeValue {
         case .indirect(let dWARFAttributeValue):
             return dWARFAttributeValue.value(for: unit, in: machO)
         case .sec_offset(let ptr):
-            return ptr.address
+            return .offset(numericCast(ptr.address))
         case .exprloc(let exprLoc):
-            return nil
+            return exprLoc.data.withUnsafeBytes {
+                var next = 0
+                var done = false
+                guard let operation: DWARFOperation = .readNext(
+                    basePointer: $0
+                        .baseAddress!
+                        .assumingMemoryBound(to: UInt8.self),
+                    operaionsSize: numericCast(exprLoc.length),
+                    addressSize: unit.header.addressSize,
+                    format: unit.header.format,
+                    nextOffset: &next,
+                    done: &done
+                ) else { return nil }
+                return .expression(operation)
+            }
         case .flag_present:
-            return true
+            return .bool(true)
         case .strx(let indexedString):
             return string(from: indexedString, for: unit, in: machO)
         case .addrx(let indexedAddress):
             return address(from: indexedAddress, for: unit, in: machO)
-        case .ref_sup4(let reference):
-            return nil
-        case .strp_sup(let refString):
-            return nil
-        case .data16(let constant):
-            return constant.value
+        case .ref_sup4:
+            return nil // TODO: implement
+        case .strp_sup:
+            return nil // TODO: implement
+        case .data16:
+            return nil // TODO: support 128bit unsigned integer
         case .line_strp(let refString):
-            guard let strings = machO.dwarf.lineStrings else {
-                return nil
-            }
-            return strings.string(
+            guard let strings = machO.dwarf.lineStrings else { return nil }
+            guard let string = strings.string(
                 at: numericCast(refString.offset)
-            )?.string
-        case .ref_sig8(let reference):
-            return nil
+            )?.string else { return nil }
+            return .string(string)
+        case .ref_sig8:
+            return nil // TODO: implement
         case .implicit_const(let constant):
-            return constant
+            return .signedInteger(constant.value)
         case .loclistx(let locList):
             return locationList(from: locList, for: unit, in: machO)
         case .rnglistx(let rngList):
             return rangeList(from: rngList, for: unit, in: machO)
-        case .ref_sup8(let reference):
-            return nil
+        case .ref_sup8:
+            return nil // TODO: implement
         case .strx1(let indexedString):
             return string(from: indexedString, for: unit, in: machO)
         case .strx2(let indexedString):
@@ -842,26 +856,30 @@ extension DWARFAttributeValue {
             return address(from: indexedAddress, for: unit, in: machO)
         case .gnu_str_index(let indexedString):
             return string(from: indexedString, for: unit, in: machO)
-        case .gnu_ref_alt(let uInt64):
-            return nil
-        case .gnu_strp_alt(let uInt64):
-            return nil
+        case .gnu_ref_alt:
+            return nil // TODO: implement
+        case .gnu_strp_alt:
+            return nil // TODO: implement
         case .llvm_addrx_offset(let uInt64):
             let index = uInt64 >> 32
             let offset = uInt64 & 0xffffffff
             guard let address = address(from: .init(index: index), for: unit, in: machO) else {
                 return nil
             }
-            return DWARFAddress(
-                segmentSelector: address.segmentSelector,
-                address: address.address + offset
+            guard case let .address(address) = address else { return nil }
+            return .address(
+                .init(
+                    segmentSelector: address.segmentSelector,
+                    address: address.address + offset
+                )
             )
         }
     }
 }
 
 extension DWARFAttributeValue {
-    fileprivate func string(
+    @inline(__always)
+    fileprivate func _string(
         from indexedString: IndexedString,
         for unit: DWARFCompilationUnit,
         in machO: MachOFile
@@ -885,7 +903,8 @@ extension DWARFAttributeValue {
         return nil
     }
 
-    fileprivate func address(
+    @inline(__always)
+    fileprivate func _address(
         from indexedAddress: IndexedAddress,
         for unit: DWARFCompilationUnit,
         in machO: MachOFile
@@ -903,7 +922,8 @@ extension DWARFAttributeValue {
         return nil
     }
 
-    fileprivate func rangeList(
+    @inline(__always)
+    fileprivate func _rangeList(
         from rngList: RngList,
         for unit: DWARFCompilationUnit,
         in machO: MachOFile
@@ -938,7 +958,8 @@ extension DWARFAttributeValue {
         ).first
     }
 
-    fileprivate func locationList(
+    @inline(__always)
+    fileprivate func _locationList(
         from locList: LocList,
         for unit: DWARFCompilationUnit,
         in machO: MachOFile
@@ -973,7 +994,8 @@ extension DWARFAttributeValue {
         ).first
     }
 
-    fileprivate func debugInfoEntry<T>(
+    @inline(__always)
+    fileprivate func _debugInfoEntry<T>(
         _ reference: Reference<T>,
         for unit: DWARFCompilationUnit,
         in machO: MachOFile,
@@ -1005,3 +1027,82 @@ extension DWARFAttributeValue {
         }
     }
 }
+
+extension DWARFAttributeValue {
+    @inline(__always)
+    fileprivate func string(
+        from indexedString: IndexedString,
+        for unit: DWARFCompilationUnit,
+        in machO: MachOFile
+    ) -> DWARFAttributeResolvedValue? {
+        guard let string = _string(
+            from: indexedString,
+            for: unit,
+            in: machO
+        ) else {
+            return nil
+        }
+        return .string(string)
+    }
+
+    @inline(__always)
+    fileprivate func address(
+        from indexedAddress: IndexedAddress,
+        for unit: DWARFCompilationUnit,
+        in machO: MachOFile
+    ) -> DWARFAttributeResolvedValue? {
+        guard let address = _address(
+            from: indexedAddress,
+            for: unit,
+            in: machO
+        ) else {
+            return nil
+        }
+        return .address(address)
+    }
+
+    @inline(__always)
+    fileprivate func rangeList(
+        from rngList: RngList,
+        for unit: DWARFCompilationUnit,
+        in machO: MachOFile
+    ) -> DWARFAttributeResolvedValue? {
+        guard let ranges = _rangeList(from: rngList, for: unit, in: machO) else {
+            return nil
+        }
+        return .ranges(ranges)
+    }
+
+    @inline(__always)
+    fileprivate func locationList(
+        from locList: LocList,
+        for unit: DWARFCompilationUnit,
+        in machO: MachOFile
+    ) -> DWARFAttributeResolvedValue? {
+        guard let locations = _locationList(
+            from: locList,
+            for: unit,
+            in: machO
+        ) else {
+            return nil
+        }
+        return .locations(locations)
+    }
+
+    @inline(__always)
+    fileprivate func debugInfoEntry<T>(
+        _ reference: Reference<T>,
+        for unit: DWARFCompilationUnit,
+        in machO: MachOFile,
+        isInSameUnit: Bool
+    ) -> DWARFAttributeResolvedValue? {
+        guard let entry = _debugInfoEntry(
+            reference,
+            for: unit,
+            in: machO,
+            isInSameUnit: isInSameUnit
+        ) else { return nil }
+        return .debugInfoEntry(entry)
+    }
+}
+
