@@ -335,104 +335,62 @@ extension DWARFAttributeValue {
 
 extension DWARFAttributeValue {
     public var constantUIntValue: UInt64? {
-        switch self {
-        case .addr(let addr):
-            addr
-        case .block2:
-            nil
-        case .block4:
-            nil
-        case .data2(let constant):
-            numericCast(constant.value)
-        case .data4(let constant):
-            numericCast(constant.value)
-        case .data8(let constant):
-            numericCast(constant.value)
+        guard let value = _value(for: nil, in: nil) else {
+            return nil
+        }
+        switch value {
+        case let .address(v):
+            return numericCast(v.address)
+        case let .offset(v):
+            return numericCast(v)
+        case let .signedInteger(v):
+            return numericCast(v)
+        case let .unsignedInteger(v):
+            return numericCast(v)
         case .string:
-            nil
-        case .block:
-            nil
-        case .block1:
-            nil
-        case .data1(let constant):
-            numericCast(constant.value)
-        case .flag:
-            nil
-        case .sdata(let constant):
-            // TODO numericCast(constant.value)
-            nil
-        case .strp:
-            nil
-        case .udata(let constant):
-            numericCast(constant.value)
-        case .ref_addr:
-            nil
-        case .ref1:
-            nil
-        case .ref2:
-            nil
-        case .ref4:
-            nil
-        case .ref8:
-            nil
-        case .ref_udata:
-            nil
-        case .indirect:
-            nil
-        case .sec_offset(let ptr):
-            ptr.address
-        case .exprloc:
-            nil
-        case .flag_present:
-            nil
-        case .strx:
-            nil
-        case .addrx:
-            nil
-        case .ref_sup4:
-            nil
-        case .strp_sup:
-            nil
-        case .data16:
-            nil // TODO UInt128
-        case .line_strp:
-            nil
-        case .ref_sig8:
-            nil
-        case .implicit_const:
-            nil // TODO Int64
-        case .loclistx:
-            nil
-        case .rnglistx:
-            nil
-        case .ref_sup8:
-            nil
-        case .strx1:
-            nil
-        case .strx2:
-            nil
-        case .strx3:
-            nil
-        case .strx4:
-            nil
-        case .addrx1:
-            nil
-        case .addrx2:
-            nil
-        case .addrx3:
-            nil
-        case .addrx4:
-            nil
-        case .gnu_addr_index:
-            nil
-        case .gnu_str_index:
-            nil
-        case .gnu_ref_alt:
-            nil
-        case .gnu_strp_alt:
-            nil
-        case .llvm_addrx_offset:
-            nil
+            return nil
+        case .bool:
+            return nil
+        case .data:
+            return nil
+        case .debugInfoEntry:
+            return nil
+        case .locations:
+            return nil
+        case .ranges:
+            return nil
+        case .expressions:
+            return nil
+        }
+    }
+
+    public var constantIntValue: Int64? {
+        guard let value = _value(for: nil, in: nil) else {
+            return nil
+        }
+        switch value {
+        case let .address(v):
+            return numericCast(v.address)
+        case let .offset(v):
+            return numericCast(v)
+        case let .signedInteger(v):
+            return numericCast(v)
+        case let .unsignedInteger(v):
+            return numericCast(v)
+        case .string:
+            return nil
+        case .bool:
+            return nil
+        case .data:
+            return nil
+        case .debugInfoEntry:
+            return nil
+        case .locations:
+            return nil
+        case .ranges:
+            return nil
+        case .expressions:
+            return nil
         }
     }
 }
@@ -741,6 +699,13 @@ extension DWARFAttributeValue {
         for unit: DWARFCompilationUnit,
         in machO: MachOFile
     ) -> DWARFAttributeResolvedValue? {
+        _value(for: unit, in: machO)
+    }
+
+    public func _value(
+        for unit: DWARFCompilationUnit?,
+        in machO: MachOFile?
+    ) -> DWARFAttributeResolvedValue? {
         switch self {
         case .addr(let address):
             return .address(.init(address: address))
@@ -767,6 +732,7 @@ extension DWARFAttributeValue {
         case .sdata(let constant):
             return .signedInteger(constant.value)
         case .strp(let refString):
+            guard let machO else { return nil }
             guard let strings = machO.dwarf.strings else {
                 return nil
             }
@@ -777,22 +743,37 @@ extension DWARFAttributeValue {
         case .udata(let constant):
             return .unsignedInteger(constant.value)
         case .ref_addr(let reference):
+            guard let machO else { return nil }
+            guard let unit else { return nil }
             return debugInfoEntry(reference, for: unit, in: machO, isInSameUnit: false)
         case .ref1(let reference):
+            guard let machO else { return nil }
+            guard let unit else { return nil }
             return debugInfoEntry(reference, for: unit, in: machO, isInSameUnit: true)
         case .ref2(let reference):
+            guard let machO else { return nil }
+            guard let unit else { return nil }
             return debugInfoEntry(reference, for: unit, in: machO, isInSameUnit: true)
         case .ref4(let reference):
+            guard let machO else { return nil }
+            guard let unit else { return nil }
             return debugInfoEntry(reference, for: unit, in: machO, isInSameUnit: true)
         case .ref8(let reference):
+            guard let machO else { return nil }
+            guard let unit else { return nil }
             return debugInfoEntry(reference, for: unit, in: machO, isInSameUnit: true)
         case .ref_udata(let reference):
+            guard let machO else { return nil }
+            guard let unit else { return nil }
             return debugInfoEntry(reference, for: unit, in: machO, isInSameUnit: true)
         case .indirect(let dWARFAttributeValue):
+            guard let machO else { return nil }
+            guard let unit else { return nil }
             return dWARFAttributeValue.value(for: unit, in: machO)
         case .sec_offset(let ptr):
             return .offset(numericCast(ptr.address))
         case .exprloc(let exprLoc):
+            guard let unit else { return nil }
             return exprLoc.data.withUnsafeBytes {
                 var next = 0
                 var done = false
@@ -815,8 +796,12 @@ extension DWARFAttributeValue {
         case .flag_present:
             return .bool(true)
         case .strx(let indexedString):
+            guard let machO else { return nil }
+            guard let unit else { return nil }
             return string(from: indexedString, for: unit, in: machO)
         case .addrx(let indexedAddress):
+            guard let machO else { return nil }
+            guard let unit else { return nil }
             return address(from: indexedAddress, for: unit, in: machO)
         case .ref_sup4:
             return nil // TODO: implement
@@ -825,6 +810,7 @@ extension DWARFAttributeValue {
         case .data16:
             return nil // TODO: support 128bit unsigned integer
         case .line_strp(let refString):
+            guard let machO else { return nil }
             guard let strings = machO.dwarf.lineStrings else { return nil }
             guard let string = strings.string(
                 at: numericCast(refString.offset)
@@ -835,36 +821,62 @@ extension DWARFAttributeValue {
         case .implicit_const(let constant):
             return .signedInteger(constant.value)
         case .loclistx(let locList):
+            guard let machO else { return nil }
+            guard let unit else { return nil }
             return locationList(from: locList, for: unit, in: machO)
         case .rnglistx(let rngList):
+            guard let machO else { return nil }
+            guard let unit else { return nil }
             return rangeList(from: rngList, for: unit, in: machO)
         case .ref_sup8:
             return nil // TODO: implement
         case .strx1(let indexedString):
+            guard let machO else { return nil }
+            guard let unit else { return nil }
             return string(from: indexedString, for: unit, in: machO)
         case .strx2(let indexedString):
+            guard let machO else { return nil }
+            guard let unit else { return nil }
             return string(from: indexedString, for: unit, in: machO)
         case .strx3(let indexedString):
+            guard let machO else { return nil }
+            guard let unit else { return nil }
             return string(from: indexedString, for: unit, in: machO)
         case .strx4(let indexedString):
+            guard let machO else { return nil }
+            guard let unit else { return nil }
             return string(from: indexedString, for: unit, in: machO)
         case .addrx1(let indexedAddress):
+            guard let machO else { return nil }
+            guard let unit else { return nil }
             return address(from: indexedAddress, for: unit, in: machO)
         case .addrx2(let indexedAddress):
+            guard let machO else { return nil }
+            guard let unit else { return nil }
             return address(from: indexedAddress, for: unit, in: machO)
         case .addrx3(let indexedAddress):
+            guard let machO else { return nil }
+            guard let unit else { return nil }
             return address(from: indexedAddress, for: unit, in: machO)
         case .addrx4(let indexedAddress):
+            guard let machO else { return nil }
+            guard let unit else { return nil }
             return address(from: indexedAddress, for: unit, in: machO)
         case .gnu_addr_index(let indexedAddress):
+            guard let machO else { return nil }
+            guard let unit else { return nil }
             return address(from: indexedAddress, for: unit, in: machO)
         case .gnu_str_index(let indexedString):
+            guard let machO else { return nil }
+            guard let unit else { return nil }
             return string(from: indexedString, for: unit, in: machO)
         case .gnu_ref_alt:
             return nil // TODO: implement
         case .gnu_strp_alt:
             return nil // TODO: implement
         case .llvm_addrx_offset(let uInt64):
+            guard let machO else { return nil }
+            guard let unit else { return nil }
             let index = uInt64 >> 32
             let offset = uInt64 & 0xffffffff
             guard let address = address(from: .init(index: index), for: unit, in: machO) else {
