@@ -177,6 +177,73 @@ extension DWARFLineHeader {
             header.maximum_operations_per_instruction
         }
     }
+
+    public var standardOpcodeLengths: [UInt8] {
+        switch self {
+        case .upToVersion4(let header):
+            header.standard_opcode_lengths
+        case .version5(let header):
+            header.standard_opcode_lengths
+        case .upToVersion4_32(let header):
+            header.standard_opcode_lengths
+        case .version5_32(let header):
+            header.standard_opcode_lengths
+        }
+    }
+}
+
+extension DWARFLineHeader {
+    public var dwarf4Directories: [String]? {
+        switch self {
+        case .upToVersion4(let header):
+            header.include_directories
+        case .version5:
+            nil
+        case .upToVersion4_32(let header):
+            header.include_directories
+        case .version5_32:
+            nil
+        }
+    }
+
+    public var dwarf4Files: [DWARF4FileEntry]? {
+        switch self {
+        case .upToVersion4(let header):
+            header.file_names
+        case .version5:
+            nil
+        case .upToVersion4_32(let header):
+            header.file_names
+        case .version5_32:
+            nil
+        }
+    }
+
+    public var dwarf5Directories: [DWARFFileEntry]? {
+        switch self {
+        case .upToVersion4:
+            nil
+        case .version5(let header):
+            header.directories
+        case .upToVersion4_32:
+            nil
+        case .version5_32(let header):
+            header.directories
+        }
+    }
+
+    public var dwarf5Files: [DWARFFileEntry]? {
+        switch self {
+        case .upToVersion4:
+            nil
+        case .version5(let header):
+            header.file_names
+        case .upToVersion4_32:
+            nil
+        case .version5_32(let header):
+            header.file_names
+        }
+    }
 }
 
 extension DWARFLineHeader {
