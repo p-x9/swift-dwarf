@@ -19,7 +19,7 @@ public enum DWARFAttributeResolvedValue {
     case debugInfoEntry(DWARFDebugInfoEntry)
     case locations([DWARFLocation])
     case ranges([DWARFRange])
-    case expression(DWARFOperation)
+    case expressions([DWARFOperation])
 }
 
 extension DWARFAttributeResolvedValue: CustomStringConvertible {
@@ -45,7 +45,7 @@ extension DWARFAttributeResolvedValue: CustomStringConvertible {
             return array.description
         case .ranges(let array):
             return array.description
-        case .expression(let expression):
+        case .expressions(let expression):
             return expression.description
         }
     }

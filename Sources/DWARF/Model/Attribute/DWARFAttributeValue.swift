@@ -796,17 +796,21 @@ extension DWARFAttributeValue {
             return exprLoc.data.withUnsafeBytes {
                 var next = 0
                 var done = false
-                guard let operation: DWARFOperation = .readNext(
-                    basePointer: $0
-                        .baseAddress!
-                        .assumingMemoryBound(to: UInt8.self),
-                    operaionsSize: numericCast(exprLoc.length),
-                    addressSize: unit.header.addressSize,
-                    format: unit.header.format,
-                    nextOffset: &next,
-                    done: &done
-                ) else { return nil }
-                return .expression(operation)
+                var result: [DWARFOperation] = []
+                while next < exprLoc.length, !done {
+                    guard let operation: DWARFOperation = .readNext(
+                        basePointer: $0
+                            .baseAddress!
+                            .assumingMemoryBound(to: UInt8.self),
+                        operaionsSize: numericCast(exprLoc.length),
+                        addressSize: unit.header.addressSize,
+                        format: unit.header.format,
+                        nextOffset: &next,
+                        done: &done
+                    ) else { break }
+                    result.append(operation)
+                }
+                return .expressions(result)
             }
         case .flag_present:
             return .bool(true)
