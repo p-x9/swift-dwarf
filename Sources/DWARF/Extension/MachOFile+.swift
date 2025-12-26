@@ -9,12 +9,18 @@
 import Foundation
 @_spi(Support) import MachOKit
 internal import FileIO
+#if canImport(os)
 import struct os.OSAllocatedUnfairLock
+#endif
 
 fileprivate final class FileHandleHolder: @unchecked Sendable {
     static let shared = FileHandleHolder()
 
+#if canImport(os)
     private let lock: OSAllocatedUnfairLock = .init()
+#else
+    private let lock: NSRecursiveLock = .init()
+#endif
     private let _mapTable: NSMapTable<MachOFile, MachOFile.File> = .weakToStrongObjects()
 
     private init() {}
