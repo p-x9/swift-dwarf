@@ -12,6 +12,7 @@ import MachOKit
 public struct DWARFDebugInfoEntry: Sendable {
     public let tag: DWARFTag
     public let abbreviationCode: UInt
+    public let hasChildren: Bool
     public let attributes: [(attribute: DWARFAttribute, value: DWARFAttributeValue)]
 
     public let offset: Int
@@ -34,6 +35,7 @@ extension DWARFDebugInfoEntry {
         .init(
             tag: .null,
             abbreviationCode: 0,
+            hasChildren: false,
             attributes: [],
             offset: offset
         )
@@ -83,6 +85,7 @@ extension DWARFDebugInfoEntry {
         return .init(
             tag: abbreviation.tag,
             abbreviationCode: code,
+            hasChildren: abbreviation.hasChildren,
             attributes: values,
             offset: offset
         )
