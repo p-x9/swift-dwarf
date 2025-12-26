@@ -63,7 +63,7 @@ extension DWARFCompilationUnit {
     public func addressesBase(
         in machO: MachOFile
     ) -> UInt64? {
-        base(for: .address_class, in: machO)
+        base(for: .addr_base, in: machO)
     }
 
     public func stringOffsetsBase(
