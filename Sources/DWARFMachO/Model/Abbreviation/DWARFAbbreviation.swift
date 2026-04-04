@@ -14,12 +14,12 @@ extension DWARFAbbreviation {
     public static func load(
         at offset: Int,
         from machO: MachOFile,
-        isTerminater: inout Bool
+        isTerminator: inout Bool
     ) -> Self? {
         _load(
             at: offset,
             from: machO,
-            isTerminater: &isTerminater
+            isTerminator: &isTerminator
         )
     }
 }

@@ -35,7 +35,7 @@ extension DWARFAbbreviationsSet {
             let abbrev = DWARFAbbreviation._load(
                 at: offset + pos,
                 from: binary,
-                isTerminater: &isTerminator
+                isTerminator: &isTerminator
             )
             guard let abbrev else {
                 if !isTerminator {

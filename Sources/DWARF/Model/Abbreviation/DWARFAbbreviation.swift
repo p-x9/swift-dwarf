@@ -21,7 +21,7 @@ extension DWARFAbbreviation {
     package static func _load(
         at offset: Int,
         from binary: some _DWARFBinary,
-        isTerminater: inout Bool
+        isTerminator: inout Bool
     ) -> Self? {
         let initialOffset = offset + binary.headerStartOffset
         var offset = offset + binary.headerStartOffset
@@ -31,7 +31,7 @@ extension DWARFAbbreviation {
             .assumingMemoryBound(to: UInt8.self)
             .readULEB128()
         if code == 0 {
-            isTerminater = true
+            isTerminator = true
             return nil
         }
         offset += numericCast(codeSize)

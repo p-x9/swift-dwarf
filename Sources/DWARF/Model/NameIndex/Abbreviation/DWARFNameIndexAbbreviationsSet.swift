@@ -33,7 +33,7 @@ extension DWARFNameIndexAbbreviationsSet {
             let abbrev: DWARFNameIndexAbbreviation? = ._load(
                 at: offset + pos,
                 from: binary,
-                isTerminater: &isTerminator
+                isTerminator: &isTerminator
             )
             guard let abbrev else {
                 if !isTerminator {
