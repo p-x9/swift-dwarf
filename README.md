@@ -32,8 +32,8 @@ let strings = machO.dwarf.strings
 // abbreviations tables in `.debug_abbrev` section
 let abbreviationSets = machO.dwarf.abbreviationsSets
 
-// compiration units in `.debug_info` section
-let compirationUnits = machO.dwarf.compilationUnits
+// compilation units in `.debug_info` section
+let compilationUnits = machO.dwarf.compilationUnits
 /* ... */
 ```
 
