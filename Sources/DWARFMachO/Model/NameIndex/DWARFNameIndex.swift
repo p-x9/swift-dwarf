@@ -3,7 +3,7 @@
 //  swift-dwarf
 //
 //  Created by p-x9 on 2026/04/05
-//  
+//
 //
 
 extension DWARFNameIndex {
@@ -20,7 +20,7 @@ extension DWARFNameIndex {
     }
 
     public func foreignTypeUnitOffsets(
-        in machO: MachOFile,
+        in machO: MachOFile
     ) -> AnyRandomAccessCollection<Int> {
         _foreignTypeUnitOffsets(in: machO)
     }
