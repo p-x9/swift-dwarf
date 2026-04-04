@@ -7,7 +7,6 @@
 //
 
 import Foundation
-@_spi(Support) import MachOKit
 
 public struct DWARFCompilationUnit: Sendable {
     public let header: DWARFCompilationUnitHeader
@@ -21,29 +20,29 @@ extension DWARFCompilationUnit {
 }
 
 extension DWARFCompilationUnit {
-    public func abbreviationsSet(in machO: MachOFile) -> DWARFAbbreviationsSet? {
-        guard let dwarf = machO.dwarfSegment,
-              let __debug_abbrev = dwarf.__debug_abbrev(in: machO) else {
+    package func _abbreviationsSet(in binary: some _DWARFBinary) -> DWARFAbbreviationsSet? {
+        guard let dwarf = binary.dwarfSegment,
+              let debug_abbrev = dwarf.debug_abbrev(in: binary) else {
             return nil
         }
-        return .load(
-            at: __debug_abbrev.offset + header.debugAbbrevOffset,
-            from: machO,
-            abbrevSectionStartOffset: __debug_abbrev.offset
+        return ._load(
+            at: debug_abbrev.offset + header.debugAbbrevOffset,
+            from: binary,
+            abbrevSectionStartOffset: debug_abbrev.offset
         )
     }
 
-    public func debugInfoEntries(in machO: MachOFile) -> [DWARFDebugInfoEntry] {
-        guard let abbreviationsSet = abbreviationsSet(in: machO) else {
+    package func _debugInfoEntries(in binary: some _DWARFBinary) -> [DWARFDebugInfoEntry] {
+        guard let abbreviationsSet = _abbreviationsSet(in: binary) else {
             return []
         }
 
         var pos = header.actualLayoutSize
         var entries: [DWARFDebugInfoEntry] = []
         while pos < layoutSize {
-            guard let entry: DWARFDebugInfoEntry = .load(
-                at: offset + machO.headerStartOffset + pos,
-                from: machO,
+            guard let entry: DWARFDebugInfoEntry = ._load(
+                at: offset + pos,
+                from: binary,
                 dwarfFormat: header.format,
                 abbreviationsSet: abbreviationsSet,
                 addressSize: header.addressSize
@@ -60,88 +59,88 @@ extension DWARFCompilationUnit {
 }
 
 extension DWARFCompilationUnit {
-    public func addressesBase(
-        in machO: MachOFile
+    package func _addressesBase(
+        in binary: some _DWARFBinary
     ) -> UInt64? {
-        base(for: .addr_base, in: machO)
+        base(for: .addr_base, in: binary)
     }
 
-    public func stringOffsetsBase(
-        in machO: MachOFile
+    package func _stringOffsetsBase(
+        in binary: some _DWARFBinary
     ) -> UInt64? {
-        base(for: .str_offsets_base, in: machO)
+        base(for: .str_offsets_base, in: binary)
     }
 
-    public func rangeListsBase(
-        in machO: MachOFile
+    package func _rangeListsBase(
+        in binary: some _DWARFBinary
     ) -> UInt64? {
-        base(for: .rnglists_base, in: machO)
+        base(for: .rnglists_base, in: binary)
     }
 
-    public func locationListsBase(
-        in machO: MachOFile
+    package func _locationListsBase(
+        in binary: some _DWARFBinary
     ) -> UInt64? {
-        base(for: .loclists_base, in: machO)
+        base(for: .loclists_base, in: binary)
     }
 }
 
 extension DWARFCompilationUnit {
-    public func stringOffsets(
-        in machO: MachOFile
+    package func _stringOffsets(
+        in binary: some _DWARFBinary
     ) -> DWARFStringOffsetsTable? {
-        guard let dwarfSegment = machO.dwarfSegment,
-              let __debug_str_offs = dwarfSegment.__debug_str_offs(in: machO),
-              let base = stringOffsetsBase(in: machO) else {
+        guard let dwarfSegment = binary.dwarfSegment,
+              let debug_str_offs = dwarfSegment.debug_str_offs(in: binary),
+              let base = _stringOffsetsBase(in: binary) else {
             return nil
         }
-        return machO.dwarf.stringOffsetsTables.first(
+        return binary.dwarf.stringOffsetsTables.first(
             where: {
-                $0.offset - __debug_str_offs.offset + $0.header.layoutSize == base
+                $0.offset - debug_str_offs.offset + $0.header.layoutSize == base
             }
         )
     }
 
-    public func addresses(
-        in machO: MachOFile
+    package func _addresses(
+        in binary: some _DWARFBinary
     ) -> DWARFAddressTable? {
-        guard let dwarfSegment = machO.dwarfSegment,
-              let __debug_addr = dwarfSegment.__debug_addr(in: machO),
-              let base = addressesBase(in: machO) else {
+        guard let dwarfSegment = binary.dwarfSegment,
+              let debug_addr = dwarfSegment.debug_addr(in: binary),
+              let base = _addressesBase(in: binary) else {
             return nil
         }
-        return machO.dwarf.addresses.first(
+        return binary.dwarf.addresses.first(
             where: {
-                $0.offset - __debug_addr.offset + $0.header.layoutSize == base
+                $0.offset - debug_addr.offset + $0.header.layoutSize == base
             }
         )
     }
 
-    public func rangeList(
-        in machO: MachOFile
+    package func _rangeList(
+        in binary: some _DWARFBinary
     ) -> DWARFRangeList? {
-        guard let dwarfSegment = machO.dwarfSegment,
-              let __debug_rnglists = dwarfSegment.__debug_rnglists(in: machO),
-              let base = rangeListsBase(in: machO) else {
+        guard let dwarfSegment = binary.dwarfSegment,
+              let debug_rnglists = dwarfSegment.debug_rnglists(in: binary),
+              let base = _rangeListsBase(in: binary) else {
             return nil
         }
-        return machO.dwarf.rangeLists.first(
+        return binary.dwarf.rangeLists.first(
             where: {
-                $0.offset - __debug_rnglists.offset + $0.header.layoutSize == base
+                $0.offset - debug_rnglists.offset + $0.header.layoutSize == base
             }
         )
     }
 
-    public func locationList(
-        in machO: MachOFile
+    package func _locationList(
+        in binary: some _DWARFBinary
     ) -> DWARFLocationList? {
-        guard let dwarfSegment = machO.dwarfSegment,
-              let __debug_loclists = dwarfSegment.__debug_loclists(in: machO),
-              let base = locationListsBase(in: machO) else {
+        guard let dwarfSegment = binary.dwarfSegment,
+              let debug_loclists = dwarfSegment.debug_loclists(in: binary),
+              let base = _locationListsBase(in: binary) else {
             return nil
         }
-        return machO.dwarf.locationLists.first(
+        return binary.dwarf.locationLists.first(
             where: {
-                $0.offset - __debug_loclists.offset + $0.header.layoutSize == base
+                $0.offset - debug_loclists.offset + $0.header.layoutSize == base
             }
         )
     }
@@ -149,15 +148,15 @@ extension DWARFCompilationUnit {
 
 extension DWARFCompilationUnit {
     private func compileUnitDebugInfoEntry(
-        in machO: MachOFile
+        in binary: some _DWARFBinary
     ) -> DWARFDebugInfoEntry? {
-        guard let abbreviationsSet = abbreviationsSet(in: machO) else {
+        guard let abbreviationsSet = _abbreviationsSet(in: binary) else {
             return nil
         }
         let pos = header.actualLayoutSize
-        guard let entry: DWARFDebugInfoEntry = .load(
-            at: offset + machO.headerStartOffset + pos,
-            from: machO,
+        guard let entry: DWARFDebugInfoEntry = ._load(
+            at: offset + pos,
+            from: binary,
             dwarfFormat: header.format,
             abbreviationsSet: abbreviationsSet,
             addressSize: header.addressSize
@@ -168,9 +167,9 @@ extension DWARFCompilationUnit {
 
     private func base(
         for attribute: DWARFAttribute,
-        in machO: MachOFile
+        in binary: some _DWARFBinary
     ) -> UInt64? {
-        guard let entry = compileUnitDebugInfoEntry(in: machO) else {
+        guard let entry = compileUnitDebugInfoEntry(in: binary) else {
             return nil
         }
         guard let attribute = entry.attributes.first(
@@ -184,10 +183,13 @@ extension DWARFCompilationUnit {
 }
 
 extension DWARFCompilationUnit {
-    public static func load(at offset: Int, in machO: MachOFile) throws -> Self? {
-        guard let header: DWARFCompilationUnitHeader = try .load(
-            at: offset + machO.headerStartOffset,
-            in: machO
+    package static func _load(
+        at offset: Int,
+        from binary: some _DWARFBinary
+    ) throws -> Self? {
+        guard let header: DWARFCompilationUnitHeader = try ._load(
+            at: offset,
+            from: binary
         ) else { return nil }
         return .init(
             header: header,

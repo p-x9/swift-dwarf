@@ -7,7 +7,6 @@
 //
 
 import Foundation
-@_spi(Support) import MachOKit
 
 public enum DWARFAddressTableHeader: Sendable {
     case version5(DWARF5AddressTableHeader64)

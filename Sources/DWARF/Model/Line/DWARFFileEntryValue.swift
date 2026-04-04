@@ -7,7 +7,6 @@
 //
 
 import Foundation
-@_spi(Support) import MachOKit
 import DWARFC
 
 public struct DWARFFileEntryValue: Sendable {
@@ -18,18 +17,16 @@ public struct DWARFFileEntryValue: Sendable {
 }
 
 extension DWARFFileEntryValue {
-    public static func load(
+    package static func _load(
         at offset: Int,
         for format: DWARFFileEntryFormat,
-        in machO: MachOFile,
+        in binary: some _DWARFBinary,
         dwarfFormat: DWARFFormat,
         addressSize: Int
     ) throws -> Self? {
-        let offset = offset + machO.headerStartOffset
-
-        let value: DWARFAttributeValue? = .load(
+        let value: DWARFAttributeValue? = ._load(
             at: offset,
-            from: machO,
+            from: binary,
             as: format.format,
             dwarfFormat: dwarfFormat,
             addressSize: addressSize

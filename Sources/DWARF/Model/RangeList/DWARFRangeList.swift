@@ -7,7 +7,6 @@
 //
 
 import Foundation
-@_spi(Support) import MachOKit
 
 public struct DWARFRangeList: Sendable {
     public let header: DWARFRangeListHeader
@@ -21,18 +20,18 @@ extension DWARFRangeList {
 }
 
 extension DWARFRangeList {
-    public func offsets(for machO: MachOFile) throws -> [Int] {
+    package func _offsets(for binary: some _DWARFBinary) throws -> [Int] {
         guard header.offsetEntryCount > 0 else { return [] }
-        let offset = offset + header.layoutSize + machO.headerStartOffset
+        let offset = offset + header.layoutSize + binary.headerStartOffset
         if header.addressSize == 4 {
-            let sequence: DataSequence<UInt32> = machO.fileHandle
+            let sequence: DataSequence<UInt32> = binary.fileHandle
                 .readDataSequence(
                     offset: numericCast(offset),
                     numberOfElements: header.offsetEntryCount
                 )
             return sequence.map(Int.init(_:))
         } else {
-            let sequence: DataSequence<UInt64> = machO.fileHandle
+            let sequence: DataSequence<UInt64> = binary.fileHandle
                 .readDataSequence(
                     offset: numericCast(offset),
                     numberOfElements: header.offsetEntryCount
@@ -63,11 +62,11 @@ extension DWARFRangeList {
         }
     }
 
-    public func operations(
-        for machO: MachOFile,
+    package func _operations(
+        for binary: some _DWARFBinary,
         entryOffset: Int = 0
     ) throws -> Operations {
-        var offset = machO.headerStartOffset + offset + header.layoutSize + entryOffset
+        var offset = binary.headerStartOffset + offset + header.layoutSize + entryOffset
         if header.offsetEntryCount > 0 {
             if header.addressSize == 4 {
                 offset += MemoryLayout<UInt32>.size * header.offsetEntryCount
@@ -76,7 +75,7 @@ extension DWARFRangeList {
             }
         }
 
-        let data = try machO.fileHandle
+        let data = try binary.fileHandle
             .readData(
                 offset: offset,
                 length: layoutSize - header.layoutSize
@@ -124,10 +123,13 @@ extension DWARFRangeList.Operations {
 }
 
 extension DWARFRangeList {
-    public static func load(at offset: Int, in machO: MachOFile) throws -> Self? {
-        guard let header: DWARFRangeListHeader = try .load(
-            at: offset + machO.headerStartOffset,
-            in: machO
+    package static func _load(
+        at offset: Int,
+        in binary: some _DWARFBinary
+    ) throws -> Self? {
+        guard let header: DWARFRangeListHeader = try ._load(
+            at: offset,
+            in: binary
         ) else { return nil }
         return .init(
             header: header,

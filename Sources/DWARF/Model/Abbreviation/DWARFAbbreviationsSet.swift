@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import MachOKit
 
 public struct DWARFAbbreviationsSet: Sendable {
     /// offset from the start of `debug_abbrev` secton
@@ -24,19 +23,18 @@ extension DWARFAbbreviationsSet {
 }
 
 extension DWARFAbbreviationsSet {
-    public static func load(
+    package static func _load(
         at offset: Int,
-        from machO: MachOFile,
+        from binary: some _DWARFBinary,
         abbrevSectionStartOffset: Int
     ) -> Self? {
-        let offset = offset + machO.headerStartOffset
         var pos = 0
         var abbrevations: [DWARFAbbreviation] = []
         while true {
             var isTerminator = false
-            let abbrev = DWARFAbbreviation.load(
+            let abbrev = DWARFAbbreviation._load(
                 at: offset + pos,
-                from: machO,
+                from: binary,
                 isTerminater: &isTerminator
             )
             guard let abbrev else {
@@ -51,7 +49,7 @@ extension DWARFAbbreviationsSet {
             abbrevations.append(abbrev)
         }
         return .init(
-            offset: offset - abbrevSectionStartOffset - machO.headerStartOffset,
+            offset: offset - abbrevSectionStartOffset,
             abbreviations: abbrevations
         )
     }

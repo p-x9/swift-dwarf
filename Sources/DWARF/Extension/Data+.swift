@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import MachOKit
 
 extension Data {
     func uintValue<T: FixedWidthInteger>(

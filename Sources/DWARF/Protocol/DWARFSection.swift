@@ -7,8 +7,6 @@
 //
 
 package protocol DWARFSection {
-    associatedtype Binary = _DWARFBinary
-
     /// Name of this section
     var sectionName: String { get }
     /// Memory address

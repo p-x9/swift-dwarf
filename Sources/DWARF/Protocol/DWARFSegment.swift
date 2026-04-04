@@ -6,8 +6,8 @@
 //  
 //
 
-package protocol DWARFSegment {
-    associatedtype DWARFBinary = _DWARFBinary
+package protocol DWARFSegment<DWARFBinary> {
+    associatedtype DWARFBinary: _DWARFBinary
 
     associatedtype DWARFSectionType: DWARFSection
 
@@ -33,7 +33,8 @@ extension DWARFSegment {
 extension DWARFSegment {
     @inline(__always)
     func _section(for name: String, in binary: DWARFBinary) -> DWARFSectionType? {
-        sections(in: binary).first(
+        let name = binary.dwarfSectionPrefix + name
+        return sections(in: binary).first(
             where: {
                 $0.sectionName == name
             }
@@ -42,47 +43,47 @@ extension DWARFSegment {
 }
 
 extension DWARFSegment {
-    func debug_abbrev(in binary: DWARFBinary) -> DWARFSectionType? {
+    package func debug_abbrev(in binary: DWARFBinary) -> DWARFSectionType? {
         section(for: .debug_abbrev, in: binary)
     }
 
-    func debug_info(in binary: DWARFBinary) -> DWARFSectionType? {
+    package func debug_info(in binary: DWARFBinary) -> DWARFSectionType? {
         section(for: .debug_info, in: binary)
     }
 
-    func debug_line(in binary: DWARFBinary) -> DWARFSectionType? {
+    package func debug_line(in binary: DWARFBinary) -> DWARFSectionType? {
         section(for: .debug_line, in: binary)
     }
 
-    func debug_str(in binary: DWARFBinary) -> DWARFSectionType? {
+    package func debug_str(in binary: DWARFBinary) -> DWARFSectionType? {
         section(for: .debug_str, in: binary)
     }
 
-    func debug_line_str(in binary: DWARFBinary) -> DWARFSectionType? {
+    package func debug_line_str(in binary: DWARFBinary) -> DWARFSectionType? {
         section(for: .debug_line_str, in: binary)
     }
 
-    func debug_str_offs(in binary: DWARFBinary) -> DWARFSectionType? {
+    package func debug_str_offs(in binary: DWARFBinary) -> DWARFSectionType? {
         section(for: .debug_str_offs, in: binary)
     }
 
-    func debug_addr(in binary: DWARFBinary) -> DWARFSectionType? {
+    package func debug_addr(in binary: DWARFBinary) -> DWARFSectionType? {
         section(for: .debug_addr, in: binary)
     }
 
-    func debug_rnglists(in binary: DWARFBinary) -> DWARFSectionType? {
+    package func debug_rnglists(in binary: DWARFBinary) -> DWARFSectionType? {
         section(for: .debug_rnglists, in: binary)
     }
 
-    func debug_loclists(in binary: DWARFBinary) -> DWARFSectionType? {
+    package func debug_loclists(in binary: DWARFBinary) -> DWARFSectionType? {
         section(for: .debug_loclists, in: binary)
     }
 
-    func debug_aranges(in binary: DWARFBinary) -> DWARFSectionType? {
+    package func debug_aranges(in binary: DWARFBinary) -> DWARFSectionType? {
         section(for: .debug_aranges, in: binary)
     }
 
-    func debug_names(in binary: DWARFBinary) -> DWARFSectionType? {
+    package func debug_names(in binary: DWARFBinary) -> DWARFSectionType? {
         section(for: .debug_names, in: binary)
     }
 }

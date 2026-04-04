@@ -8,3 +8,6 @@
 
 @_exported
 import DWARFC
+
+@_exported
+@_spi(Core) import BinaryParseSupport

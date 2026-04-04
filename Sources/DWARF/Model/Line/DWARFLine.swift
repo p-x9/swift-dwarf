@@ -7,7 +7,6 @@
 //
 
 import Foundation
-@_spi(Support) import MachOKit
 
 // DWARF4 6.2.2 State Machine Register p109
 // DWARF5 6.2.2 State Machine Register p150

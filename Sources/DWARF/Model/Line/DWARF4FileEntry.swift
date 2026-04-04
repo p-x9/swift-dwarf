@@ -7,7 +7,6 @@
 //
 
 import Foundation
-@_spi(Support) import MachOKit
 
 public struct DWARF4FileEntry: Sendable {
     public let name: String
@@ -27,22 +26,25 @@ extension DWARF4FileEntry {
 }
 
 extension DWARF4FileEntry {
-    public static func load(at offset: Int, in machO: MachOFile) throws -> Self? {
-        var pos: UInt64 = numericCast(offset + machO.headerStartOffset)
-        guard let string = machO.fileHandle.readString(offset: pos),
+    package static func _load(
+        at offset: Int,
+        in binary: some _DWARFBinary
+    ) throws -> Self? {
+        var pos: UInt64 = numericCast(offset + binary.headerStartOffset)
+        guard let string = binary.fileHandle.readString(offset: pos),
               !string.isEmpty else {
             pos += 1
             return nil
         }
         pos += numericCast(string.utf8.count) + 1
 
-        let (dir_index, size) = machO.fileHandle.readULEB128(baseOffset: pos)
+        let (dir_index, size) = binary.fileHandle.readULEB128(baseOffset: pos)
         pos += UInt64(size)
 
-        let (modification_time, size2) = machO.fileHandle.readULEB128(baseOffset: pos)
+        let (modification_time, size2) = binary.fileHandle.readULEB128(baseOffset: pos)
         pos += UInt64(size2)
 
-        let (file_size, _) = machO.fileHandle.readULEB128(baseOffset: pos)
+        let (file_size, _) = binary.fileHandle.readULEB128(baseOffset: pos)
 
         return .init(
             name: string,

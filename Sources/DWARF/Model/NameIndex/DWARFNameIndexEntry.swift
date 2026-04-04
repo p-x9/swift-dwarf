@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import MachOKit
 
 public struct DWARFNameIndexEntry: Sendable {
     public let tag: DWARFTag
@@ -41,15 +40,15 @@ extension DWARFNameIndexEntry {
 }
 
 extension DWARFNameIndexEntry {
-    public static func load(
+    package static func _load(
         at offset: Int,
-        from machO: MachOFile,
+        from binary: some _DWARFBinary,
         dwarfFormat: DWARFFormat,
         abbreviationsSet: DWARFNameIndexAbbreviationsSet,
         addressSize: Int
     ) -> Self? {
-        let (code, codeSize) = machO.fileHandle.readULEB128(
-            baseOffset: numericCast(offset + machO.headerStartOffset)
+        let (code, codeSize) = binary.fileHandle.readULEB128(
+            baseOffset: numericCast(offset + binary.headerStartOffset)
         )
 
         if code == 0 { // null
@@ -66,9 +65,9 @@ extension DWARFNameIndexEntry {
         var pos = 0
         var values: [(DWARFNameIndexAttribute, DWARFAttributeValue)] = []
         for (attribute, format) in abbreviation.attributes {
-            guard let value: DWARFAttributeValue = .load(
+            guard let value: DWARFAttributeValue = ._load(
                 at: offset + codeSize + pos,
-                from: machO,
+                from: binary,
                 as: format,
                 dwarfFormat: dwarfFormat,
                 addressSize: addressSize

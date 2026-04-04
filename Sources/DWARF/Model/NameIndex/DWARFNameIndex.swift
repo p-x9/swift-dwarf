@@ -7,7 +7,6 @@
 //
 
 import Foundation
-@_spi(Support) import MachOKit
 
 public struct DWARFNameIndex: Sendable {
     public let header: DWARFNameIndexHeader
@@ -21,37 +20,37 @@ extension DWARFNameIndex {
 }
 
 extension DWARFNameIndex {
-    public func compirationUnitOffsets(
-        in machO: MachOFile
+    package func _compirationUnitOffsets(
+        in binary: some _DWARFBinary
     ) -> AnyRandomAccessCollection<Int> {
         _loadOffsets(
-            in: machO,
+            in: binary,
             offsetFromHeaderTrail: 0,
             count: header.numberOfCompirationUnits
         )
     }
 
-    public func localTypeUnitOffsets(
-        in machO: MachOFile
+    package func _localTypeUnitOffsets(
+        in binary: some _DWARFBinary
     ) -> AnyRandomAccessCollection<Int> {
         let leadingCount = header.numberOfCompirationUnits
         let offsetFromHeaderTrail = header.format.addressSize * leadingCount
 
         return _loadOffsets(
-            in: machO,
+            in: binary,
             offsetFromHeaderTrail: offsetFromHeaderTrail,
             count: header.numberOfLocalTypeUnits
         )
     }
 
-    public func foreignTypeUnitOffsets(
-        in machO: MachOFile
+    package func _foreignTypeUnitOffsets(
+        in binary: some _DWARFBinary
     ) -> AnyRandomAccessCollection<Int> {
         let leadingCount = header.numberOfCompirationUnits + header.numberOfLocalTypeUnits
         let offsetFromHeaderTrail = header.format.addressSize * leadingCount
 
         return _loadOffsets(
-            in: machO,
+            in: binary,
             offsetFromHeaderTrail: offsetFromHeaderTrail,
             count: header.numberOfForeignTypeUnits
         )
@@ -59,18 +58,18 @@ extension DWARFNameIndex {
 }
 
 extension DWARFNameIndex {
-    public func hashTable(
-        in machO: MachOFile
+    package func _hashTable(
+        in binary: some _DWARFBinary
     ) -> DWARFNameIndexHashTable {
-        var offset = offset + header.layoutSize + machO.headerStartOffset
+        var offset = offset + header.layoutSize + binary.headerStartOffset
         let leadingCount = header.numberOfCompirationUnits + header.numberOfLocalTypeUnits + header.numberOfForeignTypeUnits
         offset += header.format.addressSize * leadingCount
 
-        let buckets: DataSequence<UInt32> = machO.fileHandle.readDataSequence(
+        let buckets: DataSequence<UInt32> = binary.fileHandle.readDataSequence(
             offset: numericCast(offset),
             numberOfElements: header.numberOfBuckets
         )
-        let hashes: DataSequence<UInt32> = machO.fileHandle.readDataSequence(
+        let hashes: DataSequence<UInt32> = binary.fileHandle.readDataSequence(
             offset: numericCast(offset) + numericCast(MemoryLayout<UInt32>.size * buckets.count),
             numberOfElements: header.numberOfNames
         )
@@ -83,7 +82,7 @@ extension DWARFNameIndex {
 }
 
 extension DWARFNameIndex {
-    public func nameTable(in machO: MachOFile) -> DWARFNameIndexNameTable {
+    package func _nameTable(in binary: some _DWARFBinary) -> DWARFNameIndexNameTable {
         let leadingCount = header.numberOfCompirationUnits + header.numberOfLocalTypeUnits + header.numberOfForeignTypeUnits
         var offsetFromHeaderTrail = header.format.addressSize * leadingCount
         offsetFromHeaderTrail += MemoryLayout<UInt32>.size * (header.numberOfNames + header.numberOfBuckets)
@@ -91,13 +90,13 @@ extension DWARFNameIndex {
         let entrySize = header.format.addressSize
 
         let stringOffsets = _loadOffsets(
-            in: machO,
+            in: binary,
             offsetFromHeaderTrail: offsetFromHeaderTrail,
             count: header.numberOfNames
         )
 
         let entryOffsets = _loadOffsets(
-            in: machO,
+            in: binary,
             offsetFromHeaderTrail: offsetFromHeaderTrail + entrySize * stringOffsets.count,
             count: header.numberOfNames
         )
@@ -110,30 +109,30 @@ extension DWARFNameIndex {
 }
 
 extension DWARFNameIndex {
-    public func abbreviationsSet(
-        in machO: MachOFile
+    package func _abbreviationsSet(
+        in binary: some _DWARFBinary
     ) -> DWARFNameIndexAbbreviationsSet? {
-        var offset = offset + header.layoutSize + machO.headerStartOffset
+        var offset = offset + header.layoutSize + binary.headerStartOffset
         let leadingCount = header.numberOfCompirationUnits + header.numberOfLocalTypeUnits + header.numberOfForeignTypeUnits + 2 * header.numberOfNames
 
         offset += header.format.addressSize * leadingCount
 
         offset += MemoryLayout<UInt32>.size * (header.numberOfNames + header.numberOfBuckets)
 
-        return .load(
+        return ._load(
             at: offset,
-            from: machO
+            from: binary
         )
     }
 }
 
 extension DWARFNameIndex {
-    public func entries(in machO: MachOFile) -> [DWARFNameIndexEntry] {
-        guard let abbreviationsSet = abbreviationsSet(in: machO) else {
+    package func _entries(in binary: some _DWARFBinary) -> [DWARFNameIndexEntry] {
+        guard let abbreviationsSet = _abbreviationsSet(in: binary) else {
             return []
         }
 
-        var pos = header.layoutSize + machO.headerStartOffset
+        var pos = header.layoutSize
         let leadingCount = header.numberOfCompirationUnits + header.numberOfLocalTypeUnits + header.numberOfForeignTypeUnits + 2 * header.numberOfNames
 
         pos += header.format.addressSize * leadingCount
@@ -144,9 +143,9 @@ extension DWARFNameIndex {
 
         var entries: [DWARFNameIndexEntry] = []
         while pos < layoutSize {
-            guard let entry: DWARFNameIndexEntry = .load(
-                at: offset + machO.headerStartOffset + pos,
-                from: machO,
+            guard let entry: DWARFNameIndexEntry = ._load(
+                at: offset + pos,
+                from: binary,
                 dwarfFormat: header.format,
                 abbreviationsSet: abbreviationsSet,
                 addressSize: header.format.addressSize
@@ -163,15 +162,15 @@ extension DWARFNameIndex {
 }
 
 extension DWARFNameIndex {
-    public func entries(
+    package func _entries(
         at offset: Int, // offset from entries list starts in .debug_names section
-        in machO: MachOFile
+        in binary: some _DWARFBinary
     ) -> [DWARFNameIndexEntry] {
-        guard let abbreviationsSet = abbreviationsSet(in: machO) else {
+        guard let abbreviationsSet = _abbreviationsSet(in: binary) else {
             return []
         }
 
-        var pos = header.layoutSize + machO.headerStartOffset
+        var pos = header.layoutSize + binary.headerStartOffset
         let leadingCount = header.numberOfCompirationUnits + header.numberOfLocalTypeUnits + header.numberOfForeignTypeUnits + 2 * header.numberOfNames
 
         pos += header.format.addressSize * leadingCount
@@ -182,9 +181,9 @@ extension DWARFNameIndex {
 
         var result: [DWARFNameIndexEntry] = []
         while pos + offset < layoutSize {
-            let entry: DWARFNameIndexEntry? = .load(
+            let entry: DWARFNameIndexEntry? = ._load(
                 at: self.offset + pos + offset,
-                from: machO,
+                from: binary,
                 dwarfFormat: header.format,
                 abbreviationsSet: abbreviationsSet,
                 addressSize: header.format.addressSize
@@ -222,14 +221,14 @@ extension DWARFNameIndex {
 
 extension DWARFNameIndex {
     private func _loadOffsets(
-        in machO: MachOFile,
+        in binary: some _DWARFBinary,
         offsetFromHeaderTrail: Int,
         count: Int
     ) -> AnyRandomAccessCollection<Int> {
-        let offset = offset + header.layoutSize + machO.headerStartOffset + offsetFromHeaderTrail
+        let offset = offset + header.layoutSize + binary.headerStartOffset + offsetFromHeaderTrail
         switch header.format {
         case ._32bit:
-            let sequence: DataSequence<UInt32> = machO.fileHandle.readDataSequence(
+            let sequence: DataSequence<UInt32> = binary.fileHandle.readDataSequence(
                 offset: numericCast(offset),
                 numberOfElements: count
             )
@@ -237,7 +236,7 @@ extension DWARFNameIndex {
                 sequence.map { numericCast($0) }
             )
         case ._64bit:
-            let sequence: DataSequence<UInt64> = machO.fileHandle.readDataSequence(
+            let sequence: DataSequence<UInt64> = binary.fileHandle.readDataSequence(
                 offset: numericCast(offset),
                 numberOfElements: count
             )
@@ -249,10 +248,13 @@ extension DWARFNameIndex {
 }
 
 extension DWARFNameIndex {
-    public static func load(at offset: Int, from machO: MachOFile) throws -> Self? {
-        guard let header: DWARFNameIndexHeader = try .load(
+    package static func _load(
+        at offset: Int,
+        from binary: some _DWARFBinary
+    ) throws -> Self? {
+        guard let header: DWARFNameIndexHeader = try ._load(
             at: offset,
-            from: machO
+            from: binary
         ) else { return nil }
         return .init(
             header: header,

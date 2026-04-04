@@ -10,8 +10,16 @@ package import FileIO
 
 package protocol _DWARFBinary {
     associatedtype File: MemoryMappedFileIOProtocol
+    associatedtype DWARF: DWARFRepresentable
 
     var fileHandle: File { get }
+    var headerStartOffset: Int { get }
 
-    var dwarfSegment: (any DWARFSegment)? { get }
+    var is64Bit: Bool { get }
+    var endian: Endian { get }
+
+    var dwarfSegment: (any DWARFSegment<Self>)? { get }
+    var dwarfSectionPrefix: String { get }
+
+    var dwarf: DWARF { get }
 }

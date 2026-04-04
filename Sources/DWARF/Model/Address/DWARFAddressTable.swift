@@ -7,7 +7,6 @@
 //
 
 import Foundation
-@_spi(Support) import MachOKit
 import DWARFC
 
 public struct DWARFAddressTable: Sendable {
@@ -22,11 +21,11 @@ extension DWARFAddressTable {
 }
 
 extension DWARFAddressTable {
-    public func addresses(
-        in machO: MachOFile
+    package func _addresses(
+        in binary: some _DWARFBinary
     ) -> DWARFAddresses {
-        let data = try! machO.fileHandle.readData(
-            offset: offset + header.layoutSize + machO.headerStartOffset,
+        let data = try! binary.fileHandle.readData(
+            offset: offset + header.layoutSize + binary.headerStartOffset,
             length: layoutSize - header.layoutSize
         )
         return .init(
@@ -36,29 +35,29 @@ extension DWARFAddressTable {
                 data: data,
                 chunkSize: header.addressSize + header.segmentSelectorSize
             ),
-            endian: machO.endian
+            endian: binary.endian
         )
     }
 }
 
 extension DWARFAddressTable {
-    public static func load(
+    package static func _load(
         at offset: Int,
-        from machO: MachOFile
+        from binary: some _DWARFBinary
     ) throws -> Self? {
-        let offset = offset + machO.headerStartOffset
-        let length: UInt32 = try machO.fileHandle.read(offset: offset)
+        let offset = offset + binary.headerStartOffset
+        let length: UInt32 = try binary.fileHandle.read(offset: offset)
         let is64Bit = length == 0xffffffff
 
         if is64Bit {
             return .init(
-                header: .version5(try machO.fileHandle.read(offset: offset)),
-                offset: offset - machO.headerStartOffset
+                header: .version5(try binary.fileHandle.read(offset: offset)),
+                offset: offset - binary.headerStartOffset
             )
         } else {
             return .init(
-                header: .version5_32(try machO.fileHandle.read(offset: offset)),
-                offset: offset - machO.headerStartOffset
+                header: .version5_32(try binary.fileHandle.read(offset: offset)),
+                offset: offset - binary.headerStartOffset
             )
         }
     }

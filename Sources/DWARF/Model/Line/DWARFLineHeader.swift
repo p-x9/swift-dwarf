@@ -3,11 +3,10 @@
 //  swift-dwarf
 //
 //  Created by p-x9 on 2025/11/24
-//  
+//
 //
 
 import Foundation
-@_spi(Support) import MachOKit
 import DWARFC
 
 public enum DWARFLineHeader: Sendable {
@@ -247,33 +246,36 @@ extension DWARFLineHeader {
 }
 
 extension DWARFLineHeader {
-    public static func load(at offset: Int, in machO: MachOFile) throws -> Self? {
-        let offset = offset + machO.headerStartOffset
-        let length: UInt32 = try machO.fileHandle.read(offset: offset)
+    package static func _load(
+        at offset: Int,
+        in binary: some _DWARFBinary
+    ) throws -> Self? {
+        let offset = offset + binary.headerStartOffset
+        let length: UInt32 = try binary.fileHandle.read(offset: offset)
         let is64Bit = length == 0xffffffff
 
-        let version: UInt16 = try machO.fileHandle.read(
+        let version: UInt16 = try binary.fileHandle.read(
             offset: offset + (is64Bit ? MemoryLayout<dwarf_init_len64>.size : MemoryLayout<dwarf_init_len32>.size)
         )
 
         switch (is64Bit, version) {
         case (true, _) where version <= 4:
-            guard let header: DWARF4LineHeader64 = try .load(at: offset - machO.headerStartOffset, in: machO) else {
+            guard let header: DWARF4LineHeader64 = try ._load(at: offset - binary.headerStartOffset, in: binary) else {
                 return nil
             }
             return .upToVersion4(header)
         case (false, _) where version <= 4:
-            guard let header: DWARF4LineHeader32 = try .load(at: offset - machO.headerStartOffset, in: machO) else {
+            guard let header: DWARF4LineHeader32 = try ._load(at: offset - binary.headerStartOffset, in: binary) else {
                 return nil
             }
             return .upToVersion4_32(header)
         case (true, 5):
-            guard let header: DWARF5LineHeader64 = try .load(at: offset - machO.headerStartOffset, in: machO) else {
+            guard let header: DWARF5LineHeader64 = try ._load(at: offset - binary.headerStartOffset, in: binary) else {
                 return nil
             }
             return .version5(header)
         case (false, 5):
-            guard let header: DWARF5LineHeader32 = try .load(at: offset - machO.headerStartOffset, in: machO) else {
+            guard let header: DWARF5LineHeader32 = try ._load(at: offset - binary.headerStartOffset, in: binary) else {
                 return nil
             }
             return .version5_32(header)
@@ -303,61 +305,68 @@ public struct DWARF5LineHeader64: LayoutWrapper, Sendable {
 }
 
 extension DWARF5LineHeader64 {
-    public static func load(at offset: Int, in machO: MachOFile) throws -> Self? {
-        let offset = offset + machO.headerStartOffset
+    package static func _load(
+        at offset: Int,
+        in binary: some _DWARFBinary
+    ) throws -> Self? {
+        let offset = offset + binary.headerStartOffset
 
-        let layout: Layout = try machO.fileHandle.read(offset: offset)
+        let layout: Layout = try binary.fileHandle.read(offset: offset)
 
         let standard_opcode_lengths: [UInt8] = Array(
-            machO.fileHandle.readDataSequence(
+            binary.fileHandle.readDataSequence(
                 offset: numericCast(offset + MemoryLayout<Layout>.size),
                 numberOfElements: numericCast(layout.opcode_base) - 1
             )
         )
 
         var pos: UInt64 = numericCast(
-            offset + MemoryLayout<Layout>.size + standard_opcode_lengths.count
+            offset - binary.headerStartOffset + MemoryLayout<Layout>.size + standard_opcode_lengths.count
         )
-        let directory_entry_format_count: dwarf_ubyte = machO.fileHandle.read(offset: pos)
+        let directory_entry_format_count: dwarf_ubyte = binary.fileHandle.read(
+            offset: pos + numericCast(binary.headerStartOffset)
+        )
         pos += 1
 
         let directory_entry_format: [DWARFFileEntryFormat] = try readDWARF5FileEntryFormat(
             pos: &pos,
-            from: machO,
+            from: binary,
             numberOfFormats: numericCast(directory_entry_format_count)
         )
 
-        let (directories_count, size) = machO.fileHandle.readULEB128(
-            baseOffset: pos
+        let (directories_count, size) = binary.fileHandle.readULEB128(
+            baseOffset: pos + numericCast(binary.headerStartOffset)
         )
         pos += numericCast(size)
 
         let directories: [DWARFFileEntry] = try readDWARF5FileEntries(
             pos: &pos,
-            from: machO,
+            from: binary,
             numberOfEntries: numericCast(directories_count),
             format: directory_entry_format,
             dwarfFormat: ._64bit,
             addressSize: numericCast(layout.address_size)
         )
 
-        let file_name_entry_format_count: dwarf_ubyte = machO.fileHandle.read(offset: pos)
+        let file_name_entry_format_count: dwarf_ubyte = binary.fileHandle.read(
+            offset: pos + numericCast(binary.headerStartOffset)
+        )
         pos += 1
 
         let file_name_entry_format: [DWARFFileEntryFormat] = try readDWARF5FileEntryFormat(
             pos: &pos,
-            from: machO,
+            from: binary,
             numberOfFormats: numericCast(file_name_entry_format_count)
         )
 
-        let (file_names_count, size2) = machO.fileHandle.readULEB128(
-            baseOffset: pos
+        let (file_names_count, size2) = binary.fileHandle.readULEB128(
+            baseOffset: pos + numericCast(binary.headerStartOffset)
         )
         pos += numericCast(size2)
 
         let file_names: [DWARFFileEntry] = try readDWARF5FileEntries(
             pos: &pos,
-            from: machO,
+            from: binary,
             numberOfEntries: numericCast(file_names_count),
             format: file_name_entry_format,
             dwarfFormat: ._64bit,
@@ -375,7 +384,7 @@ extension DWARF5LineHeader64 {
             file_name_entry_format: file_name_entry_format,
             file_names_count: numericCast(file_names_count),
             file_names: file_names,
-            offset: offset - machO.headerStartOffset,
+            offset: offset - binary.headerStartOffset,
             layoutSize: numericCast(pos) - offset
         )
     }
@@ -402,61 +411,68 @@ public struct DWARF5LineHeader32: LayoutWrapper, Sendable {
 }
 
 extension DWARF5LineHeader32 {
-    public static func load(at offset: Int, in machO: MachOFile) throws -> Self? {
-        let offset = offset + machO.headerStartOffset
+    package static func _load(
+        at offset: Int,
+        in binary: some _DWARFBinary
+    ) throws -> Self? {
+        let offset = offset + binary.headerStartOffset
 
-        let layout: Layout = try machO.fileHandle.read(offset: offset)
+        let layout: Layout = try binary.fileHandle.read(offset: offset)
 
         let standard_opcode_lengths: [UInt8] = Array(
-            machO.fileHandle.readDataSequence(
+            binary.fileHandle.readDataSequence(
                 offset: numericCast(offset + MemoryLayout<Layout>.size),
                 numberOfElements: numericCast(layout.opcode_base) - 1
             )
         )
 
         var pos: UInt64 = numericCast(
-            offset + MemoryLayout<Layout>.size + standard_opcode_lengths.count
+            offset - binary.headerStartOffset + MemoryLayout<Layout>.size + standard_opcode_lengths.count
         )
-        let directory_entry_format_count: dwarf_ubyte = machO.fileHandle.read(offset: pos)
+        let directory_entry_format_count: dwarf_ubyte = binary.fileHandle.read(
+            offset: pos + numericCast(binary.headerStartOffset)
+        )
         pos += 1
 
         let directory_entry_format: [DWARFFileEntryFormat] = try readDWARF5FileEntryFormat(
             pos: &pos,
-            from: machO,
+            from: binary,
             numberOfFormats: numericCast(directory_entry_format_count)
         )
 
-        let (directories_count, size) = machO.fileHandle.readULEB128(
-            baseOffset: pos
+        let (directories_count, size) = binary.fileHandle.readULEB128(
+            baseOffset: pos + numericCast(binary.headerStartOffset)
         )
         pos += numericCast(size)
-        
+
         let directories: [DWARFFileEntry] = try readDWARF5FileEntries(
             pos: &pos,
-            from: machO,
+            from: binary,
             numberOfEntries: numericCast(directories_count),
             format: directory_entry_format,
             dwarfFormat: ._32bit,
             addressSize: numericCast(layout.address_size)
         )
 
-        let file_name_entry_format_count: dwarf_ubyte = machO.fileHandle.read(offset: pos)
+        let file_name_entry_format_count: dwarf_ubyte = binary.fileHandle.read(
+            offset: pos + numericCast(binary.headerStartOffset)
+        )
         pos += 1
 
         let file_name_entry_format: [DWARFFileEntryFormat] = try readDWARF5FileEntryFormat(
             pos: &pos,
-            from: machO,
+            from: binary,
             numberOfFormats: numericCast(file_name_entry_format_count)
         )
 
-        let (file_names_count, size2) = machO.fileHandle.readULEB128(
-            baseOffset: pos
+        let (file_names_count, size2) = binary.fileHandle.readULEB128(
+            baseOffset: pos + numericCast(binary.headerStartOffset)
         )
         pos += numericCast(size2)
 
         let file_names: [DWARFFileEntry] = try readDWARF5FileEntries(
             pos: &pos,
-            from: machO,
+            from: binary,
             numberOfEntries: numericCast(file_names_count),
             format: file_name_entry_format,
             dwarfFormat: ._32bit,
@@ -474,7 +490,7 @@ extension DWARF5LineHeader32 {
             file_name_entry_format: file_name_entry_format,
             file_names_count: numericCast(file_names_count),
             file_names: file_names,
-            offset: offset - machO.headerStartOffset,
+            offset: offset - binary.headerStartOffset,
             layoutSize: numericCast(pos) - offset
         )
     }
@@ -495,35 +511,38 @@ public struct DWARF4LineHeader64: LayoutWrapper, Sendable {
 }
 
 extension DWARF4LineHeader64 {
-    public static func load(at offset: Int, in machO: MachOFile) throws -> Self? {
-        let offset = offset + machO.headerStartOffset
+    package static func _load(
+        at offset: Int,
+        in binary: some _DWARFBinary
+    ) throws -> Self? {
+        let offset = offset + binary.headerStartOffset
 
-        let layout: Layout = try machO.fileHandle.read(offset: offset)
+        let layout: Layout = try binary.fileHandle.read(offset: offset)
 
         let standard_opcode_lengths: [UInt8] = Array(
-            machO.fileHandle.readDataSequence(
+            binary.fileHandle.readDataSequence(
                 offset: numericCast(offset + MemoryLayout<Layout>.size),
                 numberOfElements: numericCast(layout.opcode_base) - 1
             )
         )
 
         var pos: UInt64 = numericCast(
-            offset + MemoryLayout<Layout>.size + standard_opcode_lengths.count
+            offset - binary.headerStartOffset + MemoryLayout<Layout>.size + standard_opcode_lengths.count
         )
 
         let include_directories = try readDWARF4IncludeDirectories(
             pos: &pos,
-            in: machO
+            in: binary
         )
-        let file_names = try readDWARF4FileEntries(pos: &pos, in: machO)
+        let file_names = try readDWARF4FileEntries(pos: &pos, in: binary)
 
         return .init(
             layout: layout,
             standard_opcode_lengths: standard_opcode_lengths,
             include_directories: include_directories,
             file_names: file_names,
-            addressSize: machO.is64Bit ? 8 : 4,
-            offset: offset - machO.headerStartOffset,
+            addressSize: binary.is64Bit ? 8 : 4,
+            offset: offset - binary.headerStartOffset,
             layoutSize: numericCast(pos) - offset
         )
     }
@@ -544,35 +563,38 @@ public struct DWARF4LineHeader32: LayoutWrapper, Sendable {
 }
 
 extension DWARF4LineHeader32 {
-    public static func load(at offset: Int, in machO: MachOFile) throws -> Self? {
-        let offset = offset + machO.headerStartOffset
+    package static func _load(
+        at offset: Int,
+        in binary: some _DWARFBinary
+    ) throws -> Self? {
+        let offset = offset + binary.headerStartOffset
 
-        let layout: Layout = try machO.fileHandle.read(offset: offset)
+        let layout: Layout = try binary.fileHandle.read(offset: offset)
 
         let standard_opcode_lengths: [UInt8] = Array(
-            machO.fileHandle.readDataSequence(
+            binary.fileHandle.readDataSequence(
                 offset: numericCast(offset + MemoryLayout<Layout>.size),
                 numberOfElements: numericCast(layout.opcode_base) - 1
             )
         )
 
         var pos: UInt64 = numericCast(
-            offset + MemoryLayout<Layout>.size + standard_opcode_lengths.count
+            offset - binary.headerStartOffset + MemoryLayout<Layout>.size + standard_opcode_lengths.count
         )
 
         let include_directories = try readDWARF4IncludeDirectories(
             pos: &pos,
-            in: machO
+            in: binary
         )
-        let file_names = try readDWARF4FileEntries(pos: &pos, in: machO)
+        let file_names = try readDWARF4FileEntries(pos: &pos, in: binary)
 
         return .init(
             layout: layout,
             standard_opcode_lengths: standard_opcode_lengths,
             include_directories: include_directories,
             file_names: file_names,
-            addressSize: machO.is64Bit ? 8 : 4,
-            offset: offset - machO.headerStartOffset,
+            addressSize: binary.is64Bit ? 8 : 4,
+            offset: offset - binary.headerStartOffset,
             layoutSize: numericCast(pos) - offset
         )
     }
@@ -582,14 +604,14 @@ extension DWARF4LineHeader32 {
 
 fileprivate func readDWARF5FileEntryFormat(
     pos: inout UInt64,
-    from machO: MachOFile,
+    from binary: some _DWARFBinary,
     numberOfFormats: Int
 ) throws -> [DWARFFileEntryFormat] {
     var formats: [DWARFFileEntryFormat] = []
     for _ in 0 ..< numberOfFormats {
-        let format: DWARFFileEntryFormat = try .load(
+        let format: DWARFFileEntryFormat = try ._load(
             at: numericCast(pos),
-            in: machO
+            in: binary
         )!
         pos += numericCast(format.layoutSize)
         formats.append(format)
@@ -599,7 +621,7 @@ fileprivate func readDWARF5FileEntryFormat(
 
 fileprivate func readDWARF5FileEntries(
     pos: inout UInt64,
-    from machO: MachOFile,
+    from binary: some _DWARFBinary,
     numberOfEntries: Int,
     format: [DWARFFileEntryFormat],
     dwarfFormat: DWARFFormat,
@@ -607,10 +629,10 @@ fileprivate func readDWARF5FileEntries(
 ) throws -> [DWARFFileEntry] {
     var entries: [DWARFFileEntry] = []
     for _ in 0 ..< numberOfEntries {
-        let entry: DWARFFileEntry = try .load(
+        let entry: DWARFFileEntry = try ._load(
             at: numericCast(pos),
             for: format,
-            in: machO,
+            in: binary,
             dwarfFormat: dwarfFormat,
             addressSize: addressSize
         )!
@@ -622,11 +644,11 @@ fileprivate func readDWARF5FileEntries(
 
 fileprivate func readDWARF4FileEntries(
     pos: inout UInt64,
-    in machO: MachOFile
+    in binary: some _DWARFBinary
 ) throws -> [DWARF4FileEntry] {
     var file_names: [DWARF4FileEntry] = []
     while true {
-        guard let entry: DWARF4FileEntry = try .load(at: numericCast(pos) - machO.headerStartOffset, in: machO) else {
+        guard let entry: DWARF4FileEntry = try ._load(at: numericCast(pos), in: binary) else {
             pos += 1
             break
         }
@@ -638,11 +660,13 @@ fileprivate func readDWARF4FileEntries(
 
 fileprivate func readDWARF4IncludeDirectories(
     pos: inout UInt64,
-    in machO: MachOFile
+    in binary: some _DWARFBinary
 ) throws -> [String] {
     var include_directories: [String] = []
     while true {
-        guard let string = machO.fileHandle.readString(offset: pos) else {
+        guard let string = binary.fileHandle.readString(
+            offset: pos + numericCast(binary.headerStartOffset)
+        ) else {
             pos += 1
             break
         }
