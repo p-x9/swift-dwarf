@@ -112,7 +112,7 @@ extension DWARFNameIndex {
     package func _abbreviationsSet(
         in binary: some _DWARFBinary
     ) -> DWARFNameIndexAbbreviationsSet? {
-        var offset = offset + header.layoutSize + binary.headerStartOffset
+        var offset = offset + header.layoutSize
         let leadingCount = header.numberOfCompirationUnits + header.numberOfLocalTypeUnits + header.numberOfForeignTypeUnits + 2 * header.numberOfNames
 
         offset += header.format.addressSize * leadingCount
@@ -170,7 +170,7 @@ extension DWARFNameIndex {
             return []
         }
 
-        var pos = header.layoutSize + binary.headerStartOffset
+        var pos = header.layoutSize
         let leadingCount = header.numberOfCompirationUnits + header.numberOfLocalTypeUnits + header.numberOfForeignTypeUnits + 2 * header.numberOfNames
 
         pos += header.format.addressSize * leadingCount
