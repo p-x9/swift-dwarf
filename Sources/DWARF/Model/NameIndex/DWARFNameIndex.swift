@@ -20,20 +20,20 @@ extension DWARFNameIndex {
 }
 
 extension DWARFNameIndex {
-    package func _compirationUnitOffsets(
+    package func _compilationUnitOffsets(
         in binary: some _DWARFBinary
     ) -> AnyRandomAccessCollection<Int> {
         _loadOffsets(
             in: binary,
             offsetFromHeaderTrail: 0,
-            count: header.numberOfCompirationUnits
+            count: header.numberOfCompilationUnits
         )
     }
 
     package func _localTypeUnitOffsets(
         in binary: some _DWARFBinary
     ) -> AnyRandomAccessCollection<Int> {
-        let leadingCount = header.numberOfCompirationUnits
+        let leadingCount = header.numberOfCompilationUnits
         let offsetFromHeaderTrail = header.format.addressSize * leadingCount
 
         return _loadOffsets(
@@ -46,7 +46,7 @@ extension DWARFNameIndex {
     package func _foreignTypeUnitOffsets(
         in binary: some _DWARFBinary
     ) -> AnyRandomAccessCollection<Int> {
-        let leadingCount = header.numberOfCompirationUnits + header.numberOfLocalTypeUnits
+        let leadingCount = header.numberOfCompilationUnits + header.numberOfLocalTypeUnits
         let offsetFromHeaderTrail = header.format.addressSize * leadingCount
 
         return _loadOffsets(
@@ -62,7 +62,7 @@ extension DWARFNameIndex {
         in binary: some _DWARFBinary
     ) -> DWARFNameIndexHashTable {
         var offset = offset + header.layoutSize + binary.headerStartOffset
-        let leadingCount = header.numberOfCompirationUnits + header.numberOfLocalTypeUnits + header.numberOfForeignTypeUnits
+        let leadingCount = header.numberOfCompilationUnits + header.numberOfLocalTypeUnits + header.numberOfForeignTypeUnits
         offset += header.format.addressSize * leadingCount
 
         let buckets: DataSequence<UInt32> = binary.fileHandle.readDataSequence(
@@ -83,7 +83,7 @@ extension DWARFNameIndex {
 
 extension DWARFNameIndex {
     package func _nameTable(in binary: some _DWARFBinary) -> DWARFNameIndexNameTable {
-        let leadingCount = header.numberOfCompirationUnits + header.numberOfLocalTypeUnits + header.numberOfForeignTypeUnits
+        let leadingCount = header.numberOfCompilationUnits + header.numberOfLocalTypeUnits + header.numberOfForeignTypeUnits
         var offsetFromHeaderTrail = header.format.addressSize * leadingCount
         offsetFromHeaderTrail += MemoryLayout<UInt32>.size * (header.numberOfNames + header.numberOfBuckets)
 
@@ -113,7 +113,7 @@ extension DWARFNameIndex {
         in binary: some _DWARFBinary
     ) -> DWARFNameIndexAbbreviationsSet? {
         var offset = offset + header.layoutSize
-        let leadingCount = header.numberOfCompirationUnits + header.numberOfLocalTypeUnits + header.numberOfForeignTypeUnits + 2 * header.numberOfNames
+        let leadingCount = header.numberOfCompilationUnits + header.numberOfLocalTypeUnits + header.numberOfForeignTypeUnits + 2 * header.numberOfNames
 
         offset += header.format.addressSize * leadingCount
 
@@ -133,7 +133,7 @@ extension DWARFNameIndex {
         }
 
         var pos = header.layoutSize
-        let leadingCount = header.numberOfCompirationUnits + header.numberOfLocalTypeUnits + header.numberOfForeignTypeUnits + 2 * header.numberOfNames
+        let leadingCount = header.numberOfCompilationUnits + header.numberOfLocalTypeUnits + header.numberOfForeignTypeUnits + 2 * header.numberOfNames
 
         pos += header.format.addressSize * leadingCount
 
@@ -171,7 +171,7 @@ extension DWARFNameIndex {
         }
 
         var pos = header.layoutSize
-        let leadingCount = header.numberOfCompirationUnits + header.numberOfLocalTypeUnits + header.numberOfForeignTypeUnits + 2 * header.numberOfNames
+        let leadingCount = header.numberOfCompilationUnits + header.numberOfLocalTypeUnits + header.numberOfForeignTypeUnits + 2 * header.numberOfNames
 
         pos += header.format.addressSize * leadingCount
 

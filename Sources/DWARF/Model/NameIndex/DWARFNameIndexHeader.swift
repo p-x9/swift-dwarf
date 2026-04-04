@@ -65,7 +65,7 @@ extension DWARFNameIndexHeader {
 }
 
 extension DWARFNameIndexHeader {
-    public var numberOfCompirationUnits: Int {
+    public var numberOfCompilationUnits: Int {
         switch self {
         case ._64(let header):
             numericCast(header.comp_unit_count)

@@ -7,10 +7,10 @@
 //
 
 extension DWARFNameIndex {
-    public func compirationUnitOffsets(
+    public func compilationUnitOffsets(
         in machO: MachOFile
     ) -> AnyRandomAccessCollection<Int> {
-        _compirationUnitOffsets(in: machO)
+        _compilationUnitOffsets(in: machO)
     }
 
     public func localTypeUnitOffsets(

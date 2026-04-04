@@ -37,7 +37,7 @@ extension DWARFLineTable {
         }
     }
 
-    package func _oprations(for binary: some _DWARFBinary) throws -> Operations {
+    package func _operations(for binary: some _DWARFBinary) throws -> Operations {
         let data = try binary.fileHandle
             .readData(
                 offset: binary.headerStartOffset + offset + header.layoutSize,

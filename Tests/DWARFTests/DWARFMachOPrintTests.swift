@@ -211,7 +211,7 @@ extension DWARFMachOPrintTests {
                   Length: 0x\(String(header.length, radix: 16))
                   Format: \(header.format)
                   Version: \(header.version)
-                  CU count: \(header.numberOfCompirationUnits)
+                  CU count: \(header.numberOfCompilationUnits)
                   Local TU count: \(header.numberOfLocalTypeUnits)
                   Foreign TU count: \(header.numberOfForeignTypeUnits)
                   Bucket count: \(header.numberOfBuckets)
@@ -223,7 +223,7 @@ extension DWARFMachOPrintTests {
             )
 
             print("Compilation Unit offsets [")
-            for (i, offset) in nameIndex.compirationUnitOffsets(in: machO).enumerated() {
+            for (i, offset) in nameIndex.compilationUnitOffsets(in: machO).enumerated() {
                 print(" CU[\(i)]:", "0x" + String(format: "%08x", offset))
             }
             print("]")
@@ -300,7 +300,7 @@ extension DWARFMachOPrintTests {
             dump(header, in: machO)
 
 
-            if let operations = try? table.oprations(for: machO) {
+            if let operations = try? table.operations(for: machO) {
                 print(
                     """
                     Address            Line   Column File   ISA Discriminator OpIndex Flags

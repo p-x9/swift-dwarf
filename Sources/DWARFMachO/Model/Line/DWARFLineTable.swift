@@ -7,8 +7,8 @@
 //
 
 extension DWARFLineTable {
-    public func oprations(for machO: MachOFile) throws -> Operations {
-        try _oprations(for: machO)
+    public func operations(for machO: MachOFile) throws -> Operations {
+        try _operations(for: machO)
     }
 }
 

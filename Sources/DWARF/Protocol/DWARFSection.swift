@@ -13,7 +13,7 @@ package protocol DWARFSection {
     var address: Int { get }
     /// Size in bytes
     var size: Int { get }
-    /// FIle offset
+    /// File offset
     var offset: Int { get }
     /// Section alignment (power of 2)
     var align: Int { get }
