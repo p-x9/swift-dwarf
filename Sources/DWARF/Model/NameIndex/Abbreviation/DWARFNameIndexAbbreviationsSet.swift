@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import MachOKit
 
 public struct DWARFNameIndexAbbreviationsSet: Sendable {
     public let offset: Int
@@ -23,19 +22,18 @@ extension DWARFNameIndexAbbreviationsSet {
 }
 
 extension DWARFNameIndexAbbreviationsSet {
-    public static func load(
+    package static func _load(
         at offset: Int,
-        from machO: MachOFile
+        from binary: some _DWARFBinary
     ) -> Self? {
-        let offset = offset + machO.headerStartOffset
         var pos = 0
         var abbrevations: [DWARFNameIndexAbbreviation] = []
         while true {
             var isTerminator = false
-            let abbrev = DWARFNameIndexAbbreviation.load(
+            let abbrev: DWARFNameIndexAbbreviation? = ._load(
                 at: offset + pos,
-                from: machO,
-                isTerminater: &isTerminator
+                from: binary,
+                isTerminator: &isTerminator
             )
             guard let abbrev else {
                 if !isTerminator {
@@ -49,7 +47,7 @@ extension DWARFNameIndexAbbreviationsSet {
             abbrevations.append(abbrev)
         }
         return .init(
-            offset: offset - machO.headerStartOffset,
+            offset: offset,
             abbreviations: abbrevations
         )
     }

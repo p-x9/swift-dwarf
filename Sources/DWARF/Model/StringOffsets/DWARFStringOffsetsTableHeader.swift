@@ -7,7 +7,6 @@
 //
 
 import Foundation
-@_spi(Support) import MachOKit
 
 public enum DWARFStringOffsetsTableHeader: Sendable {
     case version5(DWARF5StringOffsetsTableHeader64)

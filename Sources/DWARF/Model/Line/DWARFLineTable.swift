@@ -7,7 +7,6 @@
 //
 
 import Foundation
-@_spi(Support) import MachOKit
 
 public struct DWARFLineTable: Sendable {
     public let header: DWARFLineHeader
@@ -38,10 +37,10 @@ extension DWARFLineTable {
         }
     }
 
-    public func oprations(for machO: MachOFile) throws -> Operations {
-        let data = try machO.fileHandle
+    package func _operations(for binary: some _DWARFBinary) throws -> Operations {
+        let data = try binary.fileHandle
             .readData(
-                offset: machO.headerStartOffset + offset + header.layoutSize,
+                offset: binary.headerStartOffset + offset + header.layoutSize,
                 length: layoutSize - header.layoutSize
             )
         return .init(
@@ -83,10 +82,13 @@ extension DWARFLineTable.Operations {
 }
 
 extension DWARFLineTable {
-    public static func load(at offset: Int, in machO: MachOFile) throws -> Self? {
-        guard let header: DWARFLineHeader = try .load(
-            at: offset + machO.headerStartOffset,
-            in: machO
+    package static func _load(
+        at offset: Int,
+        in binary: some _DWARFBinary
+    ) throws -> Self? {
+        guard let header: DWARFLineHeader = try ._load(
+            at: offset,
+            in: binary
         ) else { return nil }
         return .init(
             header: header,

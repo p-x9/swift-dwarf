@@ -7,7 +7,6 @@
 //
 
 import Foundation
-@_spi(Support) import MachOKit
 import DWARFC
 
 public enum DWARFNameIndexHeader: Sendable {
@@ -66,7 +65,7 @@ extension DWARFNameIndexHeader {
 }
 
 extension DWARFNameIndexHeader {
-    public var numberOfCompirationUnits: Int {
+    public var numberOfCompilationUnits: Int {
         switch self {
         case ._64(let header):
             numericCast(header.comp_unit_count)
@@ -131,8 +130,8 @@ extension DWARFNameIndexHeader {
 }
 
 extension DWARFNameIndexHeader {
-    public func augmentation(in machO: MachOFile) -> String {
-        machO.fileHandle.readString(
+    package func _augmentation(in binary: some _DWARFBinary) -> String {
+        binary.fileHandle.readString(
             offset: numericCast(offset + layoutSize - augmentationStringSize),
             size: augmentationStringSize
         ) ?? ""
@@ -140,12 +139,15 @@ extension DWARFNameIndexHeader {
 }
 
 extension DWARFNameIndexHeader {
-    public static func load(at offset: Int, from machO: MachOFile) throws -> Self? {
-        let offset = offset + machO.headerStartOffset
-        let length: UInt32 = try machO.fileHandle.read(offset: offset)
+    package static func _load(
+        at offset: Int,
+        from binary: some _DWARFBinary
+    ) throws -> Self? {
+        let offset = offset + binary.headerStartOffset
+        let length: UInt32 = try binary.fileHandle.read(offset: offset)
         let is64Bit = length == 0xffffffff
 
-        let version: UInt16 = try machO.fileHandle.read(
+        let version: UInt16 = try binary.fileHandle.read(
             offset: offset + (is64Bit ? MemoryLayout<dwarf_init_len64>.size : MemoryLayout<dwarf_init_len32>.size)
         )
 
@@ -153,15 +155,15 @@ extension DWARFNameIndexHeader {
         case (true, _):
             return ._64(
                 .init(
-                    layout: try machO.fileHandle.read(offset: offset),
-                    offset: offset - machO.headerStartOffset
+                    layout: try binary.fileHandle.read(offset: offset),
+                    offset: offset - binary.headerStartOffset
                 )
             )
         case (false, _):
             return ._32(
                 .init(
-                    layout: try machO.fileHandle.read(offset: offset),
-                    offset: offset - machO.headerStartOffset
+                    layout: try binary.fileHandle.read(offset: offset),
+                    offset: offset - binary.headerStartOffset
                 )
             )
         }

@@ -3,7 +3,7 @@
 //  swift-dwarf
 //
 //  Created by p-x9 on 2025/06/29
-//  
+//
 //
 
 import Foundation

@@ -7,7 +7,6 @@
 //
 
 import Foundation
-@_spi(Support) import MachOKit
 
 public struct DWARFAddressRangeTable: Sendable {
     public let header: DWARFAddressRangeTableHeader
@@ -21,13 +20,13 @@ extension DWARFAddressRangeTable {
 }
 
 extension DWARFAddressRangeTable {
-    public func addressRanges(
-        in machO: MachOFile
+    package func _addressRanges(
+        in binary: some _DWARFBinary
     ) -> DWARFAddressRanges {
         let chunkSize = header.addressSize * 2 + header.segmentSelectorSize
-        let offset = offset + header.layoutSize.alignedUp(to: chunkSize) + machO.headerStartOffset
+        let offset = offset + header.layoutSize.alignedUp(to: chunkSize) + binary.headerStartOffset
 
-        let data = try! machO.fileHandle.readData(
+        let data = try! binary.fileHandle.readData(
             offset: offset,
             length: layoutSize - header.layoutSize
         )
@@ -38,16 +37,19 @@ extension DWARFAddressRangeTable {
                 data: data,
                 chunkSize: chunkSize
             ),
-            endian: machO.endian
+            endian: binary.endian
         )
     }
 }
 
 extension DWARFAddressRangeTable {
-    public static func load(at offset: Int, from machO: MachOFile) throws -> Self? {
-        guard let header: DWARFAddressRangeTableHeader = try .load(
-            at: offset + machO.headerStartOffset,
-            from: machO
+    package static func _load(
+        at offset: Int,
+        from binary: some _DWARFBinary
+    ) throws -> Self? {
+        guard let header: DWARFAddressRangeTableHeader = try ._load(
+            at: offset,
+            from: binary
         ) else { return nil }
         return .init(
             header: header,

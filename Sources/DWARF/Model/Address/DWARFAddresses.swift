@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import MachOKit
 
 public struct DWARFAddresses: Sequence, Sendable {
     public typealias Element = DWARFAddress

@@ -3,12 +3,13 @@
 //  swift-dwarf
 //
 //  Created by p-x9 on 2025/12/23
-//  
+//
 //
 
 import Foundation
 @_spi(Support) import MachOKit
-internal import FileIO
+import DWARF
+package import FileIO
 #if canImport(os)
 import struct os.OSAllocatedUnfairLock
 #endif
@@ -79,14 +80,32 @@ struct WeakKeyStrongValueMap<Key: AnyObject, Value> {
 #endif
 
 extension MachOFile {
-    internal typealias File = MemoryMappedFile
+    package typealias File = MemoryMappedFile
 
-    var fileHandle: File {
+    package var fileHandle: File {
         FileHandleHolder.shared.fileHandle(
             for: self,
             initialize: {
                 try! .open(url: url, isWritable: false)
             }
         )
+    }
+}
+
+extension MachOFile {
+    package var dwarfSegment: (any DWARFSegment<MachOFile>)? {
+        if is64Bit {
+            segments64.first(where: {
+                $0.segmentName == "__DWARF"
+            })
+        } else {
+            segments32.first(where: {
+                $0.segmentName == "__DWARF"
+            })
+        }
+    }
+
+    package var dwarfSectionPrefix: String {
+         "__"
     }
 }

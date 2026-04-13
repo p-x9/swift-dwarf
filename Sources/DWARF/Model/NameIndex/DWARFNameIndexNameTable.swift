@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import MachOKit
 
 public struct DWARFNameIndexNameTable {
     public let stringOffsets: AnyRandomAccessCollection<Int>
@@ -15,10 +14,10 @@ public struct DWARFNameIndexNameTable {
 }
 
 extension DWARFNameIndexNameTable {
-    public func strings(
-        in machO: MachOFile
+    package func _strings(
+        in binary: some _DWARFBinary
     ) -> [String]? {
-        guard let strings = machO.dwarf.strings else { return nil }
+        guard let strings = binary.dwarf.strings else { return nil }
         return stringOffsets.map {
             strings.string(at: $0)?.string ?? ""
         }

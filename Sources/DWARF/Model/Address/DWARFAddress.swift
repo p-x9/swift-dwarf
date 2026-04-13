@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import MachOKit
 
 public struct DWARFAddress: Sendable, Equatable {
     public var segmentSelector: UInt64?
@@ -39,7 +38,7 @@ extension DWARFAddress {
 }
 
 extension DWARFAddress {
-    internal static func load(
+    package static func load(
         basePointer: UnsafeRawPointer,
         nextOffset: inout Int,
         addressSize: Int,

@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import MachOKit
 
 public struct DWARFNameIndexAbbreviation: Sendable {
     public let code: UInt
@@ -18,25 +17,25 @@ public struct DWARFNameIndexAbbreviation: Sendable {
 }
 
 extension DWARFNameIndexAbbreviation {
-    public static func load(
+    package static func _load(
         at offset: Int,
-        from machO: MachOFile,
-        isTerminater: inout Bool
+        from binary: some _DWARFBinary,
+        isTerminator: inout Bool
     ) -> Self? {
-        let initialOffset = offset + machO.headerStartOffset
-        var offset = offset + machO.headerStartOffset
+        let initialOffset = offset + binary.headerStartOffset
+        var offset = offset + binary.headerStartOffset
 
-        let (code, codeSize) = UnsafeRawPointer(machO.fileHandle.ptr)
+        let (code, codeSize) = UnsafeRawPointer(binary.fileHandle.ptr)
             .advanced(by: offset)
             .assumingMemoryBound(to: UInt8.self)
             .readULEB128()
         if code == 0 {
-            isTerminater = true
+            isTerminator = true
             return nil
         }
         offset += numericCast(codeSize)
 
-        let (tag, tagSize) = UnsafeRawPointer(machO.fileHandle.ptr)
+        let (tag, tagSize) = UnsafeRawPointer(binary.fileHandle.ptr)
             .advanced(by: offset)
             .assumingMemoryBound(to: UInt8.self)
             .readULEB128()
@@ -44,13 +43,13 @@ extension DWARFNameIndexAbbreviation {
 
         var attributes: [(DWARFNameIndexAttribute, DWARFAttributeFormat)] = []
         while true {
-            let (attributeCode, attributeCodeSize) = UnsafeRawPointer(machO.fileHandle.ptr)
+            let (attributeCode, attributeCodeSize) = UnsafeRawPointer(binary.fileHandle.ptr)
                 .advanced(by: offset)
                 .assumingMemoryBound(to: UInt8.self)
                 .readULEB128()
             offset += numericCast(attributeCodeSize)
 
-            let (formatCode, formatCodeSize) = UnsafeRawPointer(machO.fileHandle.ptr)
+            let (formatCode, formatCodeSize) = UnsafeRawPointer(binary.fileHandle.ptr)
                 .advanced(by: offset)
                 .assumingMemoryBound(to: UInt8.self)
                 .readULEB128()
@@ -64,7 +63,7 @@ extension DWARFNameIndexAbbreviation {
                 fatalError()
             }
             let format = DWARFAttributeFormat.load(
-                from: UnsafeRawPointer(machO.fileHandle.ptr)
+                from: UnsafeRawPointer(binary.fileHandle.ptr)
                     .advanced(by: offset)
             )
             offset += numericCast(format.size)

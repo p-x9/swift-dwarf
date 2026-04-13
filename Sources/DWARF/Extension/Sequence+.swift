@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import MachOKit
 
 // MARK: - DWARFLineOperation
 extension Sequence<DWARFLineOperation> {
@@ -113,14 +112,14 @@ fileprivate struct RangeOperationsState {
 }
 
 extension Sequence<DWARFRangeOperation> {
-    public func ranges(
+    package func _ranges(
         addressTable: DWARFAddressTable,
-        in machO: MachOFile
+        in binary: some _DWARFBinary
     ) -> [[DWARFRange]] {
         var rangeLists: [[DWARFRange]] = []
         var state: RangeOperationsState = .init()
 
-        let addresses = Array(addressTable.addresses(in: machO))
+        let addresses = Array(addressTable._addresses(in: binary))
 
         for operation in self {
             switch operation {
@@ -197,14 +196,14 @@ fileprivate struct LocationOperationsState {
 }
 
 extension Sequence<DWARFLocationOperation> {
-    public func locations(
+    package func _locations(
         addressTable: DWARFAddressTable,
-        in machO: MachOFile
+        in binary: some _DWARFBinary
     ) -> [[DWARFLocation]] {
         var locationLists: [[DWARFLocation]] = []
         var state: LocationOperationsState = .init()
 
-        let addresses = Array(addressTable.addresses(in: machO))
+        let addresses = Array(addressTable._addresses(in: binary))
 
         for operation in self {
             switch operation {

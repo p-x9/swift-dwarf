@@ -8,6 +8,7 @@
 
 import XCTest
 @testable import DWARF
+@testable import DWARFMachO
 import DWARFC
 @_spi(Support) @testable import MachOKit
 
@@ -85,7 +86,7 @@ extension DWARFMachOPrintTests {
     func testAddresses() {
         let dwarf = machO.dwarf
         guard let dwarfSegment = machO.dwarfSegment,
-              let __debug_addr = dwarfSegment.__debug_addr(in: machO) else {
+              let __debug_addr = dwarfSegment.debug_addr(in: machO) else {
             return
         }
         for list in dwarf.addresses {
@@ -116,7 +117,7 @@ extension DWARFMachOPrintTests {
     func testAddressRanges() {
         let dwarf = machO.dwarf
         guard let dwarfSegment = machO.dwarfSegment,
-              let __debug_aranges = dwarfSegment.__debug_aranges(in: machO) else {
+              let __debug_aranges = dwarfSegment.debug_aranges(in: machO) else {
             return
         }
         for list in dwarf.addressRanges {
@@ -197,7 +198,7 @@ extension DWARFMachOPrintTests {
         let dwarf = machO.dwarf
 
         guard let dwarfSegment = machO.dwarfSegment,
-              let __debug_names = dwarfSegment.__debug_names(in: machO) else {
+              let __debug_names = dwarfSegment.debug_names(in: machO) else {
             return
         }
 
@@ -210,7 +211,7 @@ extension DWARFMachOPrintTests {
                   Length: 0x\(String(header.length, radix: 16))
                   Format: \(header.format)
                   Version: \(header.version)
-                  CU count: \(header.numberOfCompirationUnits)
+                  CU count: \(header.numberOfCompilationUnits)
                   Local TU count: \(header.numberOfLocalTypeUnits)
                   Foreign TU count: \(header.numberOfForeignTypeUnits)
                   Bucket count: \(header.numberOfBuckets)
@@ -222,7 +223,7 @@ extension DWARFMachOPrintTests {
             )
 
             print("Compilation Unit offsets [")
-            for (i, offset) in nameIndex.compirationUnitOffsets(in: machO).enumerated() {
+            for (i, offset) in nameIndex.compilationUnitOffsets(in: machO).enumerated() {
                 print(" CU[\(i)]:", "0x" + String(format: "%08x", offset))
             }
             print("]")
@@ -299,7 +300,7 @@ extension DWARFMachOPrintTests {
             dump(header, in: machO)
 
 
-            if let operations = try? table.oprations(for: machO) {
+            if let operations = try? table.operations(for: machO) {
                 print(
                     """
                     Address            Line   Column File   ISA Discriminator OpIndex Flags
@@ -328,7 +329,7 @@ extension DWARFMachOPrintTests {
     func testCompilationUnit() throws {
         let dwarf = machO.dwarf
         guard let dwarfSegment = machO.dwarfSegment,
-              let __debug_info = dwarfSegment.__debug_info(in: machO) else {
+              let __debug_info = dwarfSegment.debug_info(in: machO) else {
             return
         }
         let units = dwarf.compilationUnits

@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import MachOKit
 
 public struct DWARFNameIndexHashTable {
     public let buckets: DataSequence<UInt32>

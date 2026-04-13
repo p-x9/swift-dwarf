@@ -7,7 +7,6 @@
 //
 
 import Foundation
-@_spi(Support) import MachOKit
 import DWARFC
 
 public struct DWARFFileEntryFormat: Sendable {
@@ -22,10 +21,13 @@ extension DWARFFileEntryFormat {
 }
 
 extension DWARFFileEntryFormat {
-    public static func load(at offset: Int, in machO: MachOFile) throws -> Self? {
-        let offset = offset + machO.headerStartOffset
+    package static func _load(
+        at offset: Int,
+        in binary: some _DWARFBinary
+    ) throws -> Self? {
+        let offset = offset + binary.headerStartOffset
 
-        let (_type, size) = machO.fileHandle.readULEB128(
+        let (_type, size) = binary.fileHandle.readULEB128(
             baseOffset: numericCast(offset)
         )
         guard let type = DWARFLineContentType(rawValue: numericCast(_type)) else {
@@ -33,7 +35,7 @@ extension DWARFFileEntryFormat {
         }
 
         let format: DWARFAttributeFormat = .load(
-            from: machO.fileHandle.ptr.advanced(by: offset + size)
+            from: binary.fileHandle.ptr.advanced(by: offset + size)
         )
 
         return .init(

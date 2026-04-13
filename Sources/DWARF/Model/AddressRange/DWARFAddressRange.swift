@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import MachOKit
 
 public struct DWARFAddressRange: Sendable {
     public var address: DWARFAddress
