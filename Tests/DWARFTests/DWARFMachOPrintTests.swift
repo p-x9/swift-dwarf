@@ -3,7 +3,7 @@
 //  swift-dwarf
 //
 //  Created by p-x9 on 2025/12/26
-//  
+//
 //
 
 import XCTest
@@ -36,12 +36,8 @@ final class DWARFMachOPrintTests: XCTestCase {
 
 extension DWARFMachOPrintTests {
     func testDwarfSections() {
-        guard let dwarfSegment = machO.dwarfSegment else {
-            XCTFail("No DWARF segment found")
-            return
-        }
         for section in machO.sections64 {
-            if section.segmentName == dwarfSegment.segmentName {
+            if section.segmentName == "__DWARF" {
                 print(section.segmentName, section.sectionName)
             }
         }
@@ -360,7 +356,4 @@ extension DWARFMachOPrintTests {
             }
         }
     }
-}
-
-extension DWARFMachOPrintTests {
 }
