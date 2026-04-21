@@ -46,9 +46,10 @@ extension DWARFAddress {
         endian: Endian
     ) -> Self? {
         let data = Data(
-            bytes: basePointer,
+            bytes: basePointer.advanced(by: nextOffset),
             count: addressSize + segmentSelectorSize
         )
+        nextOffset += addressSize + segmentSelectorSize
         return .init(
             data: data,
             addressSize: addressSize,
