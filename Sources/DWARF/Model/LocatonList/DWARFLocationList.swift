@@ -23,7 +23,7 @@ extension DWARFLocationList {
     package func _offsets(for binary: some _DWARFBinary) throws -> [Int] {
         guard header.offsetEntryCount > 0 else { return [] }
         let offset = offset + header.layoutSize + binary.headerStartOffset
-        if header.addressSize == 4 {
+        if header.format == ._32bit {
             let sequence: DataSequence<UInt32> = binary.fileHandle
                 .readDataSequence(
                     offset: numericCast(offset),
