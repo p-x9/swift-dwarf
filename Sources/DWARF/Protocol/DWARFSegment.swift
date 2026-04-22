@@ -9,13 +9,13 @@
 package protocol DWARFSegment<DWARFBinary> {
     associatedtype DWARFBinary: _DWARFBinary
 
-    associatedtype DWARFSectionType: DWARFSection
+    associatedtype DWARFSectionType: DWARFSection where DWARFSectionType.DWARFBinary == DWARFBinary
 
-    var segmentName: String { get }
-    var virtualMemoryAddress: Int { get }
-    var virtualMemorySize: Int { get }
-    var fileOffset: Int { get }
-    var fileSize: Int { get }
+//    var segmentName: String { get }
+//    var virtualMemoryAddress: Int { get }
+//    var virtualMemorySize: Int { get }
+//    var fileOffset: Int { get }
+//    var fileSize: Int { get }
 
     func sections(in binary: DWARFBinary) -> DataSequence<DWARFSectionType>
 }
@@ -36,7 +36,7 @@ extension DWARFSegment {
         let name = binary.dwarfSectionPrefix + name
         return sections(in: binary).first(
             where: {
-                $0.sectionName == name
+                $0.sectionName(in: binary) == name
             }
         )
     }

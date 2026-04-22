@@ -7,8 +7,10 @@
 //
 
 package protocol DWARFSection {
+    associatedtype DWARFBinary: _DWARFBinary
+
     /// Name of this section
-    var sectionName: String { get }
+    func sectionName(in binary: DWARFBinary) -> String
     /// Memory address
     var address: Int { get }
     /// Size in bytes

@@ -9,8 +9,20 @@
 import DWARF
 import MachOKit
 
-extension Section: DWARFSection {}
-extension Section64: DWARFSection {}
+extension Section: DWARFSection {
+    package typealias DWARFBinary = MachOFile
+
+    package func sectionName(in binary: DWARFBinary) -> String {
+        sectionName
+    }
+}
+extension Section64: DWARFSection {
+    package typealias DWARFBinary = MachOFile
+
+    package func sectionName(in binary: DWARFBinary) -> String {
+        sectionName
+    }
+}
 
 extension SegmentCommand: DWARFSegment {
     package typealias DWARFBinary = MachOFile

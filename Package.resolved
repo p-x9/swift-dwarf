@@ -1,13 +1,22 @@
 {
-  "originHash" : "77ff3938e41f474f9e125508ab1ec3fa09a54b54195f1812f6407d758492f803",
+  "originHash" : "404c3b4cc5850e77d29a51df1d8b38c7ac7b48f7df7da60b09ea5c3a420f7c98",
   "pins" : [
+    {
+      "identity" : "elfkit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/p-x9/ELFKit.git",
+      "state" : {
+        "revision" : "719a08c0ef9ba81fb8baea5953aca6bd187b9967",
+        "version" : "0.6.0"
+      }
+    },
     {
       "identity" : "machokit",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/p-x9/MachOKit.git",
       "state" : {
-        "revision" : "25e56cbb2865ef4d00ea4f15501f29f65c4ca189",
-        "version" : "0.47.0"
+        "revision" : "ff3c258b4b676cbd873b03ee3f11e3bc2b11d5af",
+        "version" : "0.49.0"
       }
     },
     {
@@ -15,8 +24,17 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/p-x9/ObjectArchiveKit.git",
       "state" : {
-        "revision" : "5fbe7bc2391296aefabbb282359764ebe4ed6532",
-        "version" : "0.4.0"
+        "revision" : "96d782a576273b73b277b577943a2a25b00b919e",
+        "version" : "0.5.0"
+      }
+    },
+    {
+      "identity" : "swift-asn1",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-asn1.git",
+      "state" : {
+        "revision" : "eb50cbd14606a9161cbc5d452f18797c90ef0bab",
+        "version" : "1.7.0"
       }
     },
     {
@@ -26,6 +44,15 @@
       "state" : {
         "revision" : "5fb96b503672ea4752eded6b4e301fd87214b03b",
         "version" : "0.2.1"
+      }
+    },
+    {
+      "identity" : "swift-crypto",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-crypto.git",
+      "state" : {
+        "revision" : "95ba0316a9b733e92bb6b071255ff46263bbe7dc",
+        "version" : "3.15.1"
       }
     },
     {

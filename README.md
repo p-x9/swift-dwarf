@@ -3,11 +3,9 @@
 A Swift library for parsing binary files to obtain DWARF information.
 
 > [!NOTE]
-> Currently, only mach-o binaries are supported.
-> ([MachOKit](https://github.com/p-x9/MachOKit))
->
-> Support for ELF binaries will also be added in the future.
-> ([ELFKit](https://github.com/p-x9/ELFKit))
+> Mach-O and ELF binaries are supported.
+> [MachOKit](https://github.com/p-x9/MachOKit) is used for Mach-O binaries.
+> [ELFKit](https://github.com/p-x9/ELFKit) is used for ELF binaries.
 
 <!-- # Badges -->
 
@@ -20,11 +18,15 @@ A Swift library for parsing binary files to obtain DWARF information.
 
 ### Basic
 
-DWARF information from binary file (MachOFile) can be retrieved via the `dwarf` property.
+DWARF information from binary files can be retrieved via the `dwarf` property.
+Import the format-specific adapter that matches the binary type you want to inspect.
 
 ```swift
 import MachOKit
 import DWARF
+import DWARFMachO
+
+let machO: MachOFile = ...
 
 // string table in `.debug_str` section
 let strings = machO.dwarf.strings
@@ -37,7 +39,19 @@ let compilationUnits = machO.dwarf.compilationUnits
 /* ... */
 ```
 
+```swift
+import ELFKit
+import DWARF
+import DWARFELF
+
+let elf: ELFFile = ...
+
+let elfStrings = elf.dwarf.strings
+let elfCompilationUnits = elf.dwarf.compilationUnits
+```
+
 [DWARFMachOPrintTests.swift](/Tests/DWARFTests/DWARFMachOPrintTests.swift) provides test cases that generate output similar to dwarfdump.
+[DWARFELFPrintTests.swift](/Tests/DWARFTests/DWARFELFPrintTests.swift) provides the same for ELF binaries.
 Please use these as a reference.
 
 ## Status
@@ -45,7 +59,7 @@ Please use these as a reference.
 ### Supported Binary formats
 
 - [x] mach-o
-- [ ] ELF
+- [x] ELF
 
 ### Supported DWARF sections
 

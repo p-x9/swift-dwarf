@@ -1,64 +1,54 @@
 //
-//  DWARFMachOPrintTests.swift
+//  DWARFELFPrintTests.swift
 //  swift-dwarf
 //
-//  Created by p-x9 on 2025/12/26
+//  Created by p-x9 on 2026/04/12
 //
 //
 
 import XCTest
 @testable import DWARF
-@testable import DWARFMachO
+@testable import DWARFELF
 import DWARFC
-@_spi(Support) @testable import MachOKit
+@_spi(Support) @testable import ELFKit
 
-final class DWARFMachOPrintTests: XCTestCase {
-    private var fat: FatFile!
-    private var machO: MachOFile!
+final class DWARFELFPrintTests: XCTestCase {
+    private var elf: ELFFile!
 
     override func setUp() async throws {
         let path = ""
 
         let url = URL(fileURLWithPath: path)
-        guard let file = try? MachOKit.loadFromFile(url: url) else {
-            XCTFail("Failed to load file")
-            return
-        }
-        switch file {
-        case let .fat(fatFile):
-            self.fat = fatFile
-            self.machO = try! fatFile.machOFiles()[0]
-        case let .machO(machO):
-            self.machO = machO
-        }
+        self.elf = try .init(url: url)
     }
 }
 
-extension DWARFMachOPrintTests {
+extension DWARFELFPrintTests {
     func testDwarfSections() {
-        for section in machO.sections64 {
-            if section.segmentName == "__DWARF" {
-                print(section.segmentName, section.sectionName)
+        for section in elf.sections {
+            let name = section.name(in: elf)
+            if let name, name.starts(with: ".debug") {
+                print(name)
             }
         }
     }
 }
 
-extension DWARFMachOPrintTests {
+extension DWARFELFPrintTests {
     func testStrings() {
-        let dwarf = machO.dwarf
+        let dwarf = elf.dwarf
         guard let strings = dwarf.strings else { return }
         dump(strings)
     }
 
     func testLineStrings() {
-        let dwarf = machO.dwarf
+        let dwarf = elf.dwarf
         guard let strings = dwarf.lineStrings else { return }
         dump(strings)
     }
 
     func testStrOffsets() {
-        let dwarf = machO.dwarf
+        let dwarf = elf.dwarf
         guard let strings = dwarf.strings else { return }
 
         for table in dwarf.stringOffsetsTables {
@@ -69,7 +59,7 @@ extension DWARFMachOPrintTests {
                 "Version = \(header.version)"
             )
 
-            let offsets = table.offsets(in: machO)
+            let offsets = table.offsets(in: elf)
             for offset in offsets {
                 let string = strings.string(at: numericCast(offset))?.string
                 print("0x" + String(format: "%08X", offset) + ":", string ?? "")
@@ -78,11 +68,11 @@ extension DWARFMachOPrintTests {
     }
 }
 
-extension DWARFMachOPrintTests {
+extension DWARFELFPrintTests {
     func testAddresses() {
-        let dwarf = machO.dwarf
-        guard let dwarfSegment = machO.dwarfSegment,
-              let __debug_addr = dwarfSegment.debug_addr(in: machO) else {
+        let dwarf = elf.dwarf
+        guard let dwarfSegment = elf.dwarfSegment,
+              let __debug_addr = dwarfSegment.debug_addr(in: elf) else {
             return
         }
         for list in dwarf.addresses {
@@ -98,7 +88,7 @@ extension DWARFMachOPrintTests {
             )
             print("__debug_addr sec_offset = 0x" + String(list.offset - __debug_addr.offset + header.layoutSize, radix: 16))
 
-            let addresses = list.addresses(in: machO)
+            let addresses = list.addresses(in: elf)
             print("Addrs: [")
             for address in addresses {
                 print(
@@ -111,9 +101,9 @@ extension DWARFMachOPrintTests {
     }
 
     func testAddressRanges() {
-        let dwarf = machO.dwarf
-        guard let dwarfSegment = machO.dwarfSegment,
-              let __debug_aranges = dwarfSegment.debug_aranges(in: machO) else {
+        let dwarf = elf.dwarf
+        guard let dwarfSegment = elf.dwarfSegment,
+              let __debug_aranges = dwarfSegment.debug_aranges(in: elf) else {
             return
         }
         for list in dwarf.addressRanges {
@@ -127,7 +117,7 @@ extension DWARFMachOPrintTests {
                 "addr_size = \(header.addressSize),",
                 "seg_size = \(header.segmentSelectorSize)"
             )
-            let ranges = list.addressRanges(in: machO)
+            let ranges = list.addressRanges(in: elf)
             print("__debug_aranges sec_offset = 0x" + String(list.offset - __debug_aranges.offset + header.layoutSize, radix: 16))
             for range in ranges {
                 print(
@@ -143,9 +133,9 @@ extension DWARFMachOPrintTests {
     }
 }
 
-extension DWARFMachOPrintTests {
+extension DWARFELFPrintTests {
     func testRangeListsOperations() throws {
-        let dwarf = machO.dwarf
+        let dwarf = elf.dwarf
         for list in dwarf.rangeLists {
             let header = list.header
             print("------")
@@ -158,7 +148,7 @@ extension DWARFMachOPrintTests {
                 "seg_size = \(header.segmentSelectorSize),",
                 "offset_entry_count = \(header.offsetEntryCount)"
             )
-            let operations = try list.operations(for: machO)
+            let operations = try list.operations(for: elf)
             for operation in operations {
                 print(operation)
             }
@@ -166,9 +156,9 @@ extension DWARFMachOPrintTests {
     }
 }
 
-extension DWARFMachOPrintTests {
+extension DWARFELFPrintTests {
     func testLocationListsOperations() throws {
-        let dwarf = machO.dwarf
+        let dwarf = elf.dwarf
         for list in dwarf.locationLists {
             let header = list.header
             print("------")
@@ -181,7 +171,7 @@ extension DWARFMachOPrintTests {
                 "seg_size = \(header.segmentSelectorSize),",
                 "offset_entry_count = \(header.offsetEntryCount)"
             )
-            let operations = try list.operations(for: machO)
+            let operations = try list.operations(for: elf)
             for operation in operations {
                 print(operation)
             }
@@ -189,12 +179,12 @@ extension DWARFMachOPrintTests {
     }
 }
 
-extension DWARFMachOPrintTests {
+extension DWARFELFPrintTests {
     func testNameIndices() throws {
-        let dwarf = machO.dwarf
+        let dwarf = elf.dwarf
 
-        guard let dwarfSegment = machO.dwarfSegment,
-              let __debug_names = dwarfSegment.debug_names(in: machO) else {
+        guard let dwarfSegment = elf.dwarfSegment,
+              let __debug_names = dwarfSegment.debug_names(in: elf) else {
             return
         }
 
@@ -213,31 +203,31 @@ extension DWARFMachOPrintTests {
                   Bucket count: \(header.numberOfBuckets)
                   Name count: \(header.numberOfNames)
                   Abbreviations table size: 0x\(String(header.abbreviationsTableSize, radix: 16))
-                  Augmentation: '\(header.augmentation(in: machO))'
+                  Augmentation: '\(header.augmentation(in: elf))'
                 }
                 """
             )
 
             print("Compilation Unit offsets [")
-            for (i, offset) in nameIndex.compilationUnitOffsets(in: machO).enumerated() {
+            for (i, offset) in nameIndex.compilationUnitOffsets(in: elf).enumerated() {
                 print(" CU[\(i)]:", "0x" + String(format: "%08x", offset))
             }
             print("]")
 
             print("Local Type Unit offsets [")
-            for (i, offset) in nameIndex.localTypeUnitOffsets(in: machO).enumerated() {
+            for (i, offset) in nameIndex.localTypeUnitOffsets(in: elf).enumerated() {
                 print(" Local TU[\(i)]:", "0x" + String(format: "%08x", offset))
             }
             print("]")
 
             print("Foreign Type Unit offsets [")
-            for (i, offset) in nameIndex.foreignTypeUnitOffsets(in: machO).enumerated() {
+            for (i, offset) in nameIndex.foreignTypeUnitOffsets(in: elf).enumerated() {
                 print(" Foreign TU[\(i)]:", "0x" + String(format: "%08x", offset))
             }
             print("]")
 
             print("Abbreviations [")
-            if let abbreviationsSets = nameIndex.abbreviationsSet(in: machO) {
+            if let abbreviationsSets = nameIndex.abbreviationsSet(in: elf) {
                 for abbrev in abbreviationsSets.abbreviations {
                     print(
                         """
@@ -253,11 +243,11 @@ extension DWARFMachOPrintTests {
             }
             print("]")
 
-            let nameTable = nameIndex.nameTable(in: machO)
-            let names = nameTable.strings(in: machO) ?? []
+            let nameTable = nameIndex.nameTable(in: elf)
+            let names = nameTable.strings(in: elf) ?? []
             let entryOffsets = nameTable.entryOffsets
 
-            let hashTable = nameIndex.hashTable(in: machO)
+            let hashTable = nameIndex.hashTable(in: elf)
             let bucketRanges = hashTable.bucketRanges
             let hashes = hashTable.hashes
             for (bi, bucketRange) in bucketRanges.enumerated() {
@@ -273,10 +263,10 @@ extension DWARFMachOPrintTests {
 
                         let entries = nameIndex.entries(
                             at: entryOffsets[AnyIndex(Int(ni - 1))],
-                            in: machO
+                            in: elf
                         )
                         for entry in entries {
-                            dump(entry, in: machO, baseOffset: __debug_names.offset)
+                            dump(entry, in: elf, baseOffset: __debug_names.offset)
                         }
                     }
                 }
@@ -285,18 +275,18 @@ extension DWARFMachOPrintTests {
     }
 }
 
-extension DWARFMachOPrintTests {
+extension DWARFELFPrintTests {
     func testLine() throws {
-        let dwarf = machO.dwarf
+        let dwarf = elf.dwarf
         let tables = dwarf.lineTables
 
         for table in tables {
             let header = table.header
             print("------")
-            dump(header, in: machO)
+            dump(header, in: elf)
 
 
-            if let operations = try? table.operations(for: machO) {
+            if let operations = try? table.operations(for: elf) {
                 print(
                     """
                     Address            Line   Column File   ISA Discriminator OpIndex Flags
@@ -312,20 +302,20 @@ extension DWARFMachOPrintTests {
     }
 }
 
-extension DWARFMachOPrintTests {
+extension DWARFELFPrintTests {
     func testAbbrev() throws {
-        let dwarf = machO.dwarf
+        let dwarf = elf.dwarf
         for abbrevSet in dwarf.abbreviationsSets {
             dump(abbrevSet)
         }
     }
 }
 
-extension DWARFMachOPrintTests {
+extension DWARFELFPrintTests {
     func testCompilationUnit() throws {
-        let dwarf = machO.dwarf
-        guard let dwarfSegment = machO.dwarfSegment,
-              let __debug_info = dwarfSegment.debug_info(in: machO) else {
+        let dwarf = elf.dwarf
+        guard let dwarfSegment = elf.dwarfSegment,
+              let __debug_info = dwarfSegment.debug_info(in: elf) else {
             return
         }
         let units = dwarf.compilationUnits
@@ -342,12 +332,12 @@ extension DWARFMachOPrintTests {
             )
 
             var nest = 0
-            let entries = unit.debugInfoEntries(in: machO)
+            let entries = unit.debugInfoEntries(in: elf)
             for entry in entries {
                 dump(
                     entry,
                     for: unit,
-                    in: machO,
+                    in: elf,
                     baseOffset: __debug_info.offset,
                     nest: nest
                 )

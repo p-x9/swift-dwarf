@@ -19,14 +19,19 @@ let package = Package(
             name: "DWARFMachO",
             targets: ["DWARFMachO"]
         ),
+        .library(
+            name: "DWARFELF",
+            targets: ["DWARFELF"]
+        ),
     ],
     dependencies: [
-        .package(url: "https://github.com/p-x9/MachOKit.git", from: "0.47.0"),
         .package(url: "https://github.com/p-x9/swift-fileio.git", from: "0.12.0"),
         .package(
             url: "https://github.com/p-x9/swift-fileio-extra.git",
             from: "0.2.2"
         ),
+        .package(url: "https://github.com/p-x9/MachOKit.git", from: "0.47.0"),
+        .package(url: "https://github.com/p-x9/ELFKit.git", from: "0.6.0"),
     ],
     targets: [
         .target(
@@ -46,11 +51,19 @@ let package = Package(
             ]
         ),
         .target(
+            name: "DWARFELF",
+            dependencies: [
+                "DWARF",
+                .product(name: "ELFKit", package: "ELFKit"),
+                .product(name: "FileIO", package: "swift-fileio")
+            ]
+        ),
+        .target(
             name: "DWARFC"
         ),
         .testTarget(
             name: "DWARFTests",
-            dependencies: ["DWARF", "DWARFMachO"]
+            dependencies: ["DWARF", "DWARFMachO", "DWARFELF"]
         ),
     ]
 )

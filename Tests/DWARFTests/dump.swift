@@ -21,10 +21,10 @@ func dump(_ abbrevsSet: DWARFAbbreviationsSet) {
     }
 }
 
-func dump(
+func dump<Binary: _DWARFBinary>(
     _ entry: DWARFDebugInfoEntry,
     for unit: DWARFCompilationUnit,
-    in machO: MachOFile,
+    in binary: Binary,
     baseOffset: Int,
     nest: Int
 ) {
@@ -34,23 +34,23 @@ func dump(
         entry.tag
     )
     for attribute in entry.attributes {
-        dump(attribute, for: unit, in: machO, nest: nest)
+        dump(attribute, for: unit, in: binary, nest: nest)
     }
 }
 
-func dump(
+func dump<Binary: _DWARFBinary>(
     _ attribute: (attribute: DWARFAttribute, value: DWARFAttributeValue),
     for unit: DWARFCompilationUnit,
-    in machO: MachOFile,
+    in binary: Binary,
     nest: Int
 ) {
-    let dwarf = machO.dwarf
+    let dwarf = binary.dwarf
     let (attribute, _value) = attribute
 
     let format = _value.format
-    let value = if let value = _value.value(
+    let value = if let value = _value._value(
         for: unit,
-        in: machO
+        in: binary
     ) {
         "\(value)"
     } else { "\(_value)" }
@@ -65,9 +65,9 @@ func dump(
     }
 }
 
-func dump(
+func dump<Binary: _DWARFBinary>(
     _ entry: DWARFNameIndexEntry,
-    in machO: MachOFile,
+    in binary: Binary,
     baseOffset: Int
 ) {
     print(
@@ -76,14 +76,14 @@ func dump(
     print("      Abbrev: 0x\(String(entry.abbreviationCode, radix: 16))")
     print("      Tag: \(entry.tag)")
     for attribute in entry.attributes {
-        dump(attribute, in: machO)
+        dump(attribute, in: binary)
     }
     print("    }")
 }
 
-func dump(
+func dump<Binary: _DWARFBinary>(
     _ attribute: (attribute: DWARFNameIndexAttribute, value: DWARFAttributeValue),
-    in machO: MachOFile
+    in binary: Binary
 ) {
     let (attribute, _value) = attribute
 
@@ -95,9 +95,9 @@ func dump(
     print("        \(attribute): \(value) (\(format))")
 }
 
-func dump(
+func dump<Binary: _DWARFBinary>(
     _ header: DWARFLineHeader,
-    in machO: MachOFile
+    in binary: Binary
 ) {
     print(
         """
@@ -128,9 +128,9 @@ func dump(
                 print(
                     "",
                     content.type,
-                    content.value._value(
+                    content.value.__value(
                         for: nil,
-                        in: machO
+                        in: binary
                     ) ?? ""
                 )
             }
@@ -151,9 +151,9 @@ func dump(
                 print(
                     "    ",
                     content.type,
-                    content.value._value(
+                    content.value.__value(
                         for: nil,
-                        in: machO
+                        in: binary
                     ) ?? ""
                 )
             }
