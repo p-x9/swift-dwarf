@@ -19,10 +19,10 @@ extension DWARFNameIndex {
         _localTypeUnitOffsets(in: elf)
     }
 
-    public func foreignTypeUnitOffsets(
+    public func foreignTypeUnitSignatures(
         in elf: ELFFile
-    ) -> AnyRandomAccessCollection<Int> {
-        _foreignTypeUnitOffsets(in: elf)
+    ) -> AnyRandomAccessCollection<UInt64> {
+        _foreignTypeUnitSignatures(in: elf)
     }
 }
 
