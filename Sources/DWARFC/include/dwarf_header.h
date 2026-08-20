@@ -185,15 +185,14 @@ struct dwarf4_tu_header32_t {
     uint32_t type_offset;
 };
 
-// DWARF Version 5 Compilation Unit Header (Full, Partial, Skeleton Unit)
-// (ref: DWARF5.pdf Sections 7.5.1.1, 7.5.1.2)
+// DWARF Version 5 Full and Partial Compilation Unit Header
+// (ref: DWARF5.pdf Section 7.5.1.1)
 struct dwarf5_cu_header64_t {
     struct dwarf_init_len64 unit_length;
     dwarf_uhalf version; // 5
     dwarf_ubyte unit_type;
     dwarf_ubyte address_size;
     uint64_t debug_abbrev_offset;
-    uint8_t dwo_id ; // skelton only
 };
 
 struct dwarf5_cu_header32_t {
@@ -202,7 +201,26 @@ struct dwarf5_cu_header32_t {
     dwarf_ubyte unit_type;
     dwarf_ubyte address_size;
     uint32_t debug_abbrev_offset;
-    uint8_t dwo_id ; // skelton only
+};
+
+// DWARF Version 5 Skeleton and Split Compilation Unit Header
+// (ref: DWARF5.pdf Section 7.5.1.2)
+struct dwarf5_split_cu_header64_t {
+    struct dwarf_init_len64 unit_length;
+    dwarf_uhalf version; // 5
+    dwarf_ubyte unit_type;
+    dwarf_ubyte address_size;
+    uint64_t debug_abbrev_offset;
+    uint64_t dwo_id;
+};
+
+struct dwarf5_split_cu_header32_t {
+    struct dwarf_init_len32 unit_length;
+    dwarf_uhalf version; // 5
+    dwarf_ubyte unit_type;
+    dwarf_ubyte address_size;
+    uint32_t debug_abbrev_offset;
+    uint64_t dwo_id;
 };
 
 // DWARF Version 5 Type Unit Header
