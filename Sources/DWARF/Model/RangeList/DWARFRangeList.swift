@@ -22,21 +22,39 @@ extension DWARFRangeList {
 extension DWARFRangeList {
     package func _offsets(for binary: some _DWARFBinary) throws -> [Int] {
         guard header.offsetEntryCount > 0 else { return [] }
-        let offset = offset + header.layoutSize + binary.headerStartOffset
+        let layout = DWARFListTableLayout(
+            contributionSize: layoutSize,
+            headerSize: header.layoutSize,
+            offsetEntryCount: header.offsetEntryCount,
+            format: header.format
+        )
+        let offsetTableRange = try layout.offsetTableRange
+        let offset = offset + binary.headerStartOffset
+            + offsetTableRange.lowerBound
         if header.format == ._32bit {
             let sequence: DataSequence<UInt32> = binary.fileHandle
                 .readDataSequence(
                     offset: numericCast(offset),
                     numberOfElements: header.offsetEntryCount
                 )
-            return sequence.map(Int.init(_:))
+            return try sequence.map {
+                guard let offset = Int(exactly: $0) else {
+                    throw DWARFListTableLayoutError.offsetOutOfRange
+                }
+                return offset
+            }
         } else {
             let sequence: DataSequence<UInt64> = binary.fileHandle
                 .readDataSequence(
                     offset: numericCast(offset),
                     numberOfElements: header.offsetEntryCount
                 )
-            return sequence.map(Int.init(_:))
+            return try sequence.map {
+                guard let offset = Int(exactly: $0) else {
+                    throw DWARFListTableLayoutError.offsetOutOfRange
+                }
+                return offset
+            }
         }
     }
 }
@@ -64,21 +82,21 @@ extension DWARFRangeList {
 
     package func _operations(
         for binary: some _DWARFBinary,
-        entryOffset: Int = 0
+        entryOffset: Int? = nil
     ) throws -> Operations {
-        var offset = binary.headerStartOffset + offset + header.layoutSize + entryOffset
-        if header.offsetEntryCount > 0 {
-            if header.addressSize == 4 {
-                offset += MemoryLayout<UInt32>.size * header.offsetEntryCount
-            } else {
-                offset += MemoryLayout<UInt64>.size * header.offsetEntryCount
-            }
-        }
+        let layout = DWARFListTableLayout(
+            contributionSize: layoutSize,
+            headerSize: header.layoutSize,
+            offsetEntryCount: header.offsetEntryCount,
+            format: header.format
+        )
+        let range = try layout.operationsRange(entryOffset: entryOffset)
+        let offset = binary.headerStartOffset + offset + range.lowerBound
 
         let data = try binary.fileHandle
             .readData(
                 offset: offset,
-                length: layoutSize - header.layoutSize
+                length: range.count
             )
         return .init(
             data: data,

@@ -15,7 +15,7 @@ extension DWARFRangeList {
 extension DWARFRangeList {
     public func operations(
         for machO: MachOFile,
-        entryOffset: Int = 0
+        entryOffset: Int? = nil
     ) throws -> Operations {
         try _operations(for: machO, entryOffset: entryOffset)
     }
