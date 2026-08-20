@@ -15,7 +15,7 @@ extension DWARFLocationList {
 extension DWARFLocationList {
     public func operations(
         for elf: ELFFile,
-        entryOffset: Int = 0
+        entryOffset: Int? = nil
     ) throws -> Operations {
         try _operations(
             for: elf,
