@@ -141,16 +141,18 @@ extension DWARFLocationOperation {
                 .readULEB128()
             nextOffset += size2
 
+            guard let descriptions = readDescriptions(
+                basePointer: basePointer,
+                operaionsSize: operaionsSize,
+                addressSize: addressSize,
+                format: format,
+                nextOffset: &nextOffset
+            ) else { return nil }
+
             return .startx_endx(
                 startIndex: numericCast(startIndex),
                 endIndex: numericCast(endIndex),
-                descriptions: readDescriptions(
-                    basePointer: basePointer,
-                    operaionsSize: operaionsSize,
-                    addressSize: addressSize,
-                    format: format,
-                    nextOffset: &nextOffset
-                )
+                descriptions: descriptions
             )
 
         case .startx_length:
@@ -164,16 +166,18 @@ extension DWARFLocationOperation {
                 .readULEB128()
             nextOffset += size2
 
+            guard let descriptions = readDescriptions(
+                basePointer: basePointer,
+                operaionsSize: operaionsSize,
+                addressSize: addressSize,
+                format: format,
+                nextOffset: &nextOffset
+            ) else { return nil }
+
             return .startx_length(
                 startIndex: numericCast(startIndex),
                 length: numericCast(length),
-                descriptions: readDescriptions(
-                    basePointer: basePointer,
-                    operaionsSize: operaionsSize,
-                    addressSize: addressSize,
-                    format: format,
-                    nextOffset: &nextOffset
-                )
+                descriptions: descriptions
             )
 
         case .offset_pair:
@@ -187,28 +191,29 @@ extension DWARFLocationOperation {
                 .readULEB128()
             nextOffset += size2
 
+            guard let descriptions = readDescriptions(
+                basePointer: basePointer,
+                operaionsSize: operaionsSize,
+                addressSize: addressSize,
+                format: format,
+                nextOffset: &nextOffset
+            ) else { return nil }
+
             return .offset_pair(
                 startOffset: numericCast(startOffset),
                 endOffset: numericCast(endOffset),
-                descriptions: readDescriptions(
-                    basePointer: basePointer,
-                    operaionsSize: operaionsSize,
-                    addressSize: addressSize,
-                    format: format,
-                    nextOffset: &nextOffset
-                )
+                descriptions: descriptions
             )
 
         case .default_location:
-            return .default_location(
-                descriptions: readDescriptions(
-                    basePointer: basePointer,
-                    operaionsSize: operaionsSize,
-                    addressSize: addressSize,
-                    format: format,
-                    nextOffset: &nextOffset
-                )
-            )
+            guard let descriptions = readDescriptions(
+                basePointer: basePointer,
+                operaionsSize: operaionsSize,
+                addressSize: addressSize,
+                format: format,
+                nextOffset: &nextOffset
+            ) else { return nil }
+            return .default_location(descriptions: descriptions)
 
         case .base_address:
             guard let address: DWARFAddress = .load(
@@ -237,16 +242,19 @@ extension DWARFLocationOperation {
                 segmentSelectorSize: segmentSelectorSize,
                 endian: .little // FIXME: endian
             ) else { return nil }
+
+            guard let descriptions = readDescriptions(
+                basePointer: basePointer,
+                operaionsSize: operaionsSize,
+                addressSize: addressSize,
+                format: format,
+                nextOffset: &nextOffset
+            ) else { return nil }
+
             return .start_end(
                 start: start,
                 end: end,
-                descriptions: readDescriptions(
-                    basePointer: basePointer,
-                    operaionsSize: operaionsSize,
-                    addressSize: addressSize,
-                    format: format,
-                    nextOffset: &nextOffset
-                )
+                descriptions: descriptions
             )
 
         case .start_length:
@@ -261,16 +269,19 @@ extension DWARFLocationOperation {
                 .advanced(by: nextOffset)
                 .readULEB128()
             nextOffset += size
+
+            guard let descriptions = readDescriptions(
+                basePointer: basePointer,
+                operaionsSize: operaionsSize,
+                addressSize: addressSize,
+                format: format,
+                nextOffset: &nextOffset
+            ) else { return nil }
+
             return .start_length(
                 start: start,
                 length: numericCast(length),
-                descriptions: readDescriptions(
-                    basePointer: basePointer,
-                    operaionsSize: operaionsSize,
-                    addressSize: addressSize,
-                    format: format,
-                    nextOffset: &nextOffset
-                )
+                descriptions: descriptions
             )
         }
     }
@@ -283,23 +294,37 @@ extension DWARFLocationOperation {
         addressSize: Int,
         format: DWARFFormat,
         nextOffset: inout Int
-    ) -> [DWARFOperation] {
-        let (numberOfDescriptions, size) = basePointer
+    ) -> [DWARFOperation]? {
+        guard nextOffset < operaionsSize else { return nil }
+
+        let (descriptionByteCount, size) = basePointer
             .advanced(by: nextOffset)
             .readULEB128()
         nextOffset += size
 
+        guard let descriptionByteCount = Int(exactly: descriptionByteCount) else {
+            return nil
+        }
+        let (descriptionEnd, overflow) = nextOffset.addingReportingOverflow(
+            descriptionByteCount
+        )
+        guard !overflow, descriptionEnd <= operaionsSize else { return nil }
+
         var operations: [DWARFOperation] = []
-        for _ in 0 ..< numberOfDescriptions {
+        while nextOffset < descriptionEnd {
+            let operationOffset = nextOffset
             var done: Bool = false
             guard let operation: DWARFOperation = .readNext(
                 basePointer: basePointer,
-                operaionsSize: operaionsSize,
+                operaionsSize: descriptionEnd,
                 addressSize: addressSize,
                 format: format,
                 nextOffset: &nextOffset,
                 done: &done
-            ) else { break }
+            ), nextOffset > operationOffset, nextOffset <= descriptionEnd else {
+                nextOffset = descriptionEnd
+                return nil
+            }
             operations.append(operation)
         }
 
