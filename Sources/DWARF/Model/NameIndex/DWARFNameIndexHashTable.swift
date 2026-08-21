@@ -15,35 +15,7 @@ public struct DWARFNameIndexHashTable {
 
 extension DWARFNameIndexHashTable {
     public var bucketRanges: [Range<Int>] {
-        var ranges: [Range<Int>] = []
-        for (i, bucket) in buckets.enumerated() {
-            let start = Int(bucket)
-
-            // empty
-            if start == 0 {
-                if let last = ranges.last {
-                    ranges.append(
-                        last.upperBound..<last.upperBound + 1
-                    )
-                } else {
-                    ranges.append(0..<1)
-                }
-                continue
-            }
-
-            var end: Int = 0
-            var offset = 1
-            while end == 0 {
-                if i + offset < buckets.count {
-                    end = Int(buckets[i + offset])
-                    offset += 1
-                } else {
-                    end = hashes.count + 1
-                }
-            }
-            ranges.append(start ..< end)
-        }
-        return ranges
+        buckets.indices.map { bucketRange(at: $0) ?? 0 ..< 0 }
     }
 }
 
@@ -51,20 +23,35 @@ extension DWARFNameIndexHashTable {
     public func searchCandidateIndices(
         for name: String
     ) -> [Int] {
+        guard !buckets.isEmpty else { return [] }
+
         let hash = hash(for: name)
         let bucketIndex = Int(hash % numericCast(buckets.count))
+        guard let range = bucketRange(at: bucketIndex) else { return [] }
 
-        let start = Int(buckets[bucketIndex])
-        let end = if bucketIndex + 1 < buckets.count {
-            Int(buckets[bucketIndex + 1])
-        } else { hashes.count - 1 }
+        return range.filter { hashes[$0 - 1] == hash }
+    }
+}
 
-        return zip(
-            start ..< end,
-            hashes[start ..< end]
-        )
-        .filter { $0.1 == hash }
-        .map { Int($0.0) }
+extension DWARFNameIndexHashTable {
+    private func bucketRange(at bucketIndex: Int) -> Range<Int>? {
+        let rawStart = Int(buckets[bucketIndex])
+        guard rawStart != 0 else { return 0 ..< 0 }
+
+        // Keep the indices in the DWARF-defined 1-based domain. Convert them
+        // only when accessing a 0-based Swift collection.
+        let start = rawStart
+        let rawEnd = buckets[(bucketIndex + 1)...]
+            .first(where: { $0 != 0 })
+            .map(Int.init)
+        let end = rawEnd ?? hashes.count + 1
+
+        guard start >= 1,
+              start < end,
+              end <= hashes.count + 1 else {
+            return nil
+        }
+        return start ..< end
     }
 }
 

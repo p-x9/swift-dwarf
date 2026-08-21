@@ -220,9 +220,9 @@ extension DWARFELFPrintTests {
             }
             print("]")
 
-            print("Foreign Type Unit offsets [")
-            for (i, offset) in nameIndex.foreignTypeUnitOffsets(in: elf).enumerated() {
-                print(" Foreign TU[\(i)]:", "0x" + String(format: "%08x", offset))
+            print("Foreign Type Unit signatures [")
+            for (i, signature) in nameIndex.foreignTypeUnitSignatures(in: elf).enumerated() {
+                print(" Foreign TU[\(i)]:", "0x" + String(format: "%016llx", signature))
             }
             print("]")
 
@@ -262,7 +262,7 @@ extension DWARFELFPrintTests {
                         print("    String: \(names[ni - 1])")
 
                         let entries = nameIndex.entries(
-                            at: entryOffsets[AnyIndex(Int(ni - 1))],
+                            at: entryOffsets[AnyIndex(ni - 1)],
                             in: elf
                         )
                         for entry in entries {
