@@ -63,16 +63,15 @@ extension DWARFNameIndex {
         in binary: some _DWARFBinary
     ) -> DWARFNameIndexHashTable {
         let layout = DWARFNameIndexLayout(header: header)
-        let offset = offset + header.layoutSize + binary.headerStartOffset
-            + layout.bucketsOffset
+        let dataOffset = offset + header.layoutSize + binary.headerStartOffset
 
         let buckets: DataSequence<UInt32> = binary.fileHandle.readDataSequence(
-            offset: numericCast(offset),
+            offset: numericCast(dataOffset + layout.bucketsOffset),
             numberOfElements: header.numberOfBuckets
         )
         let hashes: DataSequence<UInt32> = binary.fileHandle.readDataSequence(
-            offset: numericCast(offset) + numericCast(MemoryLayout<UInt32>.size * buckets.count),
-            numberOfElements: header.numberOfNames
+            offset: numericCast(dataOffset + layout.hashesOffset),
+            numberOfElements: layout.hashCount
         )
 
         return .init(

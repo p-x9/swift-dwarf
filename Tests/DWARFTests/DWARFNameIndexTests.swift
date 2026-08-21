@@ -45,6 +45,26 @@ final class DWARFNameIndexTests: XCTestCase {
         XCTAssertEqual(layout.entriesOffset, 155)
     }
 
+    func testLayoutOmitsHashesWhenThereIsNoHashTable() {
+        let layout = DWARFNameIndexLayout(
+            format: ._32bit,
+            compilationUnitCount: 1,
+            localTypeUnitCount: 0,
+            foreignTypeUnitCount: 0,
+            bucketCount: 0,
+            nameCount: 2,
+            abbreviationsTableSize: 7
+        )
+
+        XCTAssertEqual(layout.bucketsOffset, 4)
+        XCTAssertEqual(layout.hashesOffset, 4)
+        XCTAssertEqual(layout.hashCount, 0)
+        XCTAssertEqual(layout.stringOffsetsOffset, 4)
+        XCTAssertEqual(layout.entryOffsetsOffset, 12)
+        XCTAssertEqual(layout.abbreviationsOffset, 20)
+        XCTAssertEqual(layout.entriesOffset, 27)
+    }
+
     func testBucketRangesPreserveOneBasedIndicesAndSkipEmptyBuckets() {
         let table = makeHashTable(
             buckets: [1, 0, 3, 5],

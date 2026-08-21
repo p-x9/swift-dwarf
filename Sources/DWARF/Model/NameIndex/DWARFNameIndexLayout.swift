@@ -75,8 +75,12 @@ internal struct DWARFNameIndexLayout {
         bucketsOffset + bucketCount * hashEntrySize
     }
 
+    var hashCount: Int {
+        bucketCount == 0 ? 0 : nameCount
+    }
+
     var stringOffsetsOffset: Int {
-        hashesOffset + nameCount * hashEntrySize
+        hashesOffset + hashCount * hashEntrySize
     }
 
     var entryOffsetsOffset: Int {
