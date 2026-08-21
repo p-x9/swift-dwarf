@@ -1016,30 +1016,52 @@ extension DWARFAttributeValue {
         in binary: some _DWARFBinary,
         isInSameUnit: Bool
     ) -> DWARFDebugInfoEntry? {
-        guard let abbreviationsSet = unit._abbreviationsSet(in: binary) else {
-            return nil
-        }
+        let referencedUnit: DWARFCompilationUnit
+        let entryOffset: Int
+
         if isInSameUnit {
-            return ._load(
-                at: unit.offset + numericCast(reference.offset),
-                from: binary,
-                dwarfFormat: unit.header.format,
-                abbreviationsSet: abbreviationsSet,
-                addressSize: unit.header.addressSize
+            guard let referenceOffset = Int(exactly: reference.offset) else {
+                return nil
+            }
+            let (offset, overflow) = unit.offset.addingReportingOverflow(
+                referenceOffset
             )
+            guard !overflow else { return nil }
+            referencedUnit = unit
+            entryOffset = offset
         } else {
             guard let dwarfSegment = binary.dwarfSegment,
                   let __debug_info = dwarfSegment.debug_info(in: binary) else {
                 return nil
             }
-            return ._load(
-                at: __debug_info.offset + numericCast(reference.offset),
-                from: binary,
-                dwarfFormat: unit.header.format,
-                abbreviationsSet: abbreviationsSet,
-                addressSize: unit.header.addressSize
-            )
+            guard let referenceOffset = Int(exactly: reference.offset) else {
+                return nil
+            }
+            let (offset, overflow) = __debug_info.offset
+                .addingReportingOverflow(referenceOffset)
+            guard !overflow,
+                  let targetUnit = DWARFCompilationUnit._containingDebugInfoEntry(
+                    at: offset,
+                    in: binary.dwarf.compilationUnits
+                  ) else {
+                return nil
+            }
+            referencedUnit = targetUnit
+            entryOffset = offset
         }
+
+        guard let abbreviationsSet = referencedUnit._abbreviationsSet(
+            in: binary
+        ) else {
+            return nil
+        }
+        return ._load(
+            at: entryOffset,
+            from: binary,
+            dwarfFormat: referencedUnit.header.format,
+            abbreviationsSet: abbreviationsSet,
+            addressSize: referencedUnit.header.addressSize
+        )
     }
 }
 
