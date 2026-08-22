@@ -26,14 +26,7 @@ extension DWARFSegment {
         for section: DWARFSectionKind,
         in binary: DWARFBinary
     ) -> DWARFSectionType? {
-        _section(for: section.rawValue, in: binary)
-    }
-}
-
-extension DWARFSegment {
-    @inline(__always)
-    func _section(for name: String, in binary: DWARFBinary) -> DWARFSectionType? {
-        let name = binary.dwarfSectionPrefix + name
+        let name = binary.dwarfSectionName(for: section)
         return sections(in: binary).first(
             where: {
                 $0.sectionName(in: binary) == name

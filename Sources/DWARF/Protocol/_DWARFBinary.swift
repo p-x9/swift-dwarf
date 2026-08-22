@@ -19,7 +19,7 @@ package protocol _DWARFBinary {
     var endian: Endian { get }
 
     var dwarfSegment: (any DWARFSegment<Self>)? { get }
-    var dwarfSectionPrefix: String { get }
+    func dwarfSectionName(for section: DWARFSectionKind) -> String
 
     var dwarf: DWARF { get }
 }

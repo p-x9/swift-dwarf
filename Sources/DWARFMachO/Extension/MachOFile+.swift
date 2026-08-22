@@ -105,7 +105,7 @@ extension MachOFile {
         }
     }
 
-    package var dwarfSectionPrefix: String {
-         "__"
+    package func dwarfSectionName(for section: DWARFSectionKind) -> String {
+        section.machOName
     }
 }

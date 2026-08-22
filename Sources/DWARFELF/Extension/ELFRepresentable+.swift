@@ -10,8 +10,8 @@ import Foundation
 import ELFKit
 
 extension ELFRepresentable {
-    package var dwarfSectionPrefix: String {
-        "."
+    package func dwarfSectionName(for section: DWARFSectionKind) -> String {
+        section.elfName
     }
 }
 
