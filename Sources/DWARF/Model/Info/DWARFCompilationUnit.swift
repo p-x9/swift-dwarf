@@ -107,13 +107,13 @@ extension DWARFCompilationUnit {
         in binary: some _DWARFBinary
     ) -> DWARFStringOffsetsTable? {
         guard let dwarfSegment = binary.dwarfSegment,
-              let debug_str_offs = dwarfSegment.debug_str_offs(in: binary),
+              let debug_str_offsets = dwarfSegment.debug_str_offsets(in: binary),
               let base = _stringOffsetsBase(in: binary) else {
             return nil
         }
         return binary.dwarf.stringOffsetsTables.first(
             where: {
-                $0.offset - debug_str_offs.offset + $0.header.layoutSize == base
+                $0.offset - debug_str_offsets.offset + $0.header.layoutSize == base
             }
         )
     }

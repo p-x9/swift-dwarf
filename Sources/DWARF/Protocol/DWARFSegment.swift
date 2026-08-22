@@ -63,8 +63,8 @@ extension DWARFSegment {
         section(for: .debug_line_str, in: binary)
     }
 
-    package func debug_str_offs(in binary: DWARFBinary) -> DWARFSectionType? {
-        section(for: .debug_str_offs, in: binary)
+    package func debug_str_offsets(in binary: DWARFBinary) -> DWARFSectionType? {
+        section(for: .debug_str_offsets, in: binary)
     }
 
     package func debug_addr(in binary: DWARFBinary) -> DWARFSectionType? {

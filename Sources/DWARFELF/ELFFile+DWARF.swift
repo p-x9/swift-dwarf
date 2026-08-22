@@ -134,14 +134,14 @@ extension ELFFile.DWARF {
     // dwarfdump --debug-str-offsets
     public var stringOffsetsTables: [DWARFStringOffsetsTable] {
         guard let dwarf = elf.dwarfSegment,
-              let debug_str_offs = dwarf.debug_str_offs(in: elf) else {
+              let debug_str_offsets = dwarf.debug_str_offsets(in: elf) else {
             return []
         }
         var lists: [DWARFStringOffsetsTable] = []
         var pos = 0
-        while pos < debug_str_offs.size {
+        while pos < debug_str_offsets.size {
             let list: DWARFStringOffsetsTable? = try? ._load(
-                at: debug_str_offs.offset + pos,
+                at: debug_str_offsets.offset + pos,
                 from: elf
             )
             guard let list else { break }

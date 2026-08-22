@@ -122,14 +122,14 @@ extension MachOFile.DWARF {
     // dwarfdump --debug-str-offsets
     public var stringOffsetsTables: [DWARFStringOffsetsTable] {
         guard let dwarf = machO.dwarfSegment,
-              let debug_str_offs = dwarf.debug_str_offs(in: machO) else {
+              let debug_str_offsets = dwarf.debug_str_offsets(in: machO) else {
             return []
         }
         var lists: [DWARFStringOffsetsTable] = []
         var pos = 0
-        while pos < debug_str_offs.size {
+        while pos < debug_str_offsets.size {
             let list: DWARFStringOffsetsTable? = try? ._load(
-                at: debug_str_offs.offset + pos,
+                at: debug_str_offsets.offset + pos,
                 from: machO
             )
             guard let list else { break }
