@@ -68,7 +68,7 @@ Please use these as a reference.
 - [x] `.debug_line`
 - [x] `.debug_str`
 - [x] `.debug_line_str`
-- [x] `.debug_str_offs`
+- [x] `.debug_str_offsets`
 - [x] `.debug_addr`
 - [x] `.debug_aranges`
 - [x] `.debug_rnglists`

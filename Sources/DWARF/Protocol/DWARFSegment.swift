@@ -26,14 +26,7 @@ extension DWARFSegment {
         for section: DWARFSectionKind,
         in binary: DWARFBinary
     ) -> DWARFSectionType? {
-        _section(for: section.rawValue, in: binary)
-    }
-}
-
-extension DWARFSegment {
-    @inline(__always)
-    func _section(for name: String, in binary: DWARFBinary) -> DWARFSectionType? {
-        let name = binary.dwarfSectionPrefix + name
+        let name = binary.dwarfSectionName(for: section)
         return sections(in: binary).first(
             where: {
                 $0.sectionName(in: binary) == name
@@ -63,8 +56,8 @@ extension DWARFSegment {
         section(for: .debug_line_str, in: binary)
     }
 
-    package func debug_str_offs(in binary: DWARFBinary) -> DWARFSectionType? {
-        section(for: .debug_str_offs, in: binary)
+    package func debug_str_offsets(in binary: DWARFBinary) -> DWARFSectionType? {
+        section(for: .debug_str_offsets, in: binary)
     }
 
     package func debug_addr(in binary: DWARFBinary) -> DWARFSectionType? {

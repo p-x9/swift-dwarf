@@ -14,7 +14,8 @@ public enum DWARFSectionKind: String, Sendable {
     case debug_line
     case debug_str
     case debug_line_str
-    case debug_str_offs
+    /// DWARF v5 string offsets section.
+    case debug_str_offsets
     case debug_addr
     case debug_rnglists
     case debug_loclists
