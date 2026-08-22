@@ -1026,7 +1026,10 @@ extension DWARFAttributeValue {
             let (offset, overflow) = unit.offset.addingReportingOverflow(
                 referenceOffset
             )
-            guard !overflow else { return nil }
+            guard !overflow,
+                  unit._containsDebugInfoEntry(at: offset) else {
+                return nil
+            }
             referencedUnit = unit
             entryOffset = offset
         } else {
