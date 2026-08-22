@@ -3,7 +3,7 @@
 //  swift-dwarf
 //
 //  Created by p-x9 on 2025/09/14
-//  
+//
 //
 
 import Foundation
@@ -16,6 +16,24 @@ public struct DWARFCompilationUnit: Sendable {
 extension DWARFCompilationUnit {
     public var layoutSize: Int {
         header.length + (header.format == ._64bit ? 12 : 4)
+    }
+}
+
+extension DWARFCompilationUnit {
+    package func _containsDebugInfoEntry(at entryOffset: Int) -> Bool {
+        let (entriesStart, startOverflow) = offset.addingReportingOverflow(
+            header.actualLayoutSize
+        )
+        let (unitEnd, endOverflow) = offset.addingReportingOverflow(layoutSize)
+        guard !startOverflow, !endOverflow else { return false }
+        return entriesStart <= entryOffset && entryOffset < unitEnd
+    }
+
+    package static func _containingDebugInfoEntry(
+        at entryOffset: Int,
+        in units: [Self]
+    ) -> Self? {
+        units.first { $0._containsDebugInfoEntry(at: entryOffset) }
     }
 }
 
