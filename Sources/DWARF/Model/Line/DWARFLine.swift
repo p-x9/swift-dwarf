@@ -49,3 +49,21 @@ extension DWARFLine {
         )
     }
 }
+
+// MARK: - State Machine
+extension DWARFLine {
+    mutating func advanceAddress(
+        operationAdvance: UInt64,
+        header: DWARFLineHeader
+    ) {
+        let maximumOperationsPerInstruction = UInt64(
+            header.maximumOperationsPerInstruction
+        )
+        let adjustedOperationIndex = layout.op_index + operationAdvance
+
+        layout.address += UInt64(header.minimumInstructionLength)
+            * (adjustedOperationIndex / maximumOperationsPerInstruction)
+        layout.op_index = adjustedOperationIndex
+            % maximumOperationsPerInstruction
+    }
+}

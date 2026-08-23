@@ -26,10 +26,10 @@ extension Sequence<DWARFLineOperation> {
 
                 let operationAdvance = adjusted / header.lineRange
 
-                state.layout.address += numericCast(header.minimumInstructionLength)
-                * ((numericCast(state.op_index) + numericCast(operationAdvance))) / numericCast(header.maximumOperationsPerInstruction)
-
-                state.layout.op_index = (state.op_index + numericCast(operationAdvance)) % numericCast(header.maximumOperationsPerInstruction)
+                state.advanceAddress(
+                    operationAdvance: UInt64(operationAdvance),
+                    header: header
+                )
 
                 state.layout.line = numericCast(
                     Int64(state.line) + lineIncrement
@@ -66,7 +66,10 @@ extension Sequence<DWARFLineOperation> {
                     state.layout.epilogue_begin = false
                     state.layout.discriminator = 0
                 case .advance_pc(pcOffset: let pcOffset):
-                    state.layout.address += numericCast(pcOffset) * numericCast(header.minimumInstructionLength)
+                    state.advanceAddress(
+                        operationAdvance: pcOffset,
+                        header: header
+                    )
                 case .advance_line(lineOffset: let lineOffset):
                     state.layout.line = numericCast(
                         Int64(state.layout.line) + numericCast(lineOffset)
@@ -85,13 +88,14 @@ extension Sequence<DWARFLineOperation> {
 
                     let operationAdvance = adjusted / header.lineRange
 
-                    state.layout.address += numericCast(header.minimumInstructionLength)
-                    * ((numericCast(state.op_index) + numericCast(operationAdvance))) / numericCast(header.maximumOperationsPerInstruction)
-
-                    state.layout.op_index = (state.op_index + numericCast(operationAdvance)) % numericCast(header.maximumOperationsPerInstruction)
+                    state.advanceAddress(
+                        operationAdvance: UInt64(operationAdvance),
+                        header: header
+                    )
 
                 case .fixed_advance_pc(pcOffset: let pcOffset):
                     state.layout.address += numericCast(pcOffset)
+                    state.layout.op_index = 0
                 case .set_prologue_end:
                     state.layout.prologue_end = true
                 case .set_epilogue_begin:
