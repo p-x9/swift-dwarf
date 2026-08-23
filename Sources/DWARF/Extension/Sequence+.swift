@@ -103,6 +103,9 @@ extension Sequence<DWARFLineOperation> {
                 case .set_isa(isa: let isa):
                     state.layout.isa = isa
                 }
+
+            case .unknownStandard:
+                break
             }
         }
         return lines
