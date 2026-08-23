@@ -105,7 +105,7 @@ extension DWARFLineHeader {
 }
 
 extension DWARFLineHeader {
-    public var opecodeBase: UInt8 {
+    public var opcodeBase: UInt8 {
         switch self {
         case .version4(let header):
             header.opcode_base

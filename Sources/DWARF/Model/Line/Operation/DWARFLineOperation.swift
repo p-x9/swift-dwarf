@@ -48,7 +48,7 @@ extension DWARFLineOperation {
             ) else { return nil }
             return .extended(operation)
 
-        case 0x01..<lineHeader.opecodeBase:
+        case 0x01..<lineHeader.opcodeBase:
             if DWARFLineStandardOpcode(rawValue: opcodeRaw) != nil {
                 guard let operation: DWARFLineStandardOperation = .readNext(
                     basePointer: basePointer,
