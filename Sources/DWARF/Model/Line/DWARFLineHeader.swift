@@ -9,22 +9,28 @@
 import Foundation
 import DWARFC
 
+/// A DWARF Version 4 or Version 5 line number program header.
+///
+/// Earlier versions use a different fixed layout: DWARF Version 4 added
+/// `maximum_operations_per_instruction` between
+/// `minimum_instruction_length` and `default_is_stmt` (DWARF Version 4,
+/// Section 6.2.4). They therefore cannot be decoded by the Version 4 layout.
 public enum DWARFLineHeader: Sendable {
-    case upToVersion4(DWARF4LineHeader64)
+    case version4(DWARF4LineHeader64)
     case version5(DWARF5LineHeader64)
 
-    case upToVersion4_32(DWARF4LineHeader32)
+    case version4_32(DWARF4LineHeader32)
     case version5_32(DWARF5LineHeader32)
 }
 
 extension DWARFLineHeader {
     public var offset: Int {
         switch self {
-        case .upToVersion4(let header):
+        case .version4(let header):
             header.offset
         case .version5(let header):
             header.offset
-        case .upToVersion4_32(let header):
+        case .version4_32(let header):
             header.offset
         case .version5_32(let header):
             header.offset
@@ -35,11 +41,11 @@ extension DWARFLineHeader {
 extension DWARFLineHeader {
     public var layoutSize: Int {
         switch self {
-        case .upToVersion4(let header):
+        case .version4(let header):
             header.layoutSize
         case .version5(let header):
             header.layoutSize
-        case .upToVersion4_32(let header):
+        case .version4_32(let header):
             header.layoutSize
         case .version5_32(let header):
             header.layoutSize
@@ -50,9 +56,9 @@ extension DWARFLineHeader {
 extension DWARFLineHeader {
     public var format: DWARFFormat {
         switch self {
-        case .upToVersion4, .version5:
+        case .version4, .version5:
                 ._64bit
-        case .upToVersion4_32, .version5_32:
+        case .version4_32, .version5_32:
                 ._32bit
         }
     }
@@ -60,11 +66,11 @@ extension DWARFLineHeader {
     // size of `unit_length` field is not contained in `length`
     public var length: Int {
         switch self {
-        case .upToVersion4(let header):
+        case .version4(let header):
             numericCast(header.unit_length.value)
         case .version5(let header):
             numericCast(header.unit_length.value)
-        case .upToVersion4_32(let header):
+        case .version4_32(let header):
             numericCast(header.unit_length.value)
         case .version5_32(let header):
             numericCast(header.unit_length.value)
@@ -73,11 +79,11 @@ extension DWARFLineHeader {
 
     public var version: DWARFVersion {
         switch self {
-        case .upToVersion4(let header):
+        case .version4(let header):
                 .init(rawValue: numericCast(header.version))!
         case .version5(let header):
                 .init(rawValue: numericCast(header.version))!
-        case .upToVersion4_32(let header):
+        case .version4_32(let header):
                 .init(rawValue: numericCast(header.version))!
         case .version5_32(let header):
                 .init(rawValue: numericCast(header.version))!
@@ -86,11 +92,11 @@ extension DWARFLineHeader {
 
     public var addressSize: Int {
         switch self {
-        case .upToVersion4(let header):
+        case .version4(let header):
             header.addressSize
         case .version5(let header):
             numericCast(header.address_size)
-        case .upToVersion4_32(let header):
+        case .version4_32(let header):
             header.addressSize
         case .version5_32(let header):
             numericCast(header.address_size)
@@ -99,13 +105,13 @@ extension DWARFLineHeader {
 }
 
 extension DWARFLineHeader {
-    public var opecodeBase: UInt8 {
+    public var opcodeBase: UInt8 {
         switch self {
-        case .upToVersion4(let header):
+        case .version4(let header):
             header.opcode_base
         case .version5(let header):
             header.opcode_base
-        case .upToVersion4_32(let header):
+        case .version4_32(let header):
             header.opcode_base
         case .version5_32(let header):
             header.opcode_base
@@ -114,11 +120,11 @@ extension DWARFLineHeader {
 
     public var lineBase: Int8 {
         switch self {
-        case .upToVersion4(let header):
+        case .version4(let header):
             header.line_base
         case .version5(let header):
             header.line_base
-        case .upToVersion4_32(let header):
+        case .version4_32(let header):
             header.line_base
         case .version5_32(let header):
             header.line_base
@@ -127,11 +133,11 @@ extension DWARFLineHeader {
 
     public var lineRange: UInt8 {
         switch self {
-        case .upToVersion4(let header):
+        case .version4(let header):
             header.line_range
         case .version5(let header):
             header.line_range
-        case .upToVersion4_32(let header):
+        case .version4_32(let header):
             header.line_range
         case .version5_32(let header):
             header.line_range
@@ -140,11 +146,11 @@ extension DWARFLineHeader {
 
     public var defaultOfIsStmt: Bool {
         switch self {
-        case .upToVersion4(let header):
+        case .version4(let header):
             header.default_is_stmt > 0
         case .version5(let header):
             header.default_is_stmt > 0
-        case .upToVersion4_32(let header):
+        case .version4_32(let header):
             header.default_is_stmt > 0
         case .version5_32(let header):
             header.default_is_stmt > 0
@@ -153,11 +159,11 @@ extension DWARFLineHeader {
 
     public var minimumInstructionLength: UInt8 {
         switch self {
-        case .upToVersion4(let header):
+        case .version4(let header):
             header.minimum_instruction_length
         case .version5(let header):
             header.minimum_instruction_length
-        case .upToVersion4_32(let header):
+        case .version4_32(let header):
             header.minimum_instruction_length
         case .version5_32(let header):
             header.minimum_instruction_length
@@ -166,11 +172,11 @@ extension DWARFLineHeader {
 
     public var maximumOperationsPerInstruction: UInt8 {
         switch self {
-        case .upToVersion4(let header):
+        case .version4(let header):
             header.maximum_operations_per_instruction
         case .version5(let header):
             header.maximum_operations_per_instruction
-        case .upToVersion4_32(let header):
+        case .version4_32(let header):
             header.maximum_operations_per_instruction
         case .version5_32(let header):
             header.maximum_operations_per_instruction
@@ -179,11 +185,11 @@ extension DWARFLineHeader {
 
     public var standardOpcodeLengths: [UInt8] {
         switch self {
-        case .upToVersion4(let header):
+        case .version4(let header):
             header.standard_opcode_lengths
         case .version5(let header):
             header.standard_opcode_lengths
-        case .upToVersion4_32(let header):
+        case .version4_32(let header):
             header.standard_opcode_lengths
         case .version5_32(let header):
             header.standard_opcode_lengths
@@ -194,11 +200,11 @@ extension DWARFLineHeader {
 extension DWARFLineHeader {
     public var dwarf4Directories: [String]? {
         switch self {
-        case .upToVersion4(let header):
+        case .version4(let header):
             header.include_directories
         case .version5:
             nil
-        case .upToVersion4_32(let header):
+        case .version4_32(let header):
             header.include_directories
         case .version5_32:
             nil
@@ -207,11 +213,11 @@ extension DWARFLineHeader {
 
     public var dwarf4Files: [DWARF4FileEntry]? {
         switch self {
-        case .upToVersion4(let header):
+        case .version4(let header):
             header.file_names
         case .version5:
             nil
-        case .upToVersion4_32(let header):
+        case .version4_32(let header):
             header.file_names
         case .version5_32:
             nil
@@ -220,11 +226,11 @@ extension DWARFLineHeader {
 
     public var dwarf5Directories: [DWARFFileEntry]? {
         switch self {
-        case .upToVersion4:
+        case .version4:
             nil
         case .version5(let header):
             header.directories
-        case .upToVersion4_32:
+        case .version4_32:
             nil
         case .version5_32(let header):
             header.directories
@@ -233,11 +239,11 @@ extension DWARFLineHeader {
 
     public var dwarf5Files: [DWARFFileEntry]? {
         switch self {
-        case .upToVersion4:
+        case .version4:
             nil
         case .version5(let header):
             header.file_names
-        case .upToVersion4_32:
+        case .version4_32:
             nil
         case .version5_32(let header):
             header.file_names
@@ -259,16 +265,16 @@ extension DWARFLineHeader {
         )
 
         switch (is64Bit, version) {
-        case (true, _) where version <= 4:
+        case (true, 4):
             guard let header: DWARF4LineHeader64 = try ._load(at: offset - binary.headerStartOffset, in: binary) else {
                 return nil
             }
-            return .upToVersion4(header)
-        case (false, _) where version <= 4:
+            return .version4(header)
+        case (false, 4):
             guard let header: DWARF4LineHeader32 = try ._load(at: offset - binary.headerStartOffset, in: binary) else {
                 return nil
             }
-            return .upToVersion4_32(header)
+            return .version4_32(header)
         case (true, 5):
             guard let header: DWARF5LineHeader64 = try ._load(at: offset - binary.headerStartOffset, in: binary) else {
                 return nil

@@ -110,13 +110,13 @@ func dump<Binary: _DWARFBinary>(
          default_is_stmt: \(header.defaultOfIsStmt)
                line_base: \(header.lineBase)
               line_range: \(header.lineRange)
-             opcode_base: \(header.opecodeBase)
+             opcode_base: \(header.opcodeBase)
         """
     )
 
     let opcodes = DWARFLineStandardOpcode.allCases
     let opcodeLengths = header.standardOpcodeLengths
-    for i in 0 ..< Int(header.opecodeBase - 1) {
+    for i in 0 ..< Int(header.opcodeBase - 1) {
         let opcode = opcodes[i]
         print("standard_opcode_lengths[\(opcode)] = \(opcodeLengths[i])")
     }

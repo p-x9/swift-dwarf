@@ -20,7 +20,7 @@ extension Sequence<DWARFLineOperation> {
         for operation in self {
             switch operation {
             case .specal(let opcode):
-                let adjusted = opcode - header.opecodeBase
+                let adjusted = opcode - header.opcodeBase
 
                 let lineIncrement: Int64 = numericCast(header.lineBase) + numericCast(adjusted % header.lineRange)
 
@@ -84,7 +84,7 @@ extension Sequence<DWARFLineOperation> {
                     state.layout.basic_block = true
                 case .const_add_pc:
                     let opcode: UInt8 = 255
-                    let adjusted = opcode - header.opecodeBase
+                    let adjusted = opcode - header.opcodeBase
 
                     let operationAdvance = adjusted / header.lineRange
 
