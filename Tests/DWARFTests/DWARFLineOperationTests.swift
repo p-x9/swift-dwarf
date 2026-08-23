@@ -58,7 +58,7 @@ private func makeHeader(
     layout.line_range = 14
     layout.opcode_base = 14
 
-    return .upToVersion4_32(
+    return .version4_32(
         .init(
             layout: layout,
             standard_opcode_lengths: Array(repeating: 0, count: 12)
