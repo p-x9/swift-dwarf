@@ -24,12 +24,18 @@ extension DWARFAddressRangeTable {
         in binary: some _DWARFBinary
     ) -> DWARFAddressRanges {
         let chunkSize = header.addressSize * 2 + header.segmentSelectorSize
-        let offset = offset + header.layoutSize.alignedUp(to: chunkSize) + binary.headerStartOffset
-
-        let data = try! binary.fileHandle.readData(
-            offset: offset,
-            length: layoutSize - header.layoutSize
+        let layout = DWARFAddressRangeTableLayout(
+            contributionSize: layoutSize,
+            headerSize: header.layoutSize,
+            tupleSize: chunkSize
         )
+        let range = try? layout.tuplesRange
+        let data = range.flatMap {
+            try? binary.fileHandle.readData(
+                offset: offset + $0.lowerBound + binary.headerStartOffset,
+                length: $0.count
+            )
+        } ?? Data()
         return .init(
             addressSize: header.addressSize,
             segmentSelectorSize: header.segmentSelectorSize,
