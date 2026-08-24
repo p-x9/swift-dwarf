@@ -256,32 +256,33 @@ extension DWARFLineHeader {
         at offset: Int,
         in binary: some _DWARFBinary
     ) throws -> Self? {
-        let offset = offset + binary.headerStartOffset
-        let length: UInt32 = try binary.fileHandle.read(offset: offset)
+        let imageOffset = offset
+        let fileOffset = imageOffset + binary.headerStartOffset
+        let length: UInt32 = try binary.fileHandle.read(offset: fileOffset)
         let is64Bit = length == 0xffffffff
 
         let version: UInt16 = try binary.fileHandle.read(
-            offset: offset + (is64Bit ? MemoryLayout<dwarf_init_len64>.size : MemoryLayout<dwarf_init_len32>.size)
+            offset: fileOffset + (is64Bit ? MemoryLayout<dwarf_init_len64>.size : MemoryLayout<dwarf_init_len32>.size)
         )
 
         switch (is64Bit, version) {
         case (true, 4):
-            guard let header: DWARF4LineHeader64 = try ._load(at: offset - binary.headerStartOffset, in: binary) else {
+            guard let header: DWARF4LineHeader64 = try ._load(at: imageOffset, in: binary) else {
                 return nil
             }
             return .version4(header)
         case (false, 4):
-            guard let header: DWARF4LineHeader32 = try ._load(at: offset - binary.headerStartOffset, in: binary) else {
+            guard let header: DWARF4LineHeader32 = try ._load(at: imageOffset, in: binary) else {
                 return nil
             }
             return .version4_32(header)
         case (true, 5):
-            guard let header: DWARF5LineHeader64 = try ._load(at: offset - binary.headerStartOffset, in: binary) else {
+            guard let header: DWARF5LineHeader64 = try ._load(at: imageOffset, in: binary) else {
                 return nil
             }
             return .version5(header)
         case (false, 5):
-            guard let header: DWARF5LineHeader32 = try ._load(at: offset - binary.headerStartOffset, in: binary) else {
+            guard let header: DWARF5LineHeader32 = try ._load(at: imageOffset, in: binary) else {
                 return nil
             }
             return .version5_32(header)
@@ -315,19 +316,20 @@ extension DWARF5LineHeader64 {
         at offset: Int,
         in binary: some _DWARFBinary
     ) throws -> Self? {
-        let offset = offset + binary.headerStartOffset
+        let imageOffset = offset
+        let fileOffset = imageOffset + binary.headerStartOffset
 
-        let layout: Layout = try binary.fileHandle.read(offset: offset)
+        let layout: Layout = try binary.fileHandle.read(offset: fileOffset)
 
         let standard_opcode_lengths: [UInt8] = Array(
             binary.fileHandle.readDataSequence(
-                offset: numericCast(offset + MemoryLayout<Layout>.size),
+                offset: numericCast(fileOffset + MemoryLayout<Layout>.size),
                 numberOfElements: numericCast(layout.opcode_base) - 1
             )
         )
 
         var pos: UInt64 = numericCast(
-            offset - binary.headerStartOffset + MemoryLayout<Layout>.size + standard_opcode_lengths.count
+            imageOffset + MemoryLayout<Layout>.size + standard_opcode_lengths.count
         )
         let directory_entry_format_count: dwarf_ubyte = binary.fileHandle.read(
             offset: pos + numericCast(binary.headerStartOffset)
@@ -390,8 +392,8 @@ extension DWARF5LineHeader64 {
             file_name_entry_format: file_name_entry_format,
             file_names_count: numericCast(file_names_count),
             file_names: file_names,
-            offset: offset - binary.headerStartOffset,
-            layoutSize: numericCast(pos) - offset
+            offset: imageOffset,
+            layoutSize: numericCast(pos) - imageOffset
         )
     }
 }
@@ -421,19 +423,20 @@ extension DWARF5LineHeader32 {
         at offset: Int,
         in binary: some _DWARFBinary
     ) throws -> Self? {
-        let offset = offset + binary.headerStartOffset
+        let imageOffset = offset
+        let fileOffset = imageOffset + binary.headerStartOffset
 
-        let layout: Layout = try binary.fileHandle.read(offset: offset)
+        let layout: Layout = try binary.fileHandle.read(offset: fileOffset)
 
         let standard_opcode_lengths: [UInt8] = Array(
             binary.fileHandle.readDataSequence(
-                offset: numericCast(offset + MemoryLayout<Layout>.size),
+                offset: numericCast(fileOffset + MemoryLayout<Layout>.size),
                 numberOfElements: numericCast(layout.opcode_base) - 1
             )
         )
 
         var pos: UInt64 = numericCast(
-            offset - binary.headerStartOffset + MemoryLayout<Layout>.size + standard_opcode_lengths.count
+            imageOffset + MemoryLayout<Layout>.size + standard_opcode_lengths.count
         )
         let directory_entry_format_count: dwarf_ubyte = binary.fileHandle.read(
             offset: pos + numericCast(binary.headerStartOffset)
@@ -496,8 +499,8 @@ extension DWARF5LineHeader32 {
             file_name_entry_format: file_name_entry_format,
             file_names_count: numericCast(file_names_count),
             file_names: file_names,
-            offset: offset - binary.headerStartOffset,
-            layoutSize: numericCast(pos) - offset
+            offset: imageOffset,
+            layoutSize: numericCast(pos) - imageOffset
         )
     }
 }
@@ -521,19 +524,20 @@ extension DWARF4LineHeader64 {
         at offset: Int,
         in binary: some _DWARFBinary
     ) throws -> Self? {
-        let offset = offset + binary.headerStartOffset
+        let imageOffset = offset
+        let fileOffset = imageOffset + binary.headerStartOffset
 
-        let layout: Layout = try binary.fileHandle.read(offset: offset)
+        let layout: Layout = try binary.fileHandle.read(offset: fileOffset)
 
         let standard_opcode_lengths: [UInt8] = Array(
             binary.fileHandle.readDataSequence(
-                offset: numericCast(offset + MemoryLayout<Layout>.size),
+                offset: numericCast(fileOffset + MemoryLayout<Layout>.size),
                 numberOfElements: numericCast(layout.opcode_base) - 1
             )
         )
 
         var pos: UInt64 = numericCast(
-            offset - binary.headerStartOffset + MemoryLayout<Layout>.size + standard_opcode_lengths.count
+            imageOffset + MemoryLayout<Layout>.size + standard_opcode_lengths.count
         )
 
         let include_directories = try readDWARF4IncludeDirectories(
@@ -548,8 +552,8 @@ extension DWARF4LineHeader64 {
             include_directories: include_directories,
             file_names: file_names,
             addressSize: binary.is64Bit ? 8 : 4,
-            offset: offset - binary.headerStartOffset,
-            layoutSize: numericCast(pos) - offset
+            offset: imageOffset,
+            layoutSize: numericCast(pos) - imageOffset
         )
     }
 }
@@ -573,19 +577,20 @@ extension DWARF4LineHeader32 {
         at offset: Int,
         in binary: some _DWARFBinary
     ) throws -> Self? {
-        let offset = offset + binary.headerStartOffset
+        let imageOffset = offset
+        let fileOffset = imageOffset + binary.headerStartOffset
 
-        let layout: Layout = try binary.fileHandle.read(offset: offset)
+        let layout: Layout = try binary.fileHandle.read(offset: fileOffset)
 
         let standard_opcode_lengths: [UInt8] = Array(
             binary.fileHandle.readDataSequence(
-                offset: numericCast(offset + MemoryLayout<Layout>.size),
+                offset: numericCast(fileOffset + MemoryLayout<Layout>.size),
                 numberOfElements: numericCast(layout.opcode_base) - 1
             )
         )
 
         var pos: UInt64 = numericCast(
-            offset - binary.headerStartOffset + MemoryLayout<Layout>.size + standard_opcode_lengths.count
+            imageOffset + MemoryLayout<Layout>.size + standard_opcode_lengths.count
         )
 
         let include_directories = try readDWARF4IncludeDirectories(
@@ -600,8 +605,8 @@ extension DWARF4LineHeader32 {
             include_directories: include_directories,
             file_names: file_names,
             addressSize: binary.is64Bit ? 8 : 4,
-            offset: offset - binary.headerStartOffset,
-            layoutSize: numericCast(pos) - offset
+            offset: imageOffset,
+            layoutSize: numericCast(pos) - imageOffset
         )
     }
 }
