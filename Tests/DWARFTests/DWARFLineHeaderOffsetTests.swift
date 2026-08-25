@@ -1,5 +1,4 @@
 import XCTest
-import MachO
 @_spi(Support) @testable import MachOKit
 @testable import DWARF
 import DWARFC
