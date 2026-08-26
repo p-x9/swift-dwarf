@@ -1,8 +1,60 @@
 import XCTest
 @testable import DWARF
 import DWARFC
+import DWARFMachO
+import DWARFELF
 
 final class DWARFUnitRootTests: XCTestCase {
+    func testLegacyUnitTypeIsResolvedFromRootDIE() throws {
+        for version: DWARFVersion in [.v2, .v3, .v4] {
+            for header in legacyHeaders(version: version) {
+                for tag: DWARFTag in [.compile_unit, .partial_unit] {
+                    let expected: DWARFUnitType? = tag == .compile_unit
+                        ? .compile : (version == .v2 ? nil : .partial)
+                    try UnitTypeBinaryFixture.withUnits(
+                        header: header,
+                        rootTag: tag
+                    ) { machO, machOUnit, elf, elfUnit in
+                        XCTAssertNil(machOUnit.header.unitType)
+                        XCTAssertNil(elfUnit.header.unitType)
+                        XCTAssertEqual(machOUnit.unitType(in: machO), expected)
+                        XCTAssertEqual(elfUnit.unitType(in: elf), expected)
+                    }
+                }
+            }
+        }
+    }
+
+    func testLegacyUnitTypeRejectsInvalidOrUnavailableRoots() throws {
+        for header in legacyHeaders(version: .v4) {
+            for tag: DWARFTag? in [nil, .null, .subprogram, .type_unit, .skeleton_unit] {
+                try UnitTypeBinaryFixture.withUnits(
+                    header: header,
+                    rootTag: tag
+                ) { machO, machOUnit, elf, elfUnit in
+                    XCTAssertNil(machOUnit.unitType(in: machO))
+                    XCTAssertNil(elfUnit.unitType(in: elf))
+                }
+            }
+        }
+    }
+
+    func testDWARF5UnitTypeUsesHeaderWithoutReadingRootDIE() throws {
+        for unitType in DWARFUnitType.allCases {
+            for header in version5Headers(unitType: unitType) {
+                // No abbreviation section is provided. In particular, split
+                // unit kinds must not be collapsed into compile/type kinds.
+                try UnitTypeBinaryFixture.withUnits(
+                    header: header,
+                    rootTag: nil
+                ) { machO, machOUnit, elf, elfUnit in
+                    XCTAssertEqual(machOUnit.unitType(in: machO), unitType)
+                    XCTAssertEqual(elfUnit.unitType(in: elf), unitType)
+                }
+            }
+        }
+    }
+
     func testDWARF4InfoHeadersAcceptFullAndPartialUnits() {
         for header in legacyHeaders(version: .v4) {
             XCTAssertNil(header.unitType)

@@ -47,6 +47,25 @@ extension DWARFCompilationUnit {
 }
 
 extension DWARFCompilationUnit {
+    package func _unitType(in binary: some _DWARFBinary) -> DWARFUnitType? {
+        // DWARF5 Section 7.5.1: the header distinguishes split units, whose
+        // root tags are shared with conventional units (Sections 3.1.3-3.1.4).
+        if let unitType = header.unitType {
+            return unitType
+        }
+
+        // DWARF3/4 Section 3.1.1: legacy .debug_info units are distinguished
+        // by their root DIE, not by a unit_type field in the header.
+        guard let entry = unitRootDebugInfoEntry(in: binary) else { return nil }
+        switch entry.tag {
+        case .compile_unit: return .compile
+        case .partial_unit: return .partial
+        default: return nil
+        }
+    }
+}
+
+extension DWARFCompilationUnit {
     package func _abbreviationsSet(in binary: some _DWARFBinary) -> DWARFAbbreviationsSet? {
         guard let dwarf = binary.dwarfSegment,
               let debug_abbrev = dwarf.debug_abbrev(in: binary) else {
