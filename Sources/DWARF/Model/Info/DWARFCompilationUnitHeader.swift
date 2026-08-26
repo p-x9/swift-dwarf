@@ -9,6 +9,14 @@
 import Foundation
 import DWARFC
 
+/// The supported header layouts for a ``DWARFCompilationUnit``.
+///
+/// Like the unit model, this enum uses "compilation unit" in the broad sense
+/// of DWARF5 Section 3.1 (pp. 59-60), including skeleton, type, and split units.
+/// https://dwarfstd.org/doc/DWARF5.pdf#page=77
+///
+/// The legacy cases describe `.debug_info` headers only; DWARF4 type unit
+/// headers from `.debug_types` are not represented here.
 public enum DWARFCompilationUnitHeader: Sendable {
     case upToVersion4(DWARF4CompilationUnitHeader64)
     case version5(DWARF5CompilationUnitHeader64)
@@ -211,6 +219,36 @@ extension DWARFCompilationUnitHeader {
             numericCast(header.type_offset)
         default:
             nil
+        }
+    }
+}
+
+extension DWARFCompilationUnitHeader {
+    /// Whether a root DIE tag matches the kind of unit described by this header.
+    ///
+    /// DWARF3/4 Section 3.1.1 defines full and partial compilation unit tags.
+    /// Legacy `.debug_info` headers have no `unit_type` field (DWARF4 Section
+    /// 7.5.1.1); they are not the type unit headers used in `.debug_types`
+    /// (Section 7.5.1.2).
+    /// https://dwarfstd.org/doc/DWARF4.pdf
+    ///
+    /// DWARF5 Sections 3.1.1-3.1.4 (pp. 60-69) define the root tags, while
+    /// Section 7.5.1 defines the header's `unit_type`. Split full and split type
+    /// units retain `DW_TAG_compile_unit` and `DW_TAG_type_unit`, respectively.
+    /// https://dwarfstd.org/doc/DWARF5.pdf
+    package func _acceptsRootTag(_ tag: DWARFTag) -> Bool {
+        switch unitType {
+        case nil:
+            return tag == .compile_unit
+                || (version.rawValue >= DWARFVersion.v3.rawValue && tag == .partial_unit)
+        case .compile, .split_compile:
+            return tag == .compile_unit
+        case .partial:
+            return tag == .partial_unit
+        case .skeleton:
+            return tag == .skeleton_unit
+        case .type, .split_type:
+            return tag == .type_unit
         }
     }
 }

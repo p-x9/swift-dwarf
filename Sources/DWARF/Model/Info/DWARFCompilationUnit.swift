@@ -8,6 +8,15 @@
 
 import Foundation
 
+/// A compilation unit in the broad sense used by the DWARF specification.
+///
+/// This model represents full, partial, skeleton, and type units, including
+/// split full and split type units. It is not limited to units whose root DIE
+/// has the `DW_TAG_compile_unit` tag.
+///
+/// See DWARF5 Section 3.1 (pp. 59-60), which uses "compilation unit" as an
+/// umbrella term and generally shortens it to "unit" in the rest of the text.
+/// https://dwarfstd.org/doc/DWARF5.pdf#page=77
 public struct DWARFCompilationUnit: Sendable {
     public let header: DWARFCompilationUnitHeader
     public let offset: Int
@@ -165,7 +174,7 @@ extension DWARFCompilationUnit {
 }
 
 extension DWARFCompilationUnit {
-    private func compileUnitDebugInfoEntry(
+    private func unitRootDebugInfoEntry(
         in binary: some _DWARFBinary
     ) -> DWARFDebugInfoEntry? {
         guard let abbreviationsSet = _abbreviationsSet(in: binary) else {
@@ -179,7 +188,7 @@ extension DWARFCompilationUnit {
             abbreviationsSet: abbreviationsSet,
             addressSize: header.addressSize
         ) else { return nil }
-        guard entry.tag == .compile_unit else { return nil }
+        guard header._acceptsRootTag(entry.tag) else { return nil }
         return entry
     }
 
@@ -187,7 +196,7 @@ extension DWARFCompilationUnit {
         for attribute: DWARFAttribute,
         in binary: some _DWARFBinary
     ) -> UInt64? {
-        guard let entry = compileUnitDebugInfoEntry(in: binary) else {
+        guard let entry = unitRootDebugInfoEntry(in: binary) else {
             return nil
         }
         guard let attribute = entry.attributes.first(
