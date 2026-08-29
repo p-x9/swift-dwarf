@@ -8,14 +8,13 @@
 
 import Foundation
 
-/// A compilation unit in the broad sense used by the DWARF specification.
+/// A unit contribution in DWARF debugging information.
 ///
 /// This model represents full, partial, skeleton, and type units, including
 /// split full and split type units. It is not limited to units whose root DIE
 /// has the `DW_TAG_compile_unit` tag.
 ///
-/// See DWARF5 Section 3.1 (pp. 59-60), which uses "compilation unit" as an
-/// umbrella term and generally shortens it to "unit" in the rest of the text.
+/// See DWARF5 Section 3.1 (pp. 59-60) for the unit kinds represented here.
 /// https://dwarfstd.org/doc/DWARF5.pdf#page=77
 public struct DWARFCompilationUnit: Sendable {
     public let header: DWARFCompilationUnitHeader

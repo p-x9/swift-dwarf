@@ -11,8 +11,8 @@ import DWARFC
 
 /// The supported header layouts for a ``DWARFCompilationUnit``.
 ///
-/// Like the unit model, this enum uses "compilation unit" in the broad sense
-/// of DWARF5 Section 3.1 (pp. 59-60), including skeleton, type, and split units.
+/// These cases cover full, partial, skeleton, type, split full, and split type
+/// units. See DWARF5 Section 3.1 (pp. 59-60) for the unit kinds represented here.
 /// https://dwarfstd.org/doc/DWARF5.pdf#page=77
 ///
 /// The legacy cases describe `.debug_info` headers only; DWARF4 type unit
