@@ -6,7 +6,7 @@ import ELFKit
 import DWARFMachO
 import DWARFELF
 
-/// Minimal object files containing one unit and an optional abbreviation set.
+/// Minimal object files containing one unit and an optional root DIE.
 enum UnitTypeBinaryFixture {
     private static let infoOffset = 0x200
     private static let abbrevOffset = 0x300
@@ -14,19 +14,31 @@ enum UnitTypeBinaryFixture {
     static func withUnits(
         header: DWARFCompilationUnitHeader,
         rootTag: DWARFTag?,
+        rootAttributes: [(attribute: DWARFAttribute, value: UInt64)] = [],
         body: (MachOFile, DWARFCompilationUnit, ELFFile, DWARFCompilationUnit) throws -> Void
     ) throws {
         var info = headerData(header)
-        info.append(rootTag == .null || rootTag == nil ? 0 : 1)
+        let hasRoot = rootTag != .null && rootTag != nil
+        info.append(hasRoot ? 1 : 0)
+        if hasRoot {
+            for (_, value) in rootAttributes {
+                switch header.format {
+                case ._32bit:
+                    info.append(bytes(UInt32(value)))
+                case ._64bit:
+                    info.append(bytes(value))
+                }
+            }
+        }
         if header.format == ._32bit {
             info.replaceSubrange(0 ..< 4, with: bytes(UInt32(info.count - 4)))
         } else {
             info.replaceSubrange(4 ..< 12, with: bytes(UInt64(info.count - 12)))
         }
 
-        // Abbreviation 1: selected tag, no children, no attributes. All tags
-        // used here fit in one ULEB128 byte. A final zero terminates the set.
-        let abbrev = rootTag.map { Data([1, UInt8($0.rawValue), 0, 0, 0, 0]) }
+        let abbrev = rootTag.map {
+            abbreviation(rootTag: $0, rootAttributes: rootAttributes)
+        }
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
@@ -145,6 +157,34 @@ enum UnitTypeBinaryFixture {
         case .version5Type(let header): bytes(header.layout)
         case .version5Type_32(let header): bytes(header.layout)
         }
+    }
+
+    private static func abbreviation(
+        rootTag: DWARFTag,
+        rootAttributes: [(attribute: DWARFAttribute, value: UInt64)]
+    ) -> Data {
+        var data = uleb128(1) // Abbreviation code.
+        data.append(uleb128(numericCast(rootTag.rawValue)))
+        data.append(0) // DW_CHILDREN_no.
+        for (attribute, _) in rootAttributes {
+            data.append(uleb128(numericCast(attribute.rawValue)))
+            data.append(uleb128(numericCast(DWARFAttributeFormatType.sec_offset.rawValue)))
+        }
+        data.append(contentsOf: [0, 0]) // End of the attribute specification.
+        data.append(0) // End of the abbreviation set.
+        return data
+    }
+
+    private static func uleb128(_ value: UInt64) -> Data {
+        var value = value
+        var data = Data()
+        repeat {
+            var byte = UInt8(value & 0x7f)
+            value >>= 7
+            if value != 0 { byte |= 0x80 }
+            data.append(byte)
+        } while value != 0
+        return data
     }
 
     private static func bytes<T>(_ value: T) -> Data {

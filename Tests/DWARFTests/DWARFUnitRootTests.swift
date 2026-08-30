@@ -115,6 +115,53 @@ final class DWARFUnitRootTests: XCTestCase {
             }
         }
     }
+
+    func testPublicBaseAccessorsReadValidDWARF5RootAttributes() throws {
+        let cases: [(
+            unitType: DWARFUnitType,
+            rootTag: DWARFTag,
+            attribute: DWARFAttribute,
+            value: UInt64
+        )] = [
+            (.partial, .partial_unit, .addr_base, 0x1234),
+            (.skeleton, .skeleton_unit, .addr_base, 0x2345),
+            (.type, .type_unit, .str_offsets_base, 0x3456)
+        ]
+
+        for testCase in cases {
+            for header in version5Headers(unitType: testCase.unitType) {
+                try UnitTypeBinaryFixture.withUnits(
+                    header: header,
+                    rootTag: testCase.rootTag,
+                    rootAttributes: [(testCase.attribute, testCase.value)]
+                ) { machO, machOUnit, elf, elfUnit in
+                    switch testCase.attribute {
+                    case .addr_base:
+                        XCTAssertEqual(machOUnit.addressesBase(in: machO), testCase.value)
+                        XCTAssertEqual(elfUnit.addressesBase(in: elf), testCase.value)
+                    case .str_offsets_base:
+                        XCTAssertEqual(machOUnit.stringOffsetsBase(in: machO), testCase.value)
+                        XCTAssertEqual(elfUnit.stringOffsetsBase(in: elf), testCase.value)
+                    default:
+                        XCTFail("Unexpected fixture attribute: \(testCase.attribute)")
+                    }
+                }
+            }
+        }
+    }
+
+    func testPublicBaseAccessorsRejectMismatchedDWARF5RootTag() throws {
+        for header in version5Headers(unitType: .skeleton) {
+            try UnitTypeBinaryFixture.withUnits(
+                header: header,
+                rootTag: .compile_unit,
+                rootAttributes: [(.addr_base, 0x1234)]
+            ) { machO, machOUnit, elf, elfUnit in
+                XCTAssertNil(machOUnit.addressesBase(in: machO))
+                XCTAssertNil(elfUnit.addressesBase(in: elf))
+            }
+        }
+    }
 }
 
 // MARK: - Header Fixtures
