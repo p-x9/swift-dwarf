@@ -11,6 +11,17 @@ import Foundation
 import DWARF
 
 extension DWARFCompilationUnit {
+    /// Returns the unit's kind across DWARF versions.
+    ///
+    /// For DWARF5, returns `header.unitType` without reading or validating the
+    /// root DIE. For earlier versions, reads the root DIE and returns `.compile`
+    /// or `.partial`, or `nil` if a valid unit root cannot be obtained.
+    /// These legacy results are normalized kinds, not serialized `DW_UT_*` fields.
+    /// DWARF4 `.debug_types` units are not currently supported.
+    public func unitType(in elf: ELFFile) -> DWARFUnitType? {
+        _unitType(in: elf)
+    }
+
     public func abbreviationsSet(
         in elf: ELFFile
     ) -> DWARFAbbreviationsSet? {

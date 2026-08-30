@@ -8,6 +8,14 @@
 
 import Foundation
 
+/// A unit contribution in DWARF debugging information.
+///
+/// This model represents full, partial, skeleton, and type units, including
+/// split full and split type units. It is not limited to units whose root DIE
+/// has the `DW_TAG_compile_unit` tag.
+///
+/// See DWARF5 Section 3.1 (pp. 59-60) for the unit kinds represented here.
+/// https://dwarfstd.org/doc/DWARF5.pdf#page=77
 public struct DWARFCompilationUnit: Sendable {
     public let header: DWARFCompilationUnitHeader
     public let offset: Int
@@ -34,6 +42,25 @@ extension DWARFCompilationUnit {
         in units: [Self]
     ) -> Self? {
         units.first { $0._containsDebugInfoEntry(at: entryOffset) }
+    }
+}
+
+extension DWARFCompilationUnit {
+    package func _unitType(in binary: some _DWARFBinary) -> DWARFUnitType? {
+        // DWARF5 Section 7.5.1: the header distinguishes split units, whose
+        // root tags are shared with conventional units (Sections 3.1.3-3.1.4).
+        if let unitType = header.unitType {
+            return unitType
+        }
+
+        // DWARF3/4 Section 3.1.1: legacy .debug_info units are distinguished
+        // by their root DIE, not by a unit_type field in the header.
+        guard let entry = unitRootDebugInfoEntry(in: binary) else { return nil }
+        switch entry.tag {
+        case .compile_unit: return .compile
+        case .partial_unit: return .partial
+        default: return nil
+        }
     }
 }
 
@@ -165,7 +192,7 @@ extension DWARFCompilationUnit {
 }
 
 extension DWARFCompilationUnit {
-    private func compileUnitDebugInfoEntry(
+    private func unitRootDebugInfoEntry(
         in binary: some _DWARFBinary
     ) -> DWARFDebugInfoEntry? {
         guard let abbreviationsSet = _abbreviationsSet(in: binary) else {
@@ -179,7 +206,7 @@ extension DWARFCompilationUnit {
             abbreviationsSet: abbreviationsSet,
             addressSize: header.addressSize
         ) else { return nil }
-        guard entry.tag == .compile_unit else { return nil }
+        guard header._acceptsRootTag(entry.tag) else { return nil }
         return entry
     }
 
@@ -187,7 +214,7 @@ extension DWARFCompilationUnit {
         for attribute: DWARFAttribute,
         in binary: some _DWARFBinary
     ) -> UInt64? {
-        guard let entry = compileUnitDebugInfoEntry(in: binary) else {
+        guard let entry = unitRootDebugInfoEntry(in: binary) else {
             return nil
         }
         guard let attribute = entry.attributes.first(
