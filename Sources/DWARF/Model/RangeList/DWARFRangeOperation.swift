@@ -78,6 +78,7 @@ extension DWARFRangeOperation {
         operaionsSize: Int,
         addressSize: Int,
         segmentSelectorSize: Int,
+        endian: Endian,
         nextOffset: inout Int,
         done: inout Bool
     ) -> DWARFRangeOperation? {
@@ -155,7 +156,7 @@ extension DWARFRangeOperation {
                 nextOffset: &nextOffset,
                 addressSize: addressSize,
                 segmentSelectorSize: segmentSelectorSize,
-                endian: .little // FIXME: endian
+                endian: endian
             ) else { return nil }
             return .base_address(address: address)
 
@@ -165,14 +166,14 @@ extension DWARFRangeOperation {
                 nextOffset: &nextOffset,
                 addressSize: addressSize,
                 segmentSelectorSize: segmentSelectorSize,
-                endian: .little // FIXME: endian
+                endian: endian
             ) else { return nil }
             guard let end: DWARFAddress = .load(
                 basePointer: basePointer,
                 nextOffset: &nextOffset,
                 addressSize: addressSize,
                 segmentSelectorSize: segmentSelectorSize,
-                endian: .little // FIXME: endian
+                endian: endian
             ) else { return nil }
             return .start_end(start: start, end: end)
 
@@ -182,7 +183,7 @@ extension DWARFRangeOperation {
                 nextOffset: &nextOffset,
                 addressSize: addressSize,
                 segmentSelectorSize: segmentSelectorSize,
-                endian: .little // FIXME: endian
+                endian: endian
             ) else { return nil }
             let (length, size) = basePointer
                 .advanced(by: nextOffset)

@@ -107,6 +107,7 @@ extension DWARFLocationOperation {
         addressSize: Int,
         format: DWARFFormat,
         segmentSelectorSize: Int,
+        endian: Endian,
         nextOffset: inout Int,
         done: inout Bool
     ) -> DWARFLocationOperation? {
@@ -221,7 +222,7 @@ extension DWARFLocationOperation {
                 nextOffset: &nextOffset,
                 addressSize: addressSize,
                 segmentSelectorSize: segmentSelectorSize,
-                endian: .little // FIXME: endian
+                endian: endian
             ) else { return nil }
             return .base_address(
                 address: address
@@ -233,14 +234,14 @@ extension DWARFLocationOperation {
                 nextOffset: &nextOffset,
                 addressSize: addressSize,
                 segmentSelectorSize: segmentSelectorSize,
-                endian: .little // FIXME: endian
+                endian: endian
             ) else { return nil }
             guard let end: DWARFAddress = .load(
                 basePointer: basePointer,
                 nextOffset: &nextOffset,
                 addressSize: addressSize,
                 segmentSelectorSize: segmentSelectorSize,
-                endian: .little // FIXME: endian
+                endian: endian
             ) else { return nil }
 
             guard let descriptions = readDescriptions(
@@ -263,7 +264,7 @@ extension DWARFLocationOperation {
                 nextOffset: &nextOffset,
                 addressSize: addressSize,
                 segmentSelectorSize: segmentSelectorSize,
-                endian: .little // FIXME: endian
+                endian: endian
             ) else { return nil }
             let (length, size) = basePointer
                 .advanced(by: nextOffset)

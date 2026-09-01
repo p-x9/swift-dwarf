@@ -64,18 +64,26 @@ extension DWARFRangeList {
         public let data: Data
         let addressSize: Int
         let segmentSelectorSize: Int
+        let endian: Endian
 
-        init(data: Data, addressSize: Int, segmentSelectorSize: Int) {
+        init(
+            data: Data,
+            addressSize: Int,
+            segmentSelectorSize: Int,
+            endian: Endian
+        ) {
             self.data = data
             self.addressSize = addressSize
             self.segmentSelectorSize = segmentSelectorSize
+            self.endian = endian
         }
 
         public func makeIterator() -> Iterator {
             .init(
                 data: data,
                 addressSize: addressSize,
-                segmentSelectorSize: segmentSelectorSize
+                segmentSelectorSize: segmentSelectorSize,
+                endian: endian
             )
         }
     }
@@ -101,7 +109,8 @@ extension DWARFRangeList {
         return .init(
             data: data,
             addressSize: numericCast(header.addressSize),
-            segmentSelectorSize: numericCast(header.segmentSelectorSize)
+            segmentSelectorSize: numericCast(header.segmentSelectorSize),
+            endian: binary.endian
         )
     }
 }
@@ -113,12 +122,19 @@ extension DWARFRangeList.Operations {
         private let data: Data
         private let addressSize: Int
         private let segmentSelectorSize: Int
+        private let endian: Endian
         private var nextOffset: Int = 0
 
-        init(data: Data, addressSize: Int, segmentSelectorSize: Int) {
+        init(
+            data: Data,
+            addressSize: Int,
+            segmentSelectorSize: Int,
+            endian: Endian
+        ) {
             self.data = data
             self.addressSize = addressSize
             self.segmentSelectorSize = segmentSelectorSize
+            self.endian = endian
         }
 
         public mutating func next() -> Element? {
@@ -132,6 +148,7 @@ extension DWARFRangeList.Operations {
                     operaionsSize: data.count,
                     addressSize: addressSize,
                     segmentSelectorSize: segmentSelectorSize,
+                    endian: endian,
                     nextOffset: &nextOffset,
                     done: &done
                 )
