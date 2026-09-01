@@ -65,17 +65,20 @@ extension DWARFLocationList {
         let addressSize: Int
         let format: DWARFFormat
         let segmentSelectorSize: Int
+        let endian: Endian
 
         init(
             data: Data,
             addressSize: Int,
             format: DWARFFormat,
-            segmentSelectorSize: Int
+            segmentSelectorSize: Int,
+            endian: Endian
         ) {
             self.data = data
             self.addressSize = addressSize
             self.format = format
             self.segmentSelectorSize = segmentSelectorSize
+            self.endian = endian
         }
 
         public func makeIterator() -> Iterator {
@@ -83,7 +86,8 @@ extension DWARFLocationList {
                 data: data,
                 addressSize: addressSize,
                 format: format,
-                segmentSelectorSize: segmentSelectorSize
+                segmentSelectorSize: segmentSelectorSize,
+                endian: endian
             )
         }
     }
@@ -110,7 +114,8 @@ extension DWARFLocationList {
             data: data,
             addressSize: numericCast(header.addressSize),
             format: header.format,
-            segmentSelectorSize: numericCast(header.segmentSelectorSize)
+            segmentSelectorSize: numericCast(header.segmentSelectorSize),
+            endian: binary.endian
         )
     }
 }
@@ -123,18 +128,21 @@ extension DWARFLocationList.Operations {
         private let addressSize: Int
         private let format: DWARFFormat
         private let segmentSelectorSize: Int
+        private let endian: Endian
         private var nextOffset: Int = 0
 
         init(
             data: Data,
             addressSize: Int,
             format: DWARFFormat,
-            segmentSelectorSize: Int
+            segmentSelectorSize: Int,
+            endian: Endian
         ) {
             self.data = data
             self.addressSize = addressSize
             self.format = format
             self.segmentSelectorSize = segmentSelectorSize
+            self.endian = endian
         }
 
         public mutating func next() -> Element? {
@@ -149,6 +157,7 @@ extension DWARFLocationList.Operations {
                     addressSize: addressSize,
                     format: format,
                     segmentSelectorSize: segmentSelectorSize,
+                    endian: endian,
                     nextOffset: &nextOffset,
                     done: &done
                 )
