@@ -30,6 +30,7 @@ extension DWARFLineOperation {
         basePointer: UnsafePointer<UInt8>,
         operaionsSize: Int,
         lineHeader: DWARFLineHeader,
+        endian: Endian,
         nextOffset: inout Int,
         done: inout Bool
     ) -> DWARFLineOperation? {
@@ -43,6 +44,7 @@ extension DWARFLineOperation {
                 basePointer: basePointer,
                 operaionsSize: operaionsSize,
                 addressSize: numericCast(lineHeader.addressSize),
+                endian: endian,
                 nextOffset: &nextOffset,
                 done: &done
             ) else { return nil }
@@ -53,6 +55,7 @@ extension DWARFLineOperation {
                 guard let operation: DWARFLineStandardOperation = .readNext(
                     basePointer: basePointer,
                     operaionsSize: operaionsSize,
+                    endian: endian,
                     nextOffset: &nextOffset,
                     done: &done
                 ) else { return nil }
