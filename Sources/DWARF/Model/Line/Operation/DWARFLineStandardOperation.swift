@@ -6,6 +6,8 @@
 //
 //
 
+import Foundation
+
 public enum DWARFLineStandardOperation: Sendable {
     /// DW_LNS_copy
     case copy
@@ -110,6 +112,7 @@ extension DWARFLineStandardOperation {
     internal static func readNext(
         basePointer: UnsafePointer<UInt8>,
         operaionsSize: Int,
+        endian: Endian,
         nextOffset: inout Int,
         done: inout Bool
     ) -> DWARFLineStandardOperation? {
@@ -156,11 +159,16 @@ extension DWARFLineStandardOperation {
         case .const_add_pc:
             return .const_add_pc
         case .fixed_advance_pc:
-            let operand: UInt16 = UnsafeRawPointer(basePointer)
-                .advanced(by: nextOffset)
-                .assumingMemoryBound(to: UInt16.self)
-                .pointee
-            nextOffset += MemoryLayout<UInt16>.size
+            let operandSize = MemoryLayout<UInt16>.size
+            guard nextOffset + operandSize <= operaionsSize else {
+                done = true
+                return nil
+            }
+            let operand: UInt16 = Data(
+                bytes: basePointer.advanced(by: nextOffset),
+                count: operandSize
+            ).uintValue(endian: endian)
+            nextOffset += operandSize
             return .fixed_advance_pc(pcOffset: operand)
         case .set_prologue_end:
             return .set_prologue_end

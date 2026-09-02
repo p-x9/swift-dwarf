@@ -6,6 +6,8 @@
 //
 //
 
+import Foundation
+
 public enum DWARFLineExtendedOperation: Sendable {
     /// DW_LNE_end_sequence
     case end_sequence
@@ -84,6 +86,7 @@ extension DWARFLineExtendedOperation {
         basePointer: UnsafePointer<UInt8>,
         operaionsSize: Int,
         addressSize: Int,
+        endian: Endian,
         nextOffset: inout Int,
         done: inout Bool
     ) -> DWARFLineExtendedOperation? {
@@ -119,21 +122,18 @@ extension DWARFLineExtendedOperation {
             return .end_sequence
 
         case .set_address:
-            if addressSize == 4 {
-                let operand: UInt32 = UnsafeRawPointer(basePointer)
-                    .advanced(by: nextOffset)
-                    .assumingMemoryBound(to: UInt32.self)
-                    .pointee
-                nextOffset += MemoryLayout<UInt32>.size
-                return .set_address(address: numericCast(operand))
-            } else {
-                let operand: UInt64 = UnsafeRawPointer(basePointer)
-                    .advanced(by: nextOffset)
-                    .assumingMemoryBound(to: UInt64.self)
-                    .pointee
-                nextOffset += MemoryLayout<UInt64>.size
-                return .set_address(address: operand)
+            guard (1...MemoryLayout<UInt64>.size).contains(addressSize),
+                  nextOffset + addressSize <= actualResultOfNextOffset,
+                  nextOffset + addressSize <= operaionsSize else {
+                done = true
+                return nil
             }
+            let operand: UInt64 = Data(
+                bytes: basePointer.advanced(by: nextOffset),
+                count: addressSize
+            ).uintValue(endian: endian)
+            nextOffset += addressSize
+            return .set_address(address: operand)
 
         case .define_file:
             let (path, size) = basePointer

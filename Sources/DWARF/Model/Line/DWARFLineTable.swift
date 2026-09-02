@@ -22,18 +22,21 @@ extension DWARFLineTable {
 extension DWARFLineTable {
     public struct Operations: Sequence {
         private let header: DWARFLineHeader
+        private let endian: Endian
         public let data: Data
 
         init(
             header: DWARFLineHeader,
+            endian: Endian,
             data: Data
         ) {
             self.header = header
+            self.endian = endian
             self.data = data
         }
 
         public func makeIterator() -> Iterator {
-            .init(header: header, data: data)
+            .init(header: header, endian: endian, data: data)
         }
     }
 
@@ -45,6 +48,7 @@ extension DWARFLineTable {
             )
         return .init(
             header: header,
+            endian: binary.endian,
             data: data
         )
     }
@@ -55,11 +59,13 @@ extension DWARFLineTable.Operations {
         public typealias Element = DWARFLineOperation
 
         private let header: DWARFLineHeader
+        private let endian: Endian
         private let data: Data
         private var nextOffset: Int = 0
 
-        init(header: DWARFLineHeader, data: Data) {
+        init(header: DWARFLineHeader, endian: Endian, data: Data) {
             self.header = header
+            self.endian = endian
             self.data = data
         }
 
@@ -73,6 +79,7 @@ extension DWARFLineTable.Operations {
                     basePointer: basePointer.assumingMemoryBound(to: UInt8.self),
                     operaionsSize: data.count,
                     lineHeader: header,
+                    endian: endian,
                     nextOffset: &nextOffset,
                     done: &done
                 )
