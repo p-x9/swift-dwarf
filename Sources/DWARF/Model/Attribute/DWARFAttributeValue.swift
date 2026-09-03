@@ -773,6 +773,7 @@ extension DWARFAttributeValue {
             return .offset(numericCast(ptr.address))
         case .exprloc(let exprLoc):
             guard let unit else { return nil }
+            guard let binary else { return nil }
             return exprLoc.data.withUnsafeBytes {
                 var next = 0
                 var done = false
@@ -785,6 +786,7 @@ extension DWARFAttributeValue {
                         operaionsSize: numericCast(exprLoc.length),
                         addressSize: unit.header.addressSize,
                         format: unit.header.format,
+                        endian: binary.endian,
                         nextOffset: &next,
                         done: &done
                     ) else { break }

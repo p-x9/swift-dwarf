@@ -39,22 +39,34 @@ extension DWARFAddress {
 
 extension DWARFAddress {
     package static func load(
-        basePointer: UnsafeRawPointer,
+        basePointer: UnsafePointer<UInt8>,
+        endOffset: Int,
         nextOffset: inout Int,
         addressSize: Int,
         segmentSelectorSize: Int,
         endian: Endian
     ) -> Self? {
-        let data = Data(
-            bytes: basePointer.advanced(by: nextOffset),
-            count: addressSize + segmentSelectorSize
-        )
-        nextOffset += addressSize + segmentSelectorSize
+        let segmentSelector: UInt64?
+        if segmentSelectorSize > 0 {
+            guard let value: UInt64 = basePointer.readFixedWidthInteger(
+                byteCount: segmentSelectorSize,
+                endian: endian,
+                nextOffset: &nextOffset,
+                endOffset: endOffset
+            ) else { return nil }
+            segmentSelector = value
+        } else {
+            segmentSelector = nil
+        }
+        guard let address: UInt64 = basePointer.readFixedWidthInteger(
+            byteCount: addressSize,
+            endian: endian,
+            nextOffset: &nextOffset,
+            endOffset: endOffset
+        ) else { return nil }
         return .init(
-            data: data,
-            addressSize: addressSize,
-            segmentSelectorSize: segmentSelectorSize,
-            endian: endian
+            segmentSelector: segmentSelector,
+            address: address
         )
     }
 }

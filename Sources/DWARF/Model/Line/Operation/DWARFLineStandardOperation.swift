@@ -6,8 +6,6 @@
 //
 //
 
-import Foundation
-
 public enum DWARFLineStandardOperation: Sendable {
     /// DW_LNS_copy
     case copy
@@ -159,16 +157,14 @@ extension DWARFLineStandardOperation {
         case .const_add_pc:
             return .const_add_pc
         case .fixed_advance_pc:
-            let operandSize = MemoryLayout<UInt16>.size
-            guard nextOffset + operandSize <= operaionsSize else {
+            guard let operand: UInt16 = basePointer.readFixedWidthInteger(
+                endian: endian,
+                nextOffset: &nextOffset,
+                endOffset: operaionsSize
+            ) else {
                 done = true
                 return nil
             }
-            let operand: UInt16 = Data(
-                bytes: basePointer.advanced(by: nextOffset),
-                count: operandSize
-            ).uintValue(endian: endian)
-            nextOffset += operandSize
             return .fixed_advance_pc(pcOffset: operand)
         case .set_prologue_end:
             return .set_prologue_end

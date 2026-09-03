@@ -9,6 +9,29 @@
 import Foundation
 
 extension FixedWidthInteger {
+    init<Bytes: Collection>(
+        bytes: Bytes,
+        endian: Endian
+    ) where Bytes.Element == UInt8 {
+        let byteCount = bytes.count
+        precondition(
+            byteCount <= Self.bitWidth / 8,
+            "Invalid byte count for target type"
+        )
+
+        var value: Self = 0
+        for (index, byte) in bytes.enumerated() {
+            let byte = Self(truncatingIfNeeded: byte)
+            let shift = endian == .little
+                ? index * 8
+                : (byteCount - 1 - index) * 8
+            value |= byte << shift
+        }
+        self = value
+    }
+}
+
+extension FixedWidthInteger {
     var uleb128Size: Int {
         var value = self
         var result = 0

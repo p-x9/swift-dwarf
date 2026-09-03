@@ -6,8 +6,6 @@
 //
 //
 
-import Foundation
-
 public enum DWARFLineExtendedOperation: Sendable {
     /// DW_LNE_end_sequence
     case end_sequence
@@ -123,16 +121,15 @@ extension DWARFLineExtendedOperation {
 
         case .set_address:
             guard (1...MemoryLayout<UInt64>.size).contains(addressSize),
-                  nextOffset + addressSize <= actualResultOfNextOffset,
-                  nextOffset + addressSize <= operaionsSize else {
+                  let operand: UInt64 = basePointer.readFixedWidthInteger(
+                      byteCount: addressSize,
+                      endian: endian,
+                      nextOffset: &nextOffset,
+                      endOffset: min(actualResultOfNextOffset, operaionsSize)
+                  ) else {
                 done = true
                 return nil
             }
-            let operand: UInt64 = Data(
-                bytes: basePointer.advanced(by: nextOffset),
-                count: addressSize
-            ).uintValue(endian: endian)
-            nextOffset += addressSize
             return .set_address(address: operand)
 
         case .define_file:

@@ -9,6 +9,28 @@
 import Foundation
 
 extension UnsafePointer<UInt8> {
+    func readFixedWidthInteger<T: FixedWidthInteger>(
+        byteCount: Int = MemoryLayout<T>.size,
+        endian: Endian,
+        nextOffset: inout Int,
+        endOffset: Int
+    ) -> T? {
+        guard nextOffset >= 0, endOffset >= nextOffset,
+              byteCount > 0, byteCount <= MemoryLayout<T>.size else {
+            return nil
+        }
+        let (operandEndOffset, overflow) = nextOffset
+            .addingReportingOverflow(byteCount)
+        guard !overflow, operandEndOffset <= endOffset else { return nil }
+
+        let bytes = UnsafeBufferPointer(
+            start: advanced(by: nextOffset),
+            count: byteCount
+        )
+        nextOffset = operandEndOffset
+        return T(bytes: bytes, endian: endian)
+    }
+
     /// (value, size)
     @_spi(Support)
     public func readULEB128() -> (UInt, Int) {
