@@ -20,50 +20,51 @@ extension DWARFAddress {
         segmentSelectorSize: Int,
         endian: Endian
     ) {
-        guard data.count == addressSize + segmentSelectorSize else { return nil }
+        guard (1...8).contains(addressSize), (0...8).contains(segmentSelectorSize),
+              data.count == addressSize + segmentSelectorSize,
+              let address: UInt64 = data.dropFirst(segmentSelectorSize)
+                .integerValue(endian: endian) else { return nil }
+
+        let segmentSelector: UInt64?
         if segmentSelectorSize > 0 {
-            self.init(
-                segmentSelector: data[0..<segmentSelectorSize]
-                    .uintValue(endian: endian),
-                address: data[segmentSelectorSize ..< segmentSelectorSize + addressSize]
-                    .uintValue(endian: endian)
-            )
+            guard let value: UInt64 = data.prefix(segmentSelectorSize)
+                .integerValue(endian: endian) else { return nil }
+            segmentSelector = value
         } else {
-            self.init(
-                segmentSelector: nil,
-                address: data.uintValue(endian: endian)
-            )
+            segmentSelector = nil
         }
+        self.init(segmentSelector: segmentSelector, address: address)
     }
 }
 
 extension DWARFAddress {
     package static func load(
-        basePointer: UnsafePointer<UInt8>,
-        endOffset: Int,
+        buffer: UnsafeBufferPointer<UInt8>,
         nextOffset: inout Int,
         addressSize: Int,
         segmentSelectorSize: Int,
         endian: Endian
     ) -> Self? {
+        guard (1...8).contains(addressSize), (0...8).contains(segmentSelectorSize)
+        else { return nil }
+        var offset = nextOffset
         let segmentSelector: UInt64?
         if segmentSelectorSize > 0 {
-            guard let value: UInt64 = basePointer.readFixedWidthInteger(
+            guard let value: UInt64 = buffer.readFixedWidthInteger(
                 byteCount: segmentSelectorSize,
                 endian: endian,
-                nextOffset: &nextOffset,
-                endOffset: endOffset
+                nextOffset: &offset
             ) else { return nil }
             segmentSelector = value
         } else {
             segmentSelector = nil
         }
-        guard let address: UInt64 = basePointer.readFixedWidthInteger(
+        guard let address: UInt64 = buffer.readFixedWidthInteger(
             byteCount: addressSize,
             endian: endian,
-            nextOffset: &nextOffset,
-            endOffset: endOffset
+            nextOffset: &offset
         ) else { return nil }
+        nextOffset = offset
         return .init(
             segmentSelector: segmentSelector,
             address: address

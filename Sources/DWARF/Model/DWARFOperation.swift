@@ -810,7 +810,9 @@ extension DWARFOperation {
         nextOffset: inout Int,
         done: inout Bool
     ) -> DWARFOperation? {
-        guard !done, nextOffset < operaionsSize else { return nil }
+        guard !done, nextOffset >= 0, nextOffset < operaionsSize else { return nil }
+
+        let buffer = UnsafeBufferPointer(start: basePointer, count: operaionsSize)
 
         let opcodeRaw = basePointer.advanced(by: nextOffset).pointee
         nextOffset += MemoryLayout<UInt8>.size
@@ -821,69 +823,60 @@ extension DWARFOperation {
 
         switch opcode {
         case .addr:
-            guard let operand: UInt64 = basePointer.readFixedWidthInteger(
+            guard let operand: UInt64 = buffer.readFixedWidthInteger(
                 byteCount: addressSize,
                 endian: endian,
-                nextOffset: &nextOffset,
-                endOffset: operaionsSize
+                nextOffset: &nextOffset
             ) else { return nil }
             return .addr(operand)
         case .deref:
             return .deref
         case .const1u:
-            guard let operand: UInt8 = basePointer.readFixedWidthInteger(
+            guard let operand: UInt8 = buffer.readFixedWidthInteger(
                 endian: endian,
-                nextOffset: &nextOffset,
-                endOffset: operaionsSize
+                nextOffset: &nextOffset
             ) else { return nil }
             return .const1u(operand)
         case .const1s:
-            guard let operand: Int8 = basePointer.readFixedWidthInteger(
+            guard let operand: Int8 = buffer.readFixedWidthInteger(
                 endian: endian,
-                nextOffset: &nextOffset,
-                endOffset: operaionsSize
+                nextOffset: &nextOffset
             ) else { return nil }
             return .const1s(operand)
         case .const2u:
-            guard let operand: UInt16 = basePointer.readFixedWidthInteger(
+            guard let operand: UInt16 = buffer.readFixedWidthInteger(
                 endian: endian,
-                nextOffset: &nextOffset,
-                endOffset: operaionsSize
+                nextOffset: &nextOffset
             ) else { return nil }
             return .const2u(operand)
         case .const2s:
-            guard let operand: Int16 = basePointer.readFixedWidthInteger(
+            guard let operand: Int16 = buffer.readFixedWidthInteger(
                 endian: endian,
-                nextOffset: &nextOffset,
-                endOffset: operaionsSize
+                nextOffset: &nextOffset
             ) else { return nil }
             return .const2s(operand)
         case .const4u:
-            guard let operand: UInt32 = basePointer.readFixedWidthInteger(
+            guard let operand: UInt32 = buffer.readFixedWidthInteger(
                 endian: endian,
-                nextOffset: &nextOffset,
-                endOffset: operaionsSize
+                nextOffset: &nextOffset
             ) else { return nil }
             return .const4u(operand)
         case .const4s:
-            guard let operand: Int32 = basePointer.readFixedWidthInteger(
+            guard let operand: Int32 = buffer.readFixedWidthInteger(
                 endian: endian,
-                nextOffset: &nextOffset,
-                endOffset: operaionsSize
+                nextOffset: &nextOffset
             ) else { return nil }
             return .const4s(operand)
         case .const8u:
-            guard let operand: UInt64 = basePointer.readFixedWidthInteger(
+            guard let operand: UInt64 = buffer.readFixedWidthInteger(
                 endian: endian,
-                nextOffset: &nextOffset,
-                endOffset: operaionsSize
+                nextOffset: &nextOffset
             ) else { return nil }
             return .const8u(operand)
         case .const8s:
-            guard let operand: Int64 = basePointer.readFixedWidthInteger(
+            guard let operand: Int64 = buffer.readFixedWidthInteger(
                 endian: endian,
-                nextOffset: &nextOffset,
-                endOffset: operaionsSize
+                nextOffset: &nextOffset
             ) else { return nil }
             return .const8s(operand)
         case .constu:
@@ -905,10 +898,9 @@ extension DWARFOperation {
         case .over:
             return .over
         case .pick:
-            guard let operand: UInt8 = basePointer.readFixedWidthInteger(
+            guard let operand: UInt8 = buffer.readFixedWidthInteger(
                 endian: endian,
-                nextOffset: &nextOffset,
-                endOffset: operaionsSize
+                nextOffset: &nextOffset
             ) else { return nil }
             return .pick(index: operand)
         case .swap:
@@ -952,10 +944,9 @@ extension DWARFOperation {
         case .xor:
             return .xor
         case .bra:
-            guard let operand: Int16 = basePointer.readFixedWidthInteger(
+            guard let operand: Int16 = buffer.readFixedWidthInteger(
                 endian: endian,
-                nextOffset: &nextOffset,
-                endOffset: operaionsSize
+                nextOffset: &nextOffset
             ) else { return nil }
             return .bra(operand)
         case .eq:
@@ -971,10 +962,9 @@ extension DWARFOperation {
         case .ne:
             return .ne
         case .skip:
-            guard let operand: Int16 = basePointer.readFixedWidthInteger(
+            guard let operand: Int16 = buffer.readFixedWidthInteger(
                 endian: endian,
-                nextOffset: &nextOffset,
-                endOffset: operaionsSize
+                nextOffset: &nextOffset
             ) else { return nil }
             return .skip(operand)
         case .lit0:
@@ -1329,17 +1319,15 @@ extension DWARFOperation {
             nextOffset += size
             return .piece(numericCast(operand))
         case .deref_size:
-            guard let operand: UInt8 = basePointer.readFixedWidthInteger(
+            guard let operand: UInt8 = buffer.readFixedWidthInteger(
                 endian: endian,
-                nextOffset: &nextOffset,
-                endOffset: operaionsSize
+                nextOffset: &nextOffset
             ) else { return nil }
             return .deref_size(operand)
         case .xderef_size:
-            guard let operand: UInt8 = basePointer.readFixedWidthInteger(
+            guard let operand: UInt8 = buffer.readFixedWidthInteger(
                 endian: endian,
-                nextOffset: &nextOffset,
-                endOffset: operaionsSize
+                nextOffset: &nextOffset
             ) else { return nil }
             return .xderef_size(operand)
         case .nop:
@@ -1347,25 +1335,22 @@ extension DWARFOperation {
         case .push_object_address:
             return .push_object_address
         case .call2:
-            guard let operand: UInt16 = basePointer.readFixedWidthInteger(
+            guard let operand: UInt16 = buffer.readFixedWidthInteger(
                 endian: endian,
-                nextOffset: &nextOffset,
-                endOffset: operaionsSize
+                nextOffset: &nextOffset
             ) else { return nil }
             return .call2(operand)
         case .call4:
-            guard let operand: UInt32 = basePointer.readFixedWidthInteger(
+            guard let operand: UInt32 = buffer.readFixedWidthInteger(
                 endian: endian,
-                nextOffset: &nextOffset,
-                endOffset: operaionsSize
+                nextOffset: &nextOffset
             ) else { return nil }
             return .call4(operand)
         case .call_ref:
-            guard let operand: UInt64 = basePointer.readFixedWidthInteger(
+            guard let operand: UInt64 = buffer.readFixedWidthInteger(
                 byteCount: format.addressSize,
                 endian: endian,
-                nextOffset: &nextOffset,
-                endOffset: operaionsSize
+                nextOffset: &nextOffset
             ) else { return nil }
             return .call_ref(operand)
         case .form_tls_address:
@@ -1402,11 +1387,10 @@ extension DWARFOperation {
         case .stack_value:
             return .stack_value
         case .implicit_pointer:
-            guard let operand: UInt64 = basePointer.readFixedWidthInteger(
+            guard let operand: UInt64 = buffer.readFixedWidthInteger(
                 byteCount: format.addressSize,
                 endian: endian,
-                nextOffset: &nextOffset,
-                endOffset: operaionsSize
+                nextOffset: &nextOffset
             ) else { return nil }
             let (operand2, size) = basePointer
                 .advanced(by: nextOffset)
@@ -1447,10 +1431,9 @@ extension DWARFOperation {
                 .advanced(by: nextOffset)
                 .readULEB128()
             nextOffset += size
-            guard let operand2: UInt8 = basePointer.readFixedWidthInteger(
+            guard let operand2: UInt8 = buffer.readFixedWidthInteger(
                 endian: endian,
-                nextOffset: &nextOffset,
-                endOffset: operaionsSize
+                nextOffset: &nextOffset
             ) else { return nil }
             let bytes = Data(
                 bytes: basePointer.advanced(by: nextOffset),
@@ -1476,10 +1459,9 @@ extension DWARFOperation {
                 dieOffset: numericCast(offset)
             )
         case .deref_type:
-            guard let operand: UInt8 = basePointer.readFixedWidthInteger(
+            guard let operand: UInt8 = buffer.readFixedWidthInteger(
                 endian: endian,
-                nextOffset: &nextOffset,
-                endOffset: operaionsSize
+                nextOffset: &nextOffset
             ) else { return nil }
             let (offset, size) = basePointer
                 .advanced(by: nextOffset)
@@ -1490,10 +1472,9 @@ extension DWARFOperation {
                 dieOffset: numericCast(offset)
             )
         case .xderef_type:
-            guard let operand: UInt8 = basePointer.readFixedWidthInteger(
+            guard let operand: UInt8 = buffer.readFixedWidthInteger(
                 endian: endian,
-                nextOffset: &nextOffset,
-                endOffset: operaionsSize
+                nextOffset: &nextOffset
             ) else { return nil }
             let (offset, size) = basePointer
                 .advanced(by: nextOffset)

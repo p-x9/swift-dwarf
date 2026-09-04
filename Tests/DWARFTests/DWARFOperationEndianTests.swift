@@ -144,10 +144,10 @@ final class DWARFOperationEndianTests: XCTestCase {
     }
 
     func testDataIntegerConversionSupportsSignedEndianValues() {
-        let littleEndianValue: Int16 = Data([0xdc, 0xfe])
-            .uintValue(endian: .little)
-        let bigEndianValue: Int16 = Data([0xfe, 0xdc])
-            .uintValue(endian: .big)
+        let littleEndianValue: Int16? = Data([0xdc, 0xfe])
+            .integerValue(endian: .little)
+        let bigEndianValue: Int16? = Data([0xfe, 0xdc])
+            .integerValue(endian: .big)
 
         XCTAssertEqual(littleEndianValue, -292)
         XCTAssertEqual(bigEndianValue, -292)

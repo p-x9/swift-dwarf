@@ -47,6 +47,26 @@ final class DWARFLineOperationTests: XCTestCase {
         XCTAssertTrue(operations.isEmpty)
     }
 
+    func testFixedWidthOperandsRespectBufferAndDeclaredLength() {
+        for endian: Endian in [.little, .big] {
+            for data in [
+                // fixed_advance_pc requires two operand bytes.
+                Data([DWARFLineStandardOpcode.fixed_advance_pc.rawValue, 0x12]),
+                // set_address advertises four address bytes, but only three exist.
+                Data([0, 5, DWARFLineExtendedOpcode.set_address.rawValue, 0x12, 0x34, 0x56]),
+                // The fourth address byte is outside the declared operation length.
+                Data([0, 4, DWARFLineExtendedOpcode.set_address.rawValue, 0x12, 0x34, 0x56, 0x78]),
+            ] {
+                let operations = Array(DWARFLineTable.Operations(
+                    header: makeHeader(unknownOpcodeOperandCount: 0, addressSize: 4),
+                    endian: endian,
+                    data: data
+                ))
+                XCTAssertTrue(operations.isEmpty)
+            }
+        }
+    }
+
     func testFixedWidthOperandsUseSpecifiedEndian() {
         for endian: Endian in [.little, .big] {
             for addressSize in [4, 8] {

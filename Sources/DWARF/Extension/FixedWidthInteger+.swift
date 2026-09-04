@@ -9,23 +9,32 @@
 import Foundation
 
 extension FixedWidthInteger {
-    init<Bytes: Collection>(
+    /// Decodes an integer in the specified byte order.
+    ///
+    /// Signed types interpret the input as two's complement and sign-extend
+    /// shorter inputs. Unsigned types zero-extend them. Empty inputs and inputs
+    /// wider than the destination type return nil; bytes are never truncated.
+    init?<Bytes: Collection>(
         bytes: Bytes,
         endian: Endian
     ) where Bytes.Element == UInt8 {
         let byteCount = bytes.count
-        precondition(
-            byteCount <= Self.bitWidth / 8,
-            "Invalid byte count for target type"
-        )
+        guard byteCount > 0, byteCount <= Self.bitWidth / 8 else { return nil }
 
         var value: Self = 0
+        var mostSignificantByte: UInt8 = 0
         for (index, byte) in bytes.enumerated() {
-            let byte = Self(truncatingIfNeeded: byte)
             let shift = endian == .little
                 ? index * 8
                 : (byteCount - 1 - index) * 8
-            value |= byte << shift
+            if shift == (byteCount - 1) * 8 {
+                mostSignificantByte = byte
+            }
+            value |= Self(truncatingIfNeeded: byte) << shift
+        }
+        if Self.isSigned, byteCount < Self.bitWidth / 8,
+           mostSignificantByte & 0x80 != 0 {
+            value |= ~Self.zero << (byteCount * 8)
         }
         self = value
     }

@@ -111,7 +111,9 @@ extension DWARFLocationOperation {
         nextOffset: inout Int,
         done: inout Bool
     ) -> DWARFLocationOperation? {
-        guard !done, nextOffset < operaionsSize else { return nil }
+        guard !done, nextOffset >= 0, nextOffset < operaionsSize else { return nil }
+
+        let buffer = UnsafeBufferPointer(start: basePointer, count: operaionsSize)
 
         let opcodeRaw = basePointer.advanced(by: nextOffset).pointee
         nextOffset += MemoryLayout<UInt8>.size
@@ -222,8 +224,7 @@ extension DWARFLocationOperation {
 
         case .base_address:
             guard let address: DWARFAddress = .load(
-                basePointer: basePointer,
-                endOffset: operaionsSize,
+                buffer: buffer,
                 nextOffset: &nextOffset,
                 addressSize: addressSize,
                 segmentSelectorSize: segmentSelectorSize,
@@ -235,16 +236,14 @@ extension DWARFLocationOperation {
 
         case .start_end:
             guard let start: DWARFAddress = .load(
-                basePointer: basePointer,
-                endOffset: operaionsSize,
+                buffer: buffer,
                 nextOffset: &nextOffset,
                 addressSize: addressSize,
                 segmentSelectorSize: segmentSelectorSize,
                 endian: endian
             ) else { return nil }
             guard let end: DWARFAddress = .load(
-                basePointer: basePointer,
-                endOffset: operaionsSize,
+                buffer: buffer,
                 nextOffset: &nextOffset,
                 addressSize: addressSize,
                 segmentSelectorSize: segmentSelectorSize,
@@ -268,8 +267,7 @@ extension DWARFLocationOperation {
 
         case .start_length:
             guard let start: DWARFAddress = .load(
-                basePointer: basePointer,
-                endOffset: operaionsSize,
+                buffer: buffer,
                 nextOffset: &nextOffset,
                 addressSize: addressSize,
                 segmentSelectorSize: segmentSelectorSize,

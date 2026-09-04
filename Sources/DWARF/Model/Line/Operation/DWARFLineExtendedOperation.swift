@@ -88,7 +88,7 @@ extension DWARFLineExtendedOperation {
         nextOffset: inout Int,
         done: inout Bool
     ) -> DWARFLineExtendedOperation? {
-        guard !done, nextOffset < operaionsSize else { return nil }
+        guard !done, nextOffset >= 0, nextOffset < operaionsSize else { return nil }
 
         let prefix = basePointer.advanced(by: nextOffset).pointee
         nextOffset += MemoryLayout<UInt8>.size
@@ -120,12 +120,15 @@ extension DWARFLineExtendedOperation {
             return .end_sequence
 
         case .set_address:
+            let buffer = UnsafeBufferPointer(
+                start: basePointer,
+                count: min(actualResultOfNextOffset, operaionsSize)
+            )
             guard (1...MemoryLayout<UInt64>.size).contains(addressSize),
-                  let operand: UInt64 = basePointer.readFixedWidthInteger(
+                  let operand: UInt64 = buffer.readFixedWidthInteger(
                       byteCount: addressSize,
                       endian: endian,
-                      nextOffset: &nextOffset,
-                      endOffset: min(actualResultOfNextOffset, operaionsSize)
+                      nextOffset: &nextOffset
                   ) else {
                 done = true
                 return nil

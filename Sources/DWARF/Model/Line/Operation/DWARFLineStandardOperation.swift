@@ -114,7 +114,9 @@ extension DWARFLineStandardOperation {
         nextOffset: inout Int,
         done: inout Bool
     ) -> DWARFLineStandardOperation? {
-        guard !done, nextOffset < operaionsSize else { return nil }
+        guard !done, nextOffset >= 0, nextOffset < operaionsSize else { return nil }
+
+        let buffer = UnsafeBufferPointer(start: basePointer, count: operaionsSize)
 
         let opcodeRaw = basePointer.advanced(by: nextOffset).pointee
         nextOffset += MemoryLayout<UInt8>.size
@@ -157,10 +159,9 @@ extension DWARFLineStandardOperation {
         case .const_add_pc:
             return .const_add_pc
         case .fixed_advance_pc:
-            guard let operand: UInt16 = basePointer.readFixedWidthInteger(
+            guard let operand: UInt16 = buffer.readFixedWidthInteger(
                 endian: endian,
-                nextOffset: &nextOffset,
-                endOffset: operaionsSize
+                nextOffset: &nextOffset
             ) else {
                 done = true
                 return nil
