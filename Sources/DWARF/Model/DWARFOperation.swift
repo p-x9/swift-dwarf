@@ -806,10 +806,13 @@ extension DWARFOperation {
         operaionsSize: Int,
         addressSize: Int,
         format: DWARFFormat,
+        endian: Endian,
         nextOffset: inout Int,
         done: inout Bool
     ) -> DWARFOperation? {
-        guard !done, nextOffset < operaionsSize else { return nil }
+        guard !done, nextOffset >= 0, nextOffset < operaionsSize else { return nil }
+
+        let buffer = UnsafeBufferPointer(start: basePointer, count: operaionsSize)
 
         let opcodeRaw = basePointer.advanced(by: nextOffset).pointee
         nextOffset += MemoryLayout<UInt8>.size
@@ -820,78 +823,61 @@ extension DWARFOperation {
 
         switch opcode {
         case .addr:
-            if addressSize == 4 {
-                let operand: UInt32 = UnsafeRawPointer(basePointer)
-                    .advanced(by: nextOffset)
-                    .assumingMemoryBound(to: UInt32.self)
-                    .pointee
-                nextOffset += MemoryLayout<UInt32>.size
-                return .addr(numericCast(operand))
-            } else {
-                let operand: UInt64 = UnsafeRawPointer(basePointer)
-                    .advanced(by: nextOffset)
-                    .assumingMemoryBound(to: UInt64.self)
-                    .pointee
-                nextOffset += MemoryLayout<UInt64>.size
-                return .addr(operand)
-            }
+            guard let operand: UInt64 = buffer.readFixedWidthInteger(
+                byteCount: addressSize,
+                endian: endian,
+                nextOffset: &nextOffset
+            ) else { return nil }
+            return .addr(operand)
         case .deref:
             return .deref
         case .const1u:
-            let operand: UInt8 = UnsafeRawPointer(basePointer)
-                .advanced(by: nextOffset)
-                .assumingMemoryBound(to: UInt8.self)
-                .pointee
-            nextOffset += MemoryLayout<UInt8>.size
+            guard let operand: UInt8 = buffer.readFixedWidthInteger(
+                endian: endian,
+                nextOffset: &nextOffset
+            ) else { return nil }
             return .const1u(operand)
         case .const1s:
-            let operand: Int8 = UnsafeRawPointer(basePointer)
-                .advanced(by: nextOffset)
-                .assumingMemoryBound(to: Int8.self)
-                .pointee
-            nextOffset += MemoryLayout<Int8>.size
+            guard let operand: Int8 = buffer.readFixedWidthInteger(
+                endian: endian,
+                nextOffset: &nextOffset
+            ) else { return nil }
             return .const1s(operand)
         case .const2u:
-            let operand: UInt16 = UnsafeRawPointer(basePointer)
-                .advanced(by: nextOffset)
-                .assumingMemoryBound(to: UInt16.self)
-                .pointee
-            nextOffset += MemoryLayout<UInt16>.size
+            guard let operand: UInt16 = buffer.readFixedWidthInteger(
+                endian: endian,
+                nextOffset: &nextOffset
+            ) else { return nil }
             return .const2u(operand)
         case .const2s:
-            let operand: Int16 = UnsafeRawPointer(basePointer)
-                .advanced(by: nextOffset)
-                .assumingMemoryBound(to: Int16.self)
-                .pointee
-            nextOffset += MemoryLayout<Int16>.size
+            guard let operand: Int16 = buffer.readFixedWidthInteger(
+                endian: endian,
+                nextOffset: &nextOffset
+            ) else { return nil }
             return .const2s(operand)
         case .const4u:
-            let operand: UInt32 = UnsafeRawPointer(basePointer)
-                .advanced(by: nextOffset)
-                .assumingMemoryBound(to: UInt32.self)
-                .pointee
-            nextOffset += MemoryLayout<UInt32>.size
+            guard let operand: UInt32 = buffer.readFixedWidthInteger(
+                endian: endian,
+                nextOffset: &nextOffset
+            ) else { return nil }
             return .const4u(operand)
         case .const4s:
-            let operand: Int32 = UnsafeRawPointer(basePointer)
-                .advanced(by: nextOffset)
-                .assumingMemoryBound(to: Int32.self)
-                .pointee
-            nextOffset += MemoryLayout<Int32>.size
+            guard let operand: Int32 = buffer.readFixedWidthInteger(
+                endian: endian,
+                nextOffset: &nextOffset
+            ) else { return nil }
             return .const4s(operand)
         case .const8u:
-            let operand: UInt64 = UnsafeRawPointer(basePointer)
-                .advanced(by: nextOffset)
-                .assumingMemoryBound(to: UInt64.self)
-                .pointee
-            nextOffset += MemoryLayout<UInt64>.size
+            guard let operand: UInt64 = buffer.readFixedWidthInteger(
+                endian: endian,
+                nextOffset: &nextOffset
+            ) else { return nil }
             return .const8u(operand)
         case .const8s:
-            let operand: Int64 = UnsafeRawPointer(basePointer)
-                .advanced(by: nextOffset)
-                .assumingMemoryBound(to: Int64.self)
-                .pointee
-            nextOffset += MemoryLayout<Int64>.size
+            guard let operand: Int64 = buffer.readFixedWidthInteger(
+                endian: endian,
+                nextOffset: &nextOffset
+            ) else { return nil }
             return .const8s(operand)
         case .constu:
             let (operand, size) = basePointer
@@ -912,11 +898,10 @@ extension DWARFOperation {
         case .over:
             return .over
         case .pick:
-            let operand: UInt8 = UnsafeRawPointer(basePointer)
-                .advanced(by: nextOffset)
-                .assumingMemoryBound(to: UInt8.self)
-                .pointee
-            nextOffset += MemoryLayout<UInt8>.size
+            guard let operand: UInt8 = buffer.readFixedWidthInteger(
+                endian: endian,
+                nextOffset: &nextOffset
+            ) else { return nil }
             return .pick(index: operand)
         case .swap:
             return .swap
@@ -959,11 +944,10 @@ extension DWARFOperation {
         case .xor:
             return .xor
         case .bra:
-            let operand: Int16 = UnsafeRawPointer(basePointer)
-                .advanced(by: nextOffset)
-                .assumingMemoryBound(to: Int16.self)
-                .pointee
-            nextOffset += MemoryLayout<Int16>.size
+            guard let operand: Int16 = buffer.readFixedWidthInteger(
+                endian: endian,
+                nextOffset: &nextOffset
+            ) else { return nil }
             return .bra(operand)
         case .eq:
             return .eq
@@ -978,11 +962,10 @@ extension DWARFOperation {
         case .ne:
             return .ne
         case .skip:
-            let operand: Int16 = UnsafeRawPointer(basePointer)
-                .advanced(by: nextOffset)
-                .assumingMemoryBound(to: Int16.self)
-                .pointee
-            nextOffset += MemoryLayout<Int16>.size
+            guard let operand: Int16 = buffer.readFixedWidthInteger(
+                endian: endian,
+                nextOffset: &nextOffset
+            ) else { return nil }
             return .skip(operand)
         case .lit0:
             return .lit0
@@ -1336,54 +1319,40 @@ extension DWARFOperation {
             nextOffset += size
             return .piece(numericCast(operand))
         case .deref_size:
-            let operand: UInt8 = UnsafeRawPointer(basePointer)
-                .advanced(by: nextOffset)
-                .assumingMemoryBound(to: UInt8.self)
-                .pointee
-            nextOffset += MemoryLayout<UInt8>.size
+            guard let operand: UInt8 = buffer.readFixedWidthInteger(
+                endian: endian,
+                nextOffset: &nextOffset
+            ) else { return nil }
             return .deref_size(operand)
         case .xderef_size:
-            let operand: UInt8 = UnsafeRawPointer(basePointer)
-                .advanced(by: nextOffset)
-                .assumingMemoryBound(to: UInt8.self)
-                .pointee
-            nextOffset += MemoryLayout<UInt8>.size
+            guard let operand: UInt8 = buffer.readFixedWidthInteger(
+                endian: endian,
+                nextOffset: &nextOffset
+            ) else { return nil }
             return .xderef_size(operand)
         case .nop:
             return .nop
         case .push_object_address:
             return .push_object_address
         case .call2:
-            let operand: UInt16 = UnsafeRawPointer(basePointer)
-                .advanced(by: nextOffset)
-                .assumingMemoryBound(to: UInt16.self)
-                .pointee
-            nextOffset += MemoryLayout<UInt16>.size
+            guard let operand: UInt16 = buffer.readFixedWidthInteger(
+                endian: endian,
+                nextOffset: &nextOffset
+            ) else { return nil }
             return .call2(operand)
         case .call4:
-            let operand: UInt32 = UnsafeRawPointer(basePointer)
-                .advanced(by: nextOffset)
-                .assumingMemoryBound(to: UInt32.self)
-                .pointee
-            nextOffset += MemoryLayout<UInt32>.size
+            guard let operand: UInt32 = buffer.readFixedWidthInteger(
+                endian: endian,
+                nextOffset: &nextOffset
+            ) else { return nil }
             return .call4(operand)
         case .call_ref:
-            switch format {
-            case ._32bit:
-                let operand: UInt32 = UnsafeRawPointer(basePointer)
-                    .advanced(by: nextOffset)
-                    .assumingMemoryBound(to: UInt32.self)
-                    .pointee
-                nextOffset += MemoryLayout<UInt32>.size
-                return .call_ref(numericCast(operand))
-            case ._64bit:
-                let operand: UInt64 = UnsafeRawPointer(basePointer)
-                    .advanced(by: nextOffset)
-                    .assumingMemoryBound(to: UInt64.self)
-                    .pointee
-                nextOffset += MemoryLayout<UInt64>.size
-                return .call_ref(numericCast(operand))
-            }
+            guard let operand: UInt64 = buffer.readFixedWidthInteger(
+                byteCount: format.addressSize,
+                endian: endian,
+                nextOffset: &nextOffset
+            ) else { return nil }
+            return .call_ref(operand)
         case .form_tls_address:
             return .form_tls_address
         case .call_frame_cfa:
@@ -1418,24 +1387,11 @@ extension DWARFOperation {
         case .stack_value:
             return .stack_value
         case .implicit_pointer:
-            let operand: UInt64 = {
-                switch format {
-                case ._32bit:
-                    let operand: UInt32 = UnsafeRawPointer(basePointer)
-                        .advanced(by: nextOffset)
-                        .assumingMemoryBound(to: UInt32.self)
-                        .pointee
-                    nextOffset += MemoryLayout<UInt32>.size
-                    return numericCast(operand)
-                case ._64bit:
-                    let operand: UInt64 = UnsafeRawPointer(basePointer)
-                        .advanced(by: nextOffset)
-                        .assumingMemoryBound(to: UInt64.self)
-                        .pointee
-                    nextOffset += MemoryLayout<UInt64>.size
-                    return operand
-                }
-            }()
+            guard let operand: UInt64 = buffer.readFixedWidthInteger(
+                byteCount: format.addressSize,
+                endian: endian,
+                nextOffset: &nextOffset
+            ) else { return nil }
             let (operand2, size) = basePointer
                 .advanced(by: nextOffset)
                 .readSLEB128()
@@ -1475,11 +1431,10 @@ extension DWARFOperation {
                 .advanced(by: nextOffset)
                 .readULEB128()
             nextOffset += size
-            let operand2: UInt8 = UnsafeRawPointer(basePointer)
-                .advanced(by: nextOffset)
-                .assumingMemoryBound(to: UInt8.self)
-                .pointee
-            nextOffset += MemoryLayout<UInt8>.size
+            guard let operand2: UInt8 = buffer.readFixedWidthInteger(
+                endian: endian,
+                nextOffset: &nextOffset
+            ) else { return nil }
             let bytes = Data(
                 bytes: basePointer.advanced(by: nextOffset),
                 count: numericCast(operand2)
@@ -1504,11 +1459,10 @@ extension DWARFOperation {
                 dieOffset: numericCast(offset)
             )
         case .deref_type:
-            let operand: UInt8 = UnsafeRawPointer(basePointer)
-                .advanced(by: nextOffset)
-                .assumingMemoryBound(to: UInt8.self)
-                .pointee
-            nextOffset += MemoryLayout<UInt8>.size
+            guard let operand: UInt8 = buffer.readFixedWidthInteger(
+                endian: endian,
+                nextOffset: &nextOffset
+            ) else { return nil }
             let (offset, size) = basePointer
                 .advanced(by: nextOffset)
                 .readULEB128()
@@ -1518,11 +1472,10 @@ extension DWARFOperation {
                 dieOffset: numericCast(offset)
             )
         case .xderef_type:
-            let operand: UInt8 = UnsafeRawPointer(basePointer)
-                .advanced(by: nextOffset)
-                .assumingMemoryBound(to: UInt8.self)
-                .pointee
-            nextOffset += MemoryLayout<UInt8>.size
+            guard let operand: UInt8 = buffer.readFixedWidthInteger(
+                endian: endian,
+                nextOffset: &nextOffset
+            ) else { return nil }
             let (offset, size) = basePointer
                 .advanced(by: nextOffset)
                 .readULEB128()

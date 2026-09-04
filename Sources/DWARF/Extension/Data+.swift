@@ -9,22 +9,12 @@
 import Foundation
 
 extension Data {
-    func uintValue<T: FixedWidthInteger>(
-        endian: Endian = .little
-    ) -> T {
-        precondition(
-            count <= T.bitWidth / 8,
-            "Invalid byte count for target type"
-        )
-        var value: T = 0
-        for (i, byte) in self.enumerated() {
-            let byte: T = numericCast(byte)
-            if endian == .little {
-                value |= (byte << (i * 8))
-            } else {
-                value |= (byte << ((count - 1 - i) * 8))
-            }
-        }
-        return value
+    /// Decodes a signed (two's complement) or unsigned integer.
+    /// Short inputs are sign- or zero-extended according to T; empty or
+    /// oversized inputs return nil. See FixedWidthInteger.init(bytes:endian:).
+    func integerValue<T: FixedWidthInteger>(
+        endian: Endian
+    ) -> T? {
+        T(bytes: self, endian: endian)
     }
 }

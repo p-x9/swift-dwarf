@@ -82,7 +82,9 @@ extension DWARFRangeOperation {
         nextOffset: inout Int,
         done: inout Bool
     ) -> DWARFRangeOperation? {
-        guard !done, nextOffset < operaionsSize else { return nil }
+        guard !done, nextOffset >= 0, nextOffset < operaionsSize else { return nil }
+
+        let buffer = UnsafeBufferPointer(start: basePointer, count: operaionsSize)
 
         let opcodeRaw = basePointer.advanced(by: nextOffset).pointee
         nextOffset += MemoryLayout<UInt8>.size
@@ -152,7 +154,7 @@ extension DWARFRangeOperation {
 
         case .base_address:
             guard let address: DWARFAddress = .load(
-                basePointer: basePointer,
+                buffer: buffer,
                 nextOffset: &nextOffset,
                 addressSize: addressSize,
                 segmentSelectorSize: segmentSelectorSize,
@@ -162,14 +164,14 @@ extension DWARFRangeOperation {
 
         case .start_end:
             guard let start: DWARFAddress = .load(
-                basePointer: basePointer,
+                buffer: buffer,
                 nextOffset: &nextOffset,
                 addressSize: addressSize,
                 segmentSelectorSize: segmentSelectorSize,
                 endian: endian
             ) else { return nil }
             guard let end: DWARFAddress = .load(
-                basePointer: basePointer,
+                buffer: buffer,
                 nextOffset: &nextOffset,
                 addressSize: addressSize,
                 segmentSelectorSize: segmentSelectorSize,
@@ -179,7 +181,7 @@ extension DWARFRangeOperation {
 
         case .start_length:
             guard let start: DWARFAddress = .load(
-                basePointer: basePointer,
+                buffer: buffer,
                 nextOffset: &nextOffset,
                 addressSize: addressSize,
                 segmentSelectorSize: segmentSelectorSize,

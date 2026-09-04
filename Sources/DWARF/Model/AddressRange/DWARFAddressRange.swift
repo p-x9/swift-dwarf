@@ -20,28 +20,16 @@ extension DWARFAddressRange {
         segmentSelectorSize: Int,
         endian: Endian
     ) {
-        guard data.count == addressSize * 2 + segmentSelectorSize else { return nil }
-        if segmentSelectorSize > 0 {
-            self.init(
-                address: .init(
-                    segmentSelector: data[0..<segmentSelectorSize]
-                        .uintValue(endian: endian),
-                    address: data[segmentSelectorSize ..< segmentSelectorSize + addressSize]
-                        .uintValue(endian: endian)
-                ),
-                length: data[(segmentSelectorSize + addressSize)...]
-                    .uintValue(endian: endian)
-            )
-        } else {
-            self.init(
-                address: .init(
-                    segmentSelector: nil,
-                    address: data[0..<addressSize]
-                        .uintValue(endian: endian)
-                ),
-                length: data[addressSize...]
-                    .uintValue(endian: endian)
-            )
-        }
+        guard (1...8).contains(addressSize), (0...8).contains(segmentSelectorSize),
+              data.count == addressSize * 2 + segmentSelectorSize else { return nil }
+        let addressByteCount = addressSize + segmentSelectorSize
+        guard let address = DWARFAddress(
+            data: data.prefix(addressByteCount),
+            addressSize: addressSize,
+            segmentSelectorSize: segmentSelectorSize,
+            endian: endian
+        ), let length: UInt64 = data.dropFirst(addressByteCount)
+            .integerValue(endian: endian) else { return nil }
+        self.init(address: address, length: length)
     }
 }
