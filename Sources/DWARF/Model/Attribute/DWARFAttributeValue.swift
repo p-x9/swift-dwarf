@@ -67,7 +67,7 @@ public indirect enum DWARFAttributeValue: Sendable {
     /// DW_FORM_strp_sup
     case strp_sup(RefString)
     /// DW_FORM_data16
-    case data16(Constant<(UInt64, UInt64)>)
+    case data16(Constant<UInt128>)
     /// DW_FORM_line_strp
     case line_strp(RefString)
     /// DW_FORM_ref_sig8
@@ -334,18 +334,26 @@ extension DWARFAttributeValue {
 
 extension DWARFAttributeValue {
     public var constantUIntValue: UInt64? {
+        constantUInt128Value.flatMap(UInt64.init(exactly:))
+    }
+
+    public var constantIntValue: Int64? {
+        constantInt128Value.flatMap(Int64.init(exactly:))
+    }
+
+    public var constantUInt128Value: UInt128? {
         guard let value = __value(for: nil, in: nil) else {
             return nil
         }
         switch value {
         case let .address(v):
-            return numericCast(v.address)
+            return UInt128(v.address)
         case let .offset(v):
-            return numericCast(v)
+            return UInt128(exactly: v)
         case let .signedInteger(v):
-            return numericCast(v)
+            return UInt128(exactly: v)
         case let .unsignedInteger(v):
-            return numericCast(v)
+            return v
         case .string:
             return nil
         case .bool:
@@ -363,19 +371,19 @@ extension DWARFAttributeValue {
         }
     }
 
-    public var constantIntValue: Int64? {
+    public var constantInt128Value: Int128? {
         guard let value = __value(for: nil, in: nil) else {
             return nil
         }
         switch value {
         case let .address(v):
-            return numericCast(v.address)
+            return Int128(exactly: v.address)
         case let .offset(v):
-            return numericCast(v)
+            return Int128(v)
         case let .signedInteger(v):
-            return numericCast(v)
+            return v
         case let .unsignedInteger(v):
-            return numericCast(v)
+            return Int128(exactly: v)
         case .string:
             return nil
         case .bool:
@@ -572,9 +580,10 @@ extension DWARFAttributeValue {
                 return .strp_sup(.init(offset: address))
             }
         case .data16:
-            let data1: UInt64 = try! binary.fileHandle.read(offset: offset)
-            let data2: UInt64 = try! binary.fileHandle.read(offset: offset + 8)
-            return .data16(.init(value: (data1, data2)))
+            let data = try! binary.fileHandle.readData(offset: offset, length: 16)
+            guard let value: UInt128 = data.integerValue(endian: binary.endian)
+            else { return nil }
+            return .data16(.init(value: value))
         case .line_strp:
             switch dwarfFormat {
             case ._32bit:
@@ -729,7 +738,7 @@ extension DWARFAttributeValue {
         case .flag(let flag):
             return .bool(flag.value)
         case .sdata(let constant):
-            return .signedInteger(constant.value)
+            return .signedInteger(numericCast(constant.value))
         case .strp(let refString):
             guard let binary else { return nil }
             guard let strings = binary.dwarf.strings else {
@@ -740,7 +749,7 @@ extension DWARFAttributeValue {
             )?.string else { return nil }
             return .string(string)
         case .udata(let constant):
-            return .unsignedInteger(constant.value)
+            return .unsignedInteger(numericCast(constant.value))
         case .ref_addr(let reference):
             guard let binary else { return nil }
             guard let unit else { return nil }
@@ -808,8 +817,8 @@ extension DWARFAttributeValue {
             return nil // TODO: implement
         case .strp_sup:
             return nil // TODO: implement
-        case .data16:
-            return nil // TODO: support 128bit unsigned integer
+        case .data16(let constant):
+            return .unsignedInteger(constant.value)
         case .line_strp(let refString):
             guard let binary else { return nil }
             guard let strings = binary.dwarf.lineStrings else { return nil }
@@ -820,7 +829,7 @@ extension DWARFAttributeValue {
         case .ref_sig8:
             return nil // TODO: implement
         case .implicit_const(let constant):
-            return .signedInteger(constant.value)
+            return .signedInteger(numericCast(constant.value))
         case .loclistx(let locList):
             guard let binary else { return nil }
             guard let unit else { return nil }
