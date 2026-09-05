@@ -43,7 +43,7 @@ final class DWARFData16Tests: XCTestCase {
 
     func testSectionOffsetPreservesUInt64Range() {
         let attribute = DWARFAttributeValue.sec_offset(
-            .init(address: UInt64.max)
+            .init(offset: UInt64.max)
         )
 
         XCTAssertEqual(attribute.constantUInt128Value, UInt128(UInt64.max))

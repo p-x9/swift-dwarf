@@ -53,7 +53,7 @@ public indirect enum DWARFAttributeValue: Sendable {
     /// DW_FORM_indirect
     case indirect(DWARFAttributeValue) // uleb128
     /// DW_FORM_sec_offset
-    case sec_offset(Ptr)
+    case sec_offset(SectionOffset)
     /// DW_FORM_exprloc
     case exprloc(ExprLoc)
     /// DW_FORM_flag_present
@@ -189,8 +189,8 @@ extension DWARFAttributeValue {
         public let data: Data
     }
 
-    public struct Ptr: Sendable {
-        public let address: UInt64
+    public struct SectionOffset: Sendable {
+        public let offset: UInt64
     }
 
     public struct Reference<Raw: FixedWidthInteger & Sendable>: Sendable {
@@ -540,10 +540,10 @@ extension DWARFAttributeValue {
             switch dwarfFormat {
             case ._32bit:
                 let address: UInt32 = try! binary.fileHandle.read(offset: offset)
-                return .sec_offset(.init(address: numericCast(address)))
+                return .sec_offset(.init(offset: numericCast(address)))
             case ._64bit:
                 let address: UInt64 = try! binary.fileHandle.read(offset: offset)
-                return .sec_offset(.init(address: address))
+                return .sec_offset(.init(offset: address))
             }
         case .exprloc:
             let (length, lengthSize) = binary.fileHandle.readULEB128(
@@ -778,8 +778,8 @@ extension DWARFAttributeValue {
             guard let binary else { return nil }
             guard let unit else { return nil }
             return dWARFAttributeValue._value(for: unit, in: binary)
-        case .sec_offset(let ptr):
-            return .sectionOffset(ptr.address)
+        case .sec_offset(let sectionOffset):
+            return .sectionOffset(sectionOffset.offset)
         case .exprloc(let exprLoc):
             guard let unit else { return nil }
             guard let binary else { return nil }
