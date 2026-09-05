@@ -41,6 +41,24 @@ final class DWARFData16Tests: XCTestCase {
         XCTAssertNil(aboveInt128.constantIntValue)
     }
 
+    func testSectionOffsetPreservesUInt64Range() {
+        let attribute = DWARFAttributeValue.sec_offset(
+            .init(address: UInt64.max)
+        )
+
+        XCTAssertEqual(attribute.constantUInt128Value, UInt128(UInt64.max))
+        XCTAssertEqual(attribute.constantUIntValue, UInt64.max)
+        XCTAssertEqual(attribute.constantInt128Value, Int128(UInt64.max))
+        XCTAssertNil(attribute.constantIntValue)
+
+        guard case .sectionOffset(let resolved) = attribute.__value(
+            for: nil, in: nil
+        ) else {
+            return XCTFail("Expected a resolved section offset")
+        }
+        XCTAssertEqual(resolved, UInt64.max)
+    }
+
     func testData16ByteOrder() throws {
         let expected: UInt128 = 0x0123456789abcdef_fedcba9876543210
         let littleEndianBytes: [UInt8] = [

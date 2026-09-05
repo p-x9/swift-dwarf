@@ -348,8 +348,8 @@ extension DWARFAttributeValue {
         switch value {
         case let .address(v):
             return UInt128(v.address)
-        case let .offset(v):
-            return UInt128(exactly: v)
+        case let .sectionOffset(v):
+            return UInt128(v)
         case let .signedInteger(v):
             return UInt128(exactly: v)
         case let .unsignedInteger(v):
@@ -378,7 +378,7 @@ extension DWARFAttributeValue {
         switch value {
         case let .address(v):
             return Int128(exactly: v.address)
-        case let .offset(v):
+        case let .sectionOffset(v):
             return Int128(v)
         case let .signedInteger(v):
             return v
@@ -779,7 +779,7 @@ extension DWARFAttributeValue {
             guard let unit else { return nil }
             return dWARFAttributeValue._value(for: unit, in: binary)
         case .sec_offset(let ptr):
-            return .offset(numericCast(ptr.address))
+            return .sectionOffset(ptr.address)
         case .exprloc(let exprLoc):
             guard let unit else { return nil }
             guard let binary else { return nil }
