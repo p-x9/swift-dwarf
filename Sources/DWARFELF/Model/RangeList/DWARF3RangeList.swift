@@ -4,6 +4,12 @@
 //
 
 extension DWARF3RangeList {
+    public func entries(in elf: ELFFile) -> [DWARF3RangeListEntry]? {
+        _entries(in: elf)
+    }
+}
+
+extension DWARF3RangeList {
     /// Loads a DWARF3/4 range list relative to `.debug_ranges`.
     public static func load(
         at sectionOffset: UInt64,
@@ -24,9 +30,7 @@ extension DWARF3RangeList {
         guard !overflow else { return nil }
         return _load(
             at: offset,
-            maximumLength: section.size - sectionOffset,
-            addressSize: unit.header.addressSize,
-            in: elf
+            addressSize: unit.header.addressSize
         )
     }
 }

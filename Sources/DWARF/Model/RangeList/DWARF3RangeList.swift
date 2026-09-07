@@ -16,17 +16,14 @@ public struct DWARF3RangeList: Sendable, Equatable {
     public let offset: Int
 
     public let addressSize: Int
-    public let entries: [DWARF3RangeListEntry]
-    public let layoutSize: Int
 }
 
 extension DWARF3RangeList {
-    package static func _parse(
+    package static func _parseEntries(
         data: Data,
-        offset: Int = 0,
         addressSize: Int,
         endian: Endian
-    ) -> Self? {
+    ) -> [DWARF3RangeListEntry]? {
         guard addressSize > 0,
               addressSize <= MemoryLayout<UInt64>.size else {
             return nil
@@ -55,12 +52,7 @@ extension DWARF3RangeList {
 
                 if beginning == 0, end == 0 {
                     entries.append(.endOfList)
-                    return .init(
-                        offset: offset,
-                        addressSize: addressSize,
-                        entries: entries,
-                        layoutSize: nextOffset
-                    )
+                    return entries
                 }
 
                 if beginning == maximumAddress {
@@ -82,28 +74,49 @@ extension DWARF3RangeList {
 }
 
 extension DWARF3RangeList {
-    package static func _load(
-        at offset: Int,
-        maximumLength: Int,
-        addressSize: Int,
+    package func _entries(
         in binary: some _DWARFBinary
-    ) -> Self? {
-        guard offset >= 0, maximumLength >= 0 else { return nil }
-        let (fileOffset, overflow) = offset.addingReportingOverflow(
-            binary.headerStartOffset
-        )
-        guard !overflow,
+    ) -> [DWARF3RangeListEntry]? {
+        guard let dwarfSegment = binary.dwarfSegment,
+              let section = dwarfSegment.debug_ranges(in: binary) else {
+            return nil
+        }
+
+        let (sectionEnd, sectionEndOverflow) = section.offset
+            .addingReportingOverflow(section.size)
+        guard !sectionEndOverflow,
+              offset >= section.offset,
+              offset <= sectionEnd else {
+            return nil
+        }
+
+        let (fileOffset, fileOffsetOverflow) = offset
+            .addingReportingOverflow(binary.headerStartOffset)
+        guard !fileOffsetOverflow,
               let data = try? binary.fileHandle.readData(
                   offset: fileOffset,
-                  length: maximumLength
+                  length: sectionEnd - offset
               ) else {
             return nil
         }
-        return _parse(
+        return Self._parseEntries(
             data: data,
-            offset: offset,
             addressSize: addressSize,
             endian: binary.endian
         )
+    }
+}
+
+extension DWARF3RangeList {
+    package static func _load(
+        at offset: Int,
+        addressSize: Int
+    ) -> Self? {
+        guard offset >= 0,
+              addressSize > 0,
+              addressSize <= MemoryLayout<UInt64>.size else {
+            return nil
+        }
+        return .init(offset: offset, addressSize: addressSize)
     }
 }

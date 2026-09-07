@@ -20,26 +20,20 @@ final class DWARF3RangeListTests: XCTestCase {
                 append(0, to: &data, size: addressSize, endian: endian)
                 data.append(0xbb)
 
-                let list = DWARF3RangeList._parse(
+                let entries = DWARF3RangeList._parseEntries(
                     data: Data(data.dropFirst()),
-                    offset: 37,
                     addressSize: addressSize,
                     endian: endian
                 )
 
                 XCTAssertEqual(
-                    list,
-                    .init(
-                        offset: 37,
-                        addressSize: addressSize,
-                        entries: [
-                            .baseAddressSelection(address: 0x1020),
-                            .range(beginningOffset: 0x10, endOffset: 0x30),
-                            .range(beginningOffset: 0x40, endOffset: 0x40),
-                            .endOfList,
-                        ],
-                        layoutSize: addressSize * 8
-                    ),
+                    entries,
+                    [
+                        .baseAddressSelection(address: 0x1020),
+                        .range(beginningOffset: 0x10, endOffset: 0x30),
+                        .range(beginningOffset: 0x40, endOffset: 0x40),
+                        .endOfList,
+                    ],
                     "\(endian), address size \(addressSize)"
                 )
             }
@@ -51,7 +45,7 @@ final class DWARF3RangeListTests: XCTestCase {
         append(1, to: &truncated, size: 4, endian: .little)
         append(2, to: &truncated, size: 3, endian: .little)
         XCTAssertNil(
-            DWARF3RangeList._parse(
+            DWARF3RangeList._parseEntries(
                 data: truncated,
                 addressSize: 4,
                 endian: .little
@@ -62,7 +56,7 @@ final class DWARF3RangeListTests: XCTestCase {
         append(1, to: &unterminated, size: 4, endian: .little)
         append(2, to: &unterminated, size: 4, endian: .little)
         XCTAssertNil(
-            DWARF3RangeList._parse(
+            DWARF3RangeList._parseEntries(
                 data: unterminated,
                 addressSize: 4,
                 endian: .little
@@ -72,14 +66,14 @@ final class DWARF3RangeListTests: XCTestCase {
 
     func testRejectsInvalidAddressSizesAndDescendingRanges() {
         XCTAssertNil(
-            DWARF3RangeList._parse(
+            DWARF3RangeList._parseEntries(
                 data: Data(repeating: 0, count: 16),
                 addressSize: 0,
                 endian: .little
             )
         )
         XCTAssertNil(
-            DWARF3RangeList._parse(
+            DWARF3RangeList._parseEntries(
                 data: Data(repeating: 0, count: 18),
                 addressSize: 9,
                 endian: .little
@@ -92,7 +86,7 @@ final class DWARF3RangeListTests: XCTestCase {
         append(0, to: &descending, size: 4, endian: .little)
         append(0, to: &descending, size: 4, endian: .little)
         XCTAssertNil(
-            DWARF3RangeList._parse(
+            DWARF3RangeList._parseEntries(
                 data: descending,
                 addressSize: 4,
                 endian: .little
