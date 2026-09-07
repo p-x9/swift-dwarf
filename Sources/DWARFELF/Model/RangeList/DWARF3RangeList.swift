@@ -19,9 +19,7 @@ extension DWARF3RangeList {
         guard unit.header.version == .v3 || unit.header.version == .v4,
               let dwarfSegment = elf.dwarfSegment,
               let section = dwarfSegment.debug_ranges(in: elf),
-              let sectionOffset = Int(exactly: sectionOffset),
-              sectionOffset >= 0,
-              sectionOffset <= section.size else {
+              let sectionOffset = Int(exactly: sectionOffset) else {
             return nil
         }
         let (offset, overflow) = section.offset.addingReportingOverflow(
@@ -30,7 +28,8 @@ extension DWARF3RangeList {
         guard !overflow else { return nil }
         return _load(
             at: offset,
-            addressSize: unit.header.addressSize
+            addressSize: unit.header.addressSize,
+            from: elf
         )
     }
 }
