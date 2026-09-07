@@ -43,6 +43,8 @@ final class DWARFFixedWidthIntegerTests: XCTestCase {
         checkByteWidths(UInt32.self)
         checkByteWidths(Int64.self)
         checkByteWidths(UInt64.self)
+        checkByteWidths(Int128.self)
+        checkByteWidths(UInt128.self)
         checkByteWidths(Int.self)
         checkByteWidths(UInt.self)
     }

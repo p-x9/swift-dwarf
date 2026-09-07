@@ -10,9 +10,9 @@ import Foundation
 
 public enum DWARFAttributeResolvedValue {
     case address(DWARFAddress)
-    case offset(Int64)
-    case signedInteger(Int64)
-    case unsignedInteger(UInt64)
+    case sectionOffset(UInt64)
+    case signedInteger(Int128)
+    case unsignedInteger(UInt128)
     case string(String)
     case bool(Bool)
     case data(Data)
@@ -27,12 +27,12 @@ extension DWARFAttributeResolvedValue: CustomStringConvertible {
         switch self {
         case .address(let dWARFAddress):
             return dWARFAddress.address.description
-        case .offset(let int64):
-            return int64.description
-        case .signedInteger(let int64):
-            return int64.description
-        case .unsignedInteger(let uInt64):
-            return uInt64.description
+        case .sectionOffset(let offset):
+            return offset.description
+        case .signedInteger(let int128):
+            return int128.description
+        case .unsignedInteger(let uInt128):
+            return uInt128.description
         case .string(let string):
             return string.description
         case .bool(let bool):

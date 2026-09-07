@@ -17,17 +17,47 @@ enum UnitTypeBinaryFixture {
         rootAttributes: [(attribute: DWARFAttribute, value: UInt64)] = [],
         body: (MachOFile, DWARFCompilationUnit, ELFFile, DWARFCompilationUnit) throws -> Void
     ) throws {
+        let attributes = rootAttributes.map { attribute, value in
+            let data: Data
+            switch header.format {
+            case ._32bit: data = bytes(UInt32(value))
+            case ._64bit: data = bytes(value)
+            }
+            return (attribute, DWARFAttributeFormatType.sec_offset, data)
+        }
+        try withUnit(
+            header: header,
+            rootTag: rootTag,
+            rootAttributes: attributes,
+            body: body
+        )
+    }
+
+    static func withData16(
+        header: DWARFCompilationUnitHeader,
+        value: UInt128,
+        body: (MachOFile, DWARFCompilationUnit, ELFFile, DWARFCompilationUnit) throws -> Void
+    ) throws {
+        try withUnit(
+            header: header,
+            rootTag: .compile_unit,
+            rootAttributes: [(.const_value, .data16, bytes(value))],
+            body: body
+        )
+    }
+
+    private static func withUnit(
+        header: DWARFCompilationUnitHeader,
+        rootTag: DWARFTag?,
+        rootAttributes: [(DWARFAttribute, DWARFAttributeFormatType, Data)],
+        body: (MachOFile, DWARFCompilationUnit, ELFFile, DWARFCompilationUnit) throws -> Void
+    ) throws {
         var info = headerData(header)
         let hasRoot = rootTag != .null && rootTag != nil
         info.append(hasRoot ? 1 : 0)
         if hasRoot {
-            for (_, value) in rootAttributes {
-                switch header.format {
-                case ._32bit:
-                    info.append(bytes(UInt32(value)))
-                case ._64bit:
-                    info.append(bytes(value))
-                }
+            for (_, _, data) in rootAttributes {
+                info.append(data)
             }
         }
         if header.format == ._32bit {
@@ -161,14 +191,14 @@ enum UnitTypeBinaryFixture {
 
     private static func abbreviation(
         rootTag: DWARFTag,
-        rootAttributes: [(attribute: DWARFAttribute, value: UInt64)]
+        rootAttributes: [(DWARFAttribute, DWARFAttributeFormatType, Data)]
     ) -> Data {
         var data = uleb128(1) // Abbreviation code.
         data.append(uleb128(numericCast(rootTag.rawValue)))
         data.append(0) // DW_CHILDREN_no.
-        for (attribute, _) in rootAttributes {
+        for (attribute, format, _) in rootAttributes {
             data.append(uleb128(numericCast(attribute.rawValue)))
-            data.append(uleb128(numericCast(DWARFAttributeFormatType.sec_offset.rawValue)))
+            data.append(uleb128(numericCast(format.rawValue)))
         }
         data.append(contentsOf: [0, 0]) // End of the attribute specification.
         data.append(0) // End of the abbreviation set.
