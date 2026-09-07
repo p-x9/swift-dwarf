@@ -75,7 +75,7 @@ Legend: ✅ supported, 🟡 partially supported, ❌ not implemented.
 | --- | --- | --- | --- |
 | `.debug_abbrev` | 2–5 | ✅ | Abbreviation tables and attribute specifications. |
 | `.debug_info` | 2–5 | 🟡 | Compilation units and DIEs. Some forms and external-file references remain unsupported. |
-| `.debug_line` | 4–5 | ✅ | Headers, file tables, line programs, and VLIW operation state. DWARF 2–3 headers are not supported. |
+| `.debug_line` | 4–5 | 🟡 | Headers, file tables, line programs, and VLIW operation state. DWARF 5 `DW_LNE_define_file` format descriptors and DWARF 2–3 headers are not supported. |
 | `.debug_str` | 2–5 | ✅ | String table lookup. |
 | `.debug_line_str` | 5 | ✅ | Line string table lookup. |
 | `.debug_str_offsets` | 5 | ✅ | String offsets tables. |
