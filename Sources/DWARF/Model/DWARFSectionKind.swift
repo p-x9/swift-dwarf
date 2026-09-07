@@ -17,6 +17,8 @@ public enum DWARFSectionKind: String, Sendable {
     /// DWARF v5 string offsets section.
     case debug_str_offsets
     case debug_addr
+    /// Range lists in the format introduced in DWARF3 and retained by DWARF4.
+    case debug_ranges
     case debug_rnglists
     case debug_loclists
     case debug_aranges

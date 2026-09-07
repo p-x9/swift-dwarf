@@ -64,6 +64,10 @@ extension DWARFSegment {
         section(for: .debug_addr, in: binary)
     }
 
+    package func debug_ranges(in binary: DWARFBinary) -> DWARFSectionType? {
+        section(for: .debug_ranges, in: binary)
+    }
+
     package func debug_rnglists(in binary: DWARFBinary) -> DWARFSectionType? {
         section(for: .debug_rnglists, in: binary)
     }
