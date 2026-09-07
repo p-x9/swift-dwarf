@@ -56,28 +56,51 @@ Please use these as a reference.
 
 ## Status
 
-### Supported Binary formats
+Support is tracked by section and feature below. A supported section does not
+imply complete support for every DWARF version, form, or related object-file
+feature.
 
-- [x] mach-o
-- [x] ELF
+Legend: ✅ supported, 🟡 partially supported, ❌ not implemented.
 
-### Supported DWARF sections
+### Binary formats
 
-- [x] `.debug_abbrev`
-- [x] `.debug_info`
-- [x] `.debug_line`
-- [x] `.debug_str`
-- [x] `.debug_line_str`
-- [x] `.debug_str_offsets`
-- [x] `.debug_addr`
-- [x] `.debug_aranges`
-- [x] `.debug_rnglists`
-- [x] `.debug_loclists`
-- [x] `.debug_names`
-- [ ] `.debug-macro`
-- [ ] `.debug-pubnames`
-- [ ] `.debug-pubtypes`
-- [ ] `.debug-ranges`
+| Format | Status | Notes |
+| --- | --- | --- |
+| Mach-O | ✅ | Thin and fat binaries are supported. Full big-endian DWARF support is not guaranteed. |
+| ELF | 🟡 | ELFKit currently limits parsing to binaries with the same endianness as the host. Compressed debug sections are not supported. |
+
+### DWARF sections
+
+| Section | DWARF version | Status | Notes |
+| --- | --- | --- | --- |
+| `.debug_abbrev` | 2–5 | ✅ | Abbreviation tables and attribute specifications. |
+| `.debug_info` | 2–5 | 🟡 | Compilation units and DIEs. Some forms and external-file references remain unsupported. |
+| `.debug_line` | 4–5 | ✅ | Headers, file tables, line programs, and VLIW operation state. DWARF 2–3 headers are not supported. |
+| `.debug_str` | 2–5 | ✅ | String table lookup. |
+| `.debug_line_str` | 5 | ✅ | Line string table lookup. |
+| `.debug_str_offsets` | 5 | ✅ | String offsets tables. |
+| `.debug_addr` | 5 | ✅ | Address tables. |
+| `.debug_aranges` | 2–5 | ✅ | Address range table headers and tuples. |
+| `.debug_rnglists` | 5 | ✅ | Range list tables and entries. |
+| `.debug_loclists` | 5 | ✅ | Location list tables and entries. |
+| `.debug_names` | 5 | ✅ | Name index tables and lookup. |
+| `.debug_ranges` | 2–4 | ❌ | Legacy range lists. |
+| `.debug_loc` | 2–4 | ❌ | Legacy location lists. |
+| `.debug_types` | 4 | ❌ | Type unit headers and signature lookup are not implemented. |
+| `.debug_macro` | 5 | ❌ | Macro information. |
+| `.debug_macinfo` | 2–4 | ❌ | Legacy macro information. |
+| `.debug_frame` / `.eh_frame` | — | ❌ | Call frame information and unwinding. |
+| `.debug_pubnames` / `.debug_pubtypes` | 2–4 | ❌ | Legacy public name and type indexes. |
+
+### Known limitations
+
+- Split DWARF `.dwo` loading and supplementary object files are not supported.
+- `DW_FORM_ref_sig8`, `DW_FORM_ref_sup4`, `DW_FORM_ref_sup8`,
+  `DW_FORM_strp_sup`, and GNU alternate reference/string forms are read but not
+  resolved.
+- ELF compressed debug sections are not supported.
+- Endianness is handled by several DWARF readers, but the library does not yet
+  claim complete big-endian coverage across every section and container.
 
 ## License
 
