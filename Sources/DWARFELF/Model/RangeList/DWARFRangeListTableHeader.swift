@@ -1,16 +1,16 @@
 //
-//  DWARFRangeListHeader.swift
+//  DWARFRangeListTableHeader.swift
 //  swift-dwarf
 //
 //  Created by p-x9 on 2026/04/05
-//  
+//
 //
 
-extension DWARFRangeListHeader {
+extension DWARFRangeListTableHeader {
     public static func load(
         at offset: Int,
-        in machO: MachOFile
+        in elf: ELFFile
     ) throws -> Self? {
-        try _load(at: offset, in: machO)
+        try _load(at: offset, in: elf)
     }
 }

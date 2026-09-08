@@ -1,12 +1,12 @@
 //
-//  DWARFLocationListHeader.swift
+//  DWARFRangeListTableHeader.swift
 //  swift-dwarf
 //
 //  Created by p-x9 on 2026/04/05
 //  
 //
 
-extension DWARFLocationListHeader {
+extension DWARFRangeListTableHeader {
     public static func load(
         at offset: Int,
         in machO: MachOFile

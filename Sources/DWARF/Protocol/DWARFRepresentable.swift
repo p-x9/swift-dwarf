@@ -17,7 +17,7 @@ public protocol DWARFRepresentable {
     var stringOffsetsTables: [DWARFStringOffsetsTable] { get }
     var addresses: [DWARFAddressTable] { get }
     var addressRanges: [DWARFAddressRangeTable] { get }
-    var rangeLists: [DWARFRangeList] { get }
-    var locationLists: [DWARFLocationList] { get }
+    var rangeListTables: [DWARFRangeListTable] { get }
+    var locationListTables: [DWARFLocationListTable] { get }
     var nameIndices: [DWARFNameIndex] { get }
 }

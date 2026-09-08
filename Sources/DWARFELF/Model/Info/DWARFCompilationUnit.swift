@@ -74,16 +74,16 @@ extension DWARFCompilationUnit {
         _addresses(in: elf)
     }
 
-    public func rangeList(
+    public func rangeListTable(
         in elf: ELFFile
-    ) -> DWARFRangeList? {
-        _rangeList(in: elf)
+    ) -> DWARFRangeListTable? {
+        _rangeListTable(in: elf)
     }
 
-    func locationList(
+    func locationListTable(
         in elf: ELFFile
-    ) -> DWARFLocationList? {
-        _locationList(in: elf)
+    ) -> DWARFLocationListTable? {
+        _locationListTable(in: elf)
     }
 }
 

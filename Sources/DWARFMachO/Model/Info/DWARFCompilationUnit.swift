@@ -74,16 +74,16 @@ extension DWARFCompilationUnit {
         _addresses(in: machO)
     }
 
-    public func rangeList(
+    public func rangeListTable(
         in machO: MachOFile
-    ) -> DWARFRangeList? {
-        _rangeList(in: machO)
+    ) -> DWARFRangeListTable? {
+        _rangeListTable(in: machO)
     }
 
-    func locationList(
+    func locationListTable(
         in machO: MachOFile
-    ) -> DWARFLocationList? {
-        _locationList(in: machO)
+    ) -> DWARFLocationListTable? {
+        _locationListTable(in: machO)
     }
 }
 

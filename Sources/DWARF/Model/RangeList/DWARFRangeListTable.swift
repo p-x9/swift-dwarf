@@ -1,5 +1,5 @@
 //
-//  DWARFRangeList.swift
+//  DWARFRangeListTable.swift
 //  swift-dwarf
 //
 //  Created by p-x9 on 2025/11/30
@@ -8,18 +8,18 @@
 
 import Foundation
 
-public struct DWARFRangeList: Sendable {
-    public let header: DWARFRangeListHeader
+public struct DWARFRangeListTable: Sendable {
+    public let header: DWARFRangeListTableHeader
     public let offset: Int
 }
 
-extension DWARFRangeList {
+extension DWARFRangeListTable {
     public var layoutSize: Int {
         header.length + (header.format == ._64bit ? 12 : 4)
     }
 }
 
-extension DWARFRangeList {
+extension DWARFRangeListTable {
     package func _offsets(for binary: some _DWARFBinary) throws -> [Int] {
         guard header.offsetEntryCount > 0 else { return [] }
         let layout = DWARFListTableLayout(
@@ -59,7 +59,7 @@ extension DWARFRangeList {
     }
 }
 
-extension DWARFRangeList {
+extension DWARFRangeListTable {
     public struct Operations: Sequence {
         public let data: Data
         let addressSize: Int
@@ -115,7 +115,7 @@ extension DWARFRangeList {
     }
 }
 
-extension DWARFRangeList.Operations {
+extension DWARFRangeListTable.Operations {
     public struct Iterator: IteratorProtocol {
         public typealias Element = DWARFRangeOperation
 
@@ -157,12 +157,12 @@ extension DWARFRangeList.Operations {
     }
 }
 
-extension DWARFRangeList {
+extension DWARFRangeListTable {
     package static func _load(
         at offset: Int,
         in binary: some _DWARFBinary
     ) throws -> Self? {
-        guard let header: DWARFRangeListHeader = try ._load(
+        guard let header: DWARFRangeListTableHeader = try ._load(
             at: offset,
             in: binary
         ) else { return nil }

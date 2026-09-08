@@ -1,5 +1,5 @@
 //
-//  DWARFLocationListHeader.swift
+//  DWARFLocationListTableHeader.swift
 //  swift-dwarf
 //
 //  Created by p-x9 on 2025/11/30
@@ -9,12 +9,12 @@
 import Foundation
 import DWARFC
 
-public enum DWARFLocationListHeader: Sendable {
+public enum DWARFLocationListTableHeader: Sendable {
     case version5(DWARF5LocationListHeader64)
     case version5_32(DWARF5LocationListHeader32)
 }
 
-extension DWARFLocationListHeader {
+extension DWARFLocationListTableHeader {
     public var offset: Int {
         switch self {
         case .version5(let header):
@@ -25,7 +25,7 @@ extension DWARFLocationListHeader {
     }
 }
 
-extension DWARFLocationListHeader {
+extension DWARFLocationListTableHeader {
     public var layoutSize: Int {
         switch self {
         case .version5(let header):
@@ -36,7 +36,7 @@ extension DWARFLocationListHeader {
     }
 }
 
-extension DWARFLocationListHeader {
+extension DWARFLocationListTableHeader {
     public var format: DWARFFormat {
         switch self {
         case .version5:
@@ -75,7 +75,7 @@ extension DWARFLocationListHeader {
     }
 }
 
-extension DWARFLocationListHeader {
+extension DWARFLocationListTableHeader {
     public var segmentSelectorSize: Int {
         switch self {
         case .version5(let header):
@@ -95,7 +95,7 @@ extension DWARFLocationListHeader {
     }
 }
 
-extension DWARFLocationListHeader {
+extension DWARFLocationListTableHeader {
     package static func _load(
         at offset: Int,
         in binary: some _DWARFBinary

@@ -144,10 +144,10 @@ extension DWARFMachOPrintTests {
 }
 
 extension DWARFMachOPrintTests {
-    func testRangeListsOperations() throws {
+    func testRangeListTablesOperations() throws {
         let dwarf = machO.dwarf
-        for list in dwarf.rangeLists {
-            let header = list.header
+        for table in dwarf.rangeListTables {
+            let header = table.header
             print("------")
             print(
                 "range list header:",
@@ -158,7 +158,7 @@ extension DWARFMachOPrintTests {
                 "seg_size = \(header.segmentSelectorSize),",
                 "offset_entry_count = \(header.offsetEntryCount)"
             )
-            let operations = try list.operations(for: machO)
+            let operations = try table.operations(for: machO)
             for operation in operations {
                 print(operation)
             }
@@ -167,10 +167,10 @@ extension DWARFMachOPrintTests {
 }
 
 extension DWARFMachOPrintTests {
-    func testLocationListsOperations() throws {
+    func testLocationListTablesOperations() throws {
         let dwarf = machO.dwarf
-        for list in dwarf.locationLists {
-            let header = list.header
+        for table in dwarf.locationListTables {
+            let header = table.header
             print("------")
             print(
                 "location list header:",
@@ -181,7 +181,7 @@ extension DWARFMachOPrintTests {
                 "seg_size = \(header.segmentSelectorSize),",
                 "offset_entry_count = \(header.offsetEntryCount)"
             )
-            let operations = try list.operations(for: machO)
+            let operations = try table.operations(for: machO)
             for operation in operations {
                 print(operation)
             }

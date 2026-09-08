@@ -184,43 +184,43 @@ extension MachOFile.DWARF {
 
 extension MachOFile.DWARF {
     // __debug_rnglists
-    public var rangeLists: [DWARFRangeList] {
+    public var rangeListTables: [DWARFRangeListTable] {
         guard let dwarf = machO.dwarfSegment,
               let debug_rnglists = dwarf.debug_rnglists(in: machO) else {
             return []
         }
-        var lists: [DWARFRangeList] = []
+        var tables: [DWARFRangeListTable] = []
         var pos = 0
         while pos < debug_rnglists.size {
-            let list: DWARFRangeList? = try? ._load(
+            let table: DWARFRangeListTable? = try? ._load(
                 at: debug_rnglists.offset + pos,
                 in: machO
             )
-            guard let list else { break }
-            lists.append(list)
-            pos += list.layoutSize
+            guard let table else { break }
+            tables.append(table)
+            pos += table.layoutSize
         }
-        return lists
+        return tables
     }
 
     // __debug_loclists
-    public var locationLists: [DWARFLocationList] {
+    public var locationListTables: [DWARFLocationListTable] {
         guard let dwarf = machO.dwarfSegment,
               let debug_loclists = dwarf.debug_loclists(in: machO) else {
             return []
         }
-        var lists: [DWARFLocationList] = []
+        var tables: [DWARFLocationListTable] = []
         var pos = 0
         while pos < debug_loclists.size {
-            let list: DWARFLocationList? = try? ._load(
+            let table: DWARFLocationListTable? = try? ._load(
                 at: debug_loclists.offset + pos,
                 in: machO
             )
-            guard let list else { break }
-            lists.append(list)
-            pos += list.layoutSize
+            guard let table else { break }
+            tables.append(table)
+            pos += table.layoutSize
         }
-        return lists
+        return tables
     }
 }
 
