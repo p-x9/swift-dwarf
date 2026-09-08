@@ -18,5 +18,7 @@ final class DWARFSectionKindTests: XCTestCase {
     func testOtherSectionNamesRetainTheirPrefixes() {
         XCTAssertEqual(DWARFSectionKind.debug_info.elfName, ".debug_info")
         XCTAssertEqual(DWARFSectionKind.debug_info.machOName, "__debug_info")
+        XCTAssertEqual(DWARFSectionKind.debug_ranges.elfName, ".debug_ranges")
+        XCTAssertEqual(DWARFSectionKind.debug_ranges.machOName, "__debug_ranges")
     }
 }
