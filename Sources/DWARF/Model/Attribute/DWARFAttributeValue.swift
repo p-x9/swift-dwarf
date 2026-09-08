@@ -956,8 +956,8 @@ extension DWARFAttributeValue {
     ) -> [DWARFRange]? {
         let index: Int = numericCast(rngList.index)
 
-        guard let list = unit._rangeList(in: binary),
-              let offsets = try? list._offsets(for: binary) else {
+        guard let table = unit._rangeListTable(in: binary),
+              let offsets = try? table._offsets(for: binary) else {
             return nil
         }
         guard let addressTable = unit._addresses(in: binary) else {
@@ -967,7 +967,7 @@ extension DWARFAttributeValue {
             return nil
         }
         let offset = offsets[index]
-        guard let _operations = try? list._operations(
+        guard let _operations = try? table._operations(
             for: binary,
             entryOffset: offset
         ) else {
@@ -992,8 +992,8 @@ extension DWARFAttributeValue {
     ) -> [DWARFLocation]? {
         let index: Int = numericCast(locList.index)
 
-        guard let list = unit._locationList(in: binary),
-              let offsets = try? list._offsets(for: binary) else {
+        guard let table = unit._locationListTable(in: binary),
+              let offsets = try? table._offsets(for: binary) else {
             return nil
         }
         guard let addressTable = unit._addresses(in: binary) else {
@@ -1003,7 +1003,7 @@ extension DWARFAttributeValue {
             return nil
         }
         let offset = offsets[index]
-        guard let _operations = try? list._operations(
+        guard let _operations = try? table._operations(
             for: binary,
             entryOffset: offset
         ) else {

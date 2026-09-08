@@ -126,7 +126,7 @@ final class DWARFOperationEndianTests: XCTestCase {
 
             XCTAssertEqual(
                 Array(
-                    DWARFLocationList.Operations(
+                    DWARFLocationListTable.Operations(
                         data: data,
                         addressSize: 8,
                         format: ._32bit,

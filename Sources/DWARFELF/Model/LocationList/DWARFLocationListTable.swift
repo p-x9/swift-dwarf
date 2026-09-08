@@ -1,27 +1,30 @@
 //
-//  DWARFRangeList.swift
+//  DWARFLocationListTable.swift
 //  swift-dwarf
 //
 //  Created by p-x9 on 2026/04/05
 //
 //
 
-extension DWARFRangeList {
+extension DWARFLocationListTable {
     public func offsets(for elf: ELFFile) throws -> [Int] {
         try _offsets(for: elf)
     }
 }
 
-extension DWARFRangeList {
+extension DWARFLocationListTable {
     public func operations(
         for elf: ELFFile,
         entryOffset: Int? = nil
     ) throws -> Operations {
-        try _operations(for: elf, entryOffset: entryOffset)
+        try _operations(
+            for: elf,
+            entryOffset: entryOffset
+        )
     }
 }
 
-extension DWARFRangeList {
+extension DWARFLocationListTable {
     public static func load(
         at offset: Int,
         in elf: ELFFile

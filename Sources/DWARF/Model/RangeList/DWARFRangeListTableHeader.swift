@@ -1,5 +1,5 @@
 //
-//  DWARFRangeListHeader.swift
+//  DWARFRangeListTableHeader.swift
 //  swift-dwarf
 //
 //  Created by p-x9 on 2025/11/30
@@ -9,12 +9,12 @@
 import Foundation
 import DWARFC
 
-public enum DWARFRangeListHeader: Sendable {
+public enum DWARFRangeListTableHeader: Sendable {
     case version5(DWARF5RangeListHeader64)
     case version5_32(DWARF5RangeListHeader32)
 }
 
-extension DWARFRangeListHeader {
+extension DWARFRangeListTableHeader {
     public var offset: Int {
         switch self {
         case .version5(let header):
@@ -25,7 +25,7 @@ extension DWARFRangeListHeader {
     }
 }
 
-extension DWARFRangeListHeader {
+extension DWARFRangeListTableHeader {
     public var layoutSize: Int {
         switch self {
         case .version5(let header):
@@ -36,7 +36,7 @@ extension DWARFRangeListHeader {
     }
 }
 
-extension DWARFRangeListHeader {
+extension DWARFRangeListTableHeader {
     public var format: DWARFFormat {
         switch self {
         case .version5:
@@ -75,7 +75,7 @@ extension DWARFRangeListHeader {
     }
 }
 
-extension DWARFRangeListHeader {
+extension DWARFRangeListTableHeader {
     public var segmentSelectorSize: Int {
         switch self {
         case .version5(let header):
@@ -95,7 +95,7 @@ extension DWARFRangeListHeader {
     }
 }
 
-extension DWARFRangeListHeader {
+extension DWARFRangeListTableHeader {
     package static func _load(
         at offset: Int,
         in binary: some _DWARFBinary

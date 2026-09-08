@@ -20,7 +20,7 @@ final class DWARFListOperationEndianTests: XCTestCase {
 
                 XCTAssertEqual(
                     Array(
-                        DWARFRangeList.Operations(
+                        DWARFRangeListTable.Operations(
                             data: data,
                             addressSize: addressSize,
                             segmentSelectorSize: 2,
@@ -64,7 +64,7 @@ final class DWARFListOperationEndianTests: XCTestCase {
 
                 XCTAssertEqual(
                     Array(
-                        DWARFLocationList.Operations(
+                        DWARFLocationListTable.Operations(
                             data: data,
                             addressSize: addressSize,
                             format: ._32bit,

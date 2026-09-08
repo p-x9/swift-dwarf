@@ -160,30 +160,30 @@ extension DWARFCompilationUnit {
         )
     }
 
-    package func _rangeList(
+    package func _rangeListTable(
         in binary: some _DWARFBinary
-    ) -> DWARFRangeList? {
+    ) -> DWARFRangeListTable? {
         guard let dwarfSegment = binary.dwarfSegment,
               let debug_rnglists = dwarfSegment.debug_rnglists(in: binary),
               let base = _rangeListsBase(in: binary) else {
             return nil
         }
-        return binary.dwarf.rangeLists.first(
+        return binary.dwarf.rangeListTables.first(
             where: {
                 $0.offset - debug_rnglists.offset + $0.header.layoutSize == base
             }
         )
     }
 
-    package func _locationList(
+    package func _locationListTable(
         in binary: some _DWARFBinary
-    ) -> DWARFLocationList? {
+    ) -> DWARFLocationListTable? {
         guard let dwarfSegment = binary.dwarfSegment,
               let debug_loclists = dwarfSegment.debug_loclists(in: binary),
               let base = _locationListsBase(in: binary) else {
             return nil
         }
-        return binary.dwarf.locationLists.first(
+        return binary.dwarf.locationListTables.first(
             where: {
                 $0.offset - debug_loclists.offset + $0.header.layoutSize == base
             }
