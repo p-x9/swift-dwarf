@@ -4,6 +4,15 @@
 //
 
 extension DWARF3LocationList {
+    /// Resolves this list's ranges and decodes its location expressions.
+    /// Overlapping locations are retained; zero-length ranges are ignored.
+    public func locations(
+        for unit: DWARFCompilationUnit,
+        in machO: MachOFile
+    ) -> [DWARFLocation]? {
+        _locations(for: unit, in: machO)
+    }
+
     public func entries(in machO: MachOFile) -> [DWARF3LocationListEntry]? {
         _entries(in: machO)
     }

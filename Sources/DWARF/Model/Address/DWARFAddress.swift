@@ -14,6 +14,15 @@ public struct DWARFAddress: Sendable, Equatable {
 }
 
 extension DWARFAddress {
+    /// Maximum address representable by the supported byte width.
+    /// Returns nil for zero, negative, or unsupported address sizes.
+    static func maximumValue(addressSize: Int) -> UInt64? {
+        guard (1...MemoryLayout<UInt64>.size).contains(addressSize) else {
+            return nil
+        }
+        return UInt64.max >> ((MemoryLayout<UInt64>.size - addressSize) * 8)
+    }
+
     init?(
         data: Data,
         addressSize: Int,

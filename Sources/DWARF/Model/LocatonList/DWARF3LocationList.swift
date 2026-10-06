@@ -20,21 +20,67 @@ public struct DWARF3LocationList: Sendable, Equatable {
 }
 
 extension DWARF3LocationList {
+    package func _locations(
+        for unit: DWARFCompilationUnit,
+        in binary: some _DWARFBinary
+    ) -> [DWARFLocation]? {
+        guard unit.header.version == .v3 || unit.header.version == .v4,
+              addressSize == unit.header.addressSize,
+              let entries = _entries(in: binary) else { return nil }
+        return entries._locations(
+            addressSize: addressSize,
+            initialBaseAddress: unit._lowPC(in: binary),
+            descriptions: {
+                Self._parseDescriptions(
+                    data: $0, addressSize: addressSize,
+                    format: unit.header.format, endian: binary.endian
+                )
+            }
+        )
+    }
+
+    package static func _parseDescriptions(
+        data: Data,
+        addressSize: Int,
+        format: DWARFFormat,
+        endian: Endian
+    ) -> [DWARFOperation]? {
+        if data.isEmpty { return [] }
+        return data.withUnsafeBytes { buffer in
+            guard let pointer = buffer.baseAddress else { return nil }
+            var offset = 0
+            var operations: [DWARFOperation] = []
+            while offset < buffer.count {
+                let previousOffset = offset
+                var done = false
+                guard let operation = DWARFOperation.readNext(
+                    basePointer: pointer.assumingMemoryBound(to: UInt8.self),
+                    operaionsSize: buffer.count,
+                    addressSize: addressSize,
+                    format: format,
+                    endian: endian,
+                    nextOffset: &offset,
+                    done: &done
+                ), offset > previousOffset, offset <= buffer.count else {
+                    return nil
+                }
+                operations.append(operation)
+            }
+            return operations
+        }
+    }
+
     package static func _parseEntries(
         data: Data,
         addressSize: Int,
         endian: Endian
     ) -> [DWARF3LocationListEntry]? {
-        guard addressSize > 0,
-              addressSize <= MemoryLayout<UInt64>.size else {
-            return nil
-        }
+        guard let maximumAddress = DWARFAddress.maximumValue(
+            addressSize: addressSize
+        ) else { return nil }
 
         var nextOffset = 0
         var entries: [DWARF3LocationListEntry] = []
-        let maximumAddress = addressSize == MemoryLayout<UInt64>.size
-            ? UInt64.max
-            : (UInt64(1) << (addressSize * 8)) - 1
 
         return data.withUnsafeBytes { rawBuffer in
             let buffer = rawBuffer.bindMemory(to: UInt8.self)
