@@ -120,17 +120,23 @@ fileprivate struct RangeOperationsState {
 
 fileprivate func addingRangeOffset(
     _ offset: UInt64,
-    to address: UInt64
+    to address: UInt64,
+    maximumAddress: UInt64
 ) -> UInt64? {
     let (result, overflow) = address.addingReportingOverflow(offset)
-    return overflow ? nil : result
+    return !overflow && result <= maximumAddress ? result : nil
 }
 
 extension Sequence<DWARFRangeOperation> {
     package func _ranges(
+        addressSize: Int,
         initialBaseAddress: @autoclosure () -> DWARFAddress?,
         addressAtIndex: (UInt64) -> DWARFAddress?
     ) -> [DWARFRange]? {
+        guard (1...8).contains(addressSize) else { return nil }
+        let maximumAddress = addressSize == 8
+            ? UInt64.max
+            : (UInt64(1) << (addressSize * 8)) - 1
         var state = RangeOperationsState()
 
         for operation in self {
@@ -146,7 +152,11 @@ extension Sequence<DWARFRangeOperation> {
 
             case .startx_endx(let startIndex, let endIndex):
                 guard let start = addressAtIndex(startIndex),
-                      let end = addressAtIndex(endIndex) else {
+                      let end = addressAtIndex(endIndex),
+                      start.address <= maximumAddress,
+                      end.address <= maximumAddress,
+                      start.segmentSelector != end.segmentSelector
+                        || end.address >= start.address else {
                     return nil
                 }
                 state.ranges.append(
@@ -157,7 +167,8 @@ extension Sequence<DWARFRangeOperation> {
                 guard let start = addressAtIndex(startIndex),
                       let endAddress = addingRangeOffset(
                           length,
-                          to: start.address
+                          to: start.address,
+                          maximumAddress: maximumAddress
                       ) else {
                     return nil
                 }
@@ -172,17 +183,20 @@ extension Sequence<DWARFRangeOperation> {
                 )
 
             case .offset_pair(let startOffset, let endOffset):
+                guard endOffset >= startOffset else { return nil }
                 if state.base == nil {
                     state.base = initialBaseAddress()
                 }
                 guard let base = state.base,
                       let startAddress = addingRangeOffset(
                           startOffset,
-                          to: base.address
+                          to: base.address,
+                          maximumAddress: maximumAddress
                       ),
                       let endAddress = addingRangeOffset(
                           endOffset,
-                          to: base.address
+                          to: base.address,
+                          maximumAddress: maximumAddress
                       ) else {
                     return nil
                 }
@@ -203,6 +217,12 @@ extension Sequence<DWARFRangeOperation> {
                 state.base = address
 
             case .start_end(let start, let end):
+                guard start.address <= maximumAddress,
+                      end.address <= maximumAddress,
+                      start.segmentSelector != end.segmentSelector
+                        || end.address >= start.address else {
+                    return nil
+                }
                 state.ranges.append(
                     .init(start: start, end: end)
                 )
@@ -210,7 +230,8 @@ extension Sequence<DWARFRangeOperation> {
             case .start_length(let start, let length):
                 guard let endAddress = addingRangeOffset(
                     length,
-                    to: start.address
+                    to: start.address,
+                    maximumAddress: maximumAddress
                 ) else {
                     return nil
                 }
@@ -233,8 +254,13 @@ extension Sequence<DWARFRangeOperation> {
 // MARK: - DWARF3RangeListEntry
 extension Sequence<DWARF3RangeListEntry> {
     package func _ranges(
+        addressSize: Int,
         initialBaseAddress: @autoclosure () -> DWARFAddress?
     ) -> [DWARFRange]? {
+        guard (1...8).contains(addressSize) else { return nil }
+        let maximumAddress = addressSize == 8
+            ? UInt64.max
+            : (UInt64(1) << (addressSize * 8)) - 1
         var state = RangeOperationsState()
 
         for entry in self {
@@ -249,22 +275,24 @@ extension Sequence<DWARF3RangeListEntry> {
                 )
 
             case .range(let beginningOffset, let endOffset):
+                if beginningOffset == endOffset {
+                    continue
+                }
                 if state.base == nil {
                     state.base = initialBaseAddress()
                 }
                 guard let base = state.base,
                       let startAddress = addingRangeOffset(
                           beginningOffset,
-                          to: base.address
+                          to: base.address,
+                          maximumAddress: maximumAddress
                       ),
                       let endAddress = addingRangeOffset(
                           endOffset,
-                          to: base.address
+                          to: base.address,
+                          maximumAddress: maximumAddress
                       ) else {
                     return nil
-                }
-                if startAddress == endAddress {
-                    continue
                 }
                 state.ranges.append(
                     .init(
