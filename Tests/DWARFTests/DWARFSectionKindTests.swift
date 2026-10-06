@@ -20,5 +20,7 @@ final class DWARFSectionKindTests: XCTestCase {
         XCTAssertEqual(DWARFSectionKind.debug_info.machOName, "__debug_info")
         XCTAssertEqual(DWARFSectionKind.debug_ranges.elfName, ".debug_ranges")
         XCTAssertEqual(DWARFSectionKind.debug_ranges.machOName, "__debug_ranges")
+        XCTAssertEqual(DWARFSectionKind.debug_loc.elfName, ".debug_loc")
+        XCTAssertEqual(DWARFSectionKind.debug_loc.machOName, "__debug_loc")
     }
 }
