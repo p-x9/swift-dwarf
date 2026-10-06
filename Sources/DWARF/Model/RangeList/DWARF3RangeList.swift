@@ -37,16 +37,12 @@ extension DWARF3RangeList {
         addressSize: Int,
         endian: Endian
     ) -> [DWARF3RangeListEntry]? {
-        guard addressSize > 0,
-              addressSize <= MemoryLayout<UInt64>.size else {
-            return nil
-        }
+        guard let maximumAddress = DWARFAddress.maximumValue(
+            addressSize: addressSize
+        ) else { return nil }
 
         var nextOffset = 0
         var entries: [DWARF3RangeListEntry] = []
-        let maximumAddress = addressSize == MemoryLayout<UInt64>.size
-            ? UInt64.max
-            : (UInt64(1) << (addressSize * 8)) - 1
 
         return data.withUnsafeBytes { rawBuffer in
             let buffer = rawBuffer.bindMemory(to: UInt8.self)

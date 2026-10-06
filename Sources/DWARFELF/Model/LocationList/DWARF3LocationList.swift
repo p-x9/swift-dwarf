@@ -4,6 +4,15 @@
 //
 
 extension DWARF3LocationList {
+    /// Resolves this list's ranges and decodes its location expressions.
+    /// Overlapping locations are retained; zero-length ranges are ignored.
+    public func locations(
+        for unit: DWARFCompilationUnit,
+        in elf: ELFFile
+    ) -> [DWARFLocation]? {
+        _locations(for: unit, in: elf)
+    }
+
     public func entries(in elf: ELFFile) -> [DWARF3LocationListEntry]? {
         _entries(in: elf)
     }

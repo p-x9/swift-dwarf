@@ -133,10 +133,9 @@ extension Sequence<DWARFRangeOperation> {
         initialBaseAddress: @autoclosure () -> DWARFAddress?,
         addressAtIndex: (UInt64) -> DWARFAddress?
     ) -> [DWARFRange]? {
-        guard (1...8).contains(addressSize) else { return nil }
-        let maximumAddress = addressSize == 8
-            ? UInt64.max
-            : (UInt64(1) << (addressSize * 8)) - 1
+        guard let maximumAddress = DWARFAddress.maximumValue(
+            addressSize: addressSize
+        ) else { return nil }
         var state = RangeOperationsState()
 
         for operation in self {
@@ -257,10 +256,9 @@ extension Sequence<DWARF3RangeListEntry> {
         addressSize: Int,
         initialBaseAddress: @autoclosure () -> DWARFAddress?
     ) -> [DWARFRange]? {
-        guard (1...8).contains(addressSize) else { return nil }
-        let maximumAddress = addressSize == 8
-            ? UInt64.max
-            : (UInt64(1) << (addressSize * 8)) - 1
+        guard let maximumAddress = DWARFAddress.maximumValue(
+            addressSize: addressSize
+        ) else { return nil }
         var state = RangeOperationsState()
 
         for entry in self {
@@ -309,6 +307,54 @@ extension Sequence<DWARF3RangeListEntry> {
             }
         }
 
+        return nil
+    }
+}
+
+// MARK: - DWARF3LocationListEntry
+extension Sequence<DWARF3LocationListEntry> {
+    package func _locations(
+        addressSize: Int,
+        initialBaseAddress: @autoclosure () -> DWARFAddress?,
+        descriptions: (Data) -> [DWARFOperation]?
+    ) -> [DWARFLocation]? {
+        guard let maximumAddress = DWARFAddress.maximumValue(
+            addressSize: addressSize
+        ) else { return nil }
+        var base: DWARFAddress?
+        var locations: [DWARFLocation] = []
+
+        for entry in self {
+            switch entry {
+            case .endOfList:
+                return locations
+            case .baseAddressSelection(let address):
+                base = .init(segmentSelector: nil, address: address)
+            case .location(let beginningOffset, let endOffset, let expression):
+                guard endOffset >= beginningOffset else { return nil }
+                if beginningOffset == endOffset { continue }
+                if base == nil { base = initialBaseAddress() }
+                guard let base,
+                      let start = addingRangeOffset(
+                          beginningOffset, to: base.address,
+                          maximumAddress: maximumAddress
+                      ),
+                      let end = addingRangeOffset(
+                          endOffset, to: base.address,
+                          maximumAddress: maximumAddress
+                      ),
+                      let operations = descriptions(expression) else {
+                    return nil
+                }
+                locations.append(.init(
+                    range: .init(
+                        start: .init(segmentSelector: base.segmentSelector, address: start),
+                        end: .init(segmentSelector: base.segmentSelector, address: end)
+                    ),
+                    descriptions: operations
+                ))
+            }
+        }
         return nil
     }
 }

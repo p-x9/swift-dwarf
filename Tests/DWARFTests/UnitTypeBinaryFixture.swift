@@ -73,12 +73,27 @@ enum UnitTypeBinaryFixture {
     static func withLegacyLocations(
         header: DWARFCompilationUnitHeader,
         debugLoc: Data,
+        lowPC: UInt64? = nil,
         body: (MachOFile, DWARFCompilationUnit, ELFFile, DWARFCompilationUnit) throws -> Void
     ) throws {
+        var attributes: [(DWARFAttribute, DWARFAttributeFormatType, Data)] = []
+        if let lowPC {
+            switch header.addressSize {
+            case 4:
+                guard let value = UInt32(exactly: lowPC) else {
+                    throw CocoaError(.fileReadCorruptFile)
+                }
+                attributes = [(.low_pc, .addr, bytes(value))]
+            case 8:
+                attributes = [(.low_pc, .addr, bytes(lowPC))]
+            default:
+                throw CocoaError(.fileReadCorruptFile)
+            }
+        }
         try withUnit(
             header: header,
             rootTag: .compile_unit,
-            rootAttributes: [],
+            rootAttributes: attributes,
             debugRanges: debugLoc,
             rangesSectionName: ".debug_loc",
             debugRnglists: nil,
