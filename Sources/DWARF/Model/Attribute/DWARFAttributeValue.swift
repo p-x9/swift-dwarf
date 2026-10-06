@@ -960,9 +960,6 @@ extension DWARFAttributeValue {
               let offsets = try? table._offsets(for: binary) else {
             return nil
         }
-        guard let addressTable = unit._addresses(in: binary) else {
-            return nil
-        }
         guard offsets.indices.contains(index) else {
             return nil
         }
@@ -973,15 +970,24 @@ extension DWARFAttributeValue {
         ) else {
             return nil
         }
-        var operations = Array(_operations)
-        guard let end = operations.firstIndex(where: { $0 == .end_of_list }) else {
-            return nil
-        }
-        operations = Array(operations[..<end])
-        return operations._ranges(
-            addressTable: addressTable,
-            in: binary
-        ).first
+        var addresses: [DWARFAddress]?
+        return _operations._ranges(
+            initialBaseAddress: unit._lowPC(in: binary),
+            addressAtIndex: { index in
+                if addresses == nil {
+                    guard let addressTable = unit._addresses(in: binary) else {
+                        return nil
+                    }
+                    addresses = Array(addressTable._addresses(in: binary))
+                }
+                guard let index = Int(exactly: index),
+                      let addresses,
+                      addresses.indices.contains(index) else {
+                    return nil
+                }
+                return addresses[index]
+            }
+        )
     }
 
     @inline(__always)
