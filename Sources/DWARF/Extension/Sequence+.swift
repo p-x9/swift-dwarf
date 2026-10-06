@@ -275,6 +275,9 @@ extension Sequence<DWARF3RangeListEntry> {
                 )
 
             case .range(let beginningOffset, let endOffset):
+                if beginningOffset == endOffset {
+                    continue
+                }
                 if state.base == nil {
                     state.base = initialBaseAddress()
                 }
@@ -290,9 +293,6 @@ extension Sequence<DWARF3RangeListEntry> {
                           maximumAddress: maximumAddress
                       ) else {
                     return nil
-                }
-                if startAddress == endAddress {
-                    continue
                 }
                 state.ranges.append(
                     .init(

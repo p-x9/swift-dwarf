@@ -262,6 +262,42 @@ final class DWARFRangeOperationTests: XCTestCase {
 }
 
 final class DWARF3RangeListEntryResolutionTests: XCTestCase {
+    func testEmptyEntryDoesNotRequireInitialBase() {
+        var initialBaseWasRequested = false
+        func initialBaseAddress() -> DWARFAddress? {
+            initialBaseWasRequested = true
+            return nil
+        }
+        let entries: [DWARF3RangeListEntry] = [
+            .range(beginningOffset: 1, endOffset: 1),
+            .baseAddressSelection(address: 0x5000),
+            .range(beginningOffset: 0x10, endOffset: 0x20),
+            .endOfList,
+        ]
+        XCTAssertEqual(entries._ranges(
+            addressSize: 4,
+            initialBaseAddress: initialBaseAddress()
+        ), [.init(start: address(0x5010), end: address(0x5020))])
+        XCTAssertFalse(initialBaseWasRequested)
+    }
+
+    func testEmptyEntryDoesNotFailOnAddressOverflow() {
+        for size in [4, 8] {
+            let maximum = size == 8 ? UInt64.max : UInt64(UInt32.max)
+            let entries: [DWARF3RangeListEntry] = [
+                .baseAddressSelection(address: maximum),
+                .range(beginningOffset: 1, endOffset: 1),
+                .baseAddressSelection(address: 0x5000),
+                .range(beginningOffset: 0x10, endOffset: 0x20),
+                .endOfList,
+            ]
+            XCTAssertEqual(entries._ranges(
+                addressSize: size,
+                initialBaseAddress: nil
+            ), [.init(start: address(0x5010), end: address(0x5020))])
+        }
+    }
+
     func testRejectsAddressesOutsideUnitWidth() {
         for size in [1, 2, 4, 8] {
             let maximum: UInt64 = size == 8
