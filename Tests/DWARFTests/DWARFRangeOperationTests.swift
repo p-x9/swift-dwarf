@@ -57,6 +57,7 @@ final class DWARFRangeOperationTests: XCTestCase {
             .end_of_list,
             .start_end(start: address(0x9000), end: address(0x9010)),
         ]._ranges(
+            addressSize: 8,
             initialBaseAddress: address(0x1000),
             addressAtIndex: { _ in
                 indexedAddressWasRequested = true
@@ -86,6 +87,7 @@ final class DWARFRangeOperationTests: XCTestCase {
             .startx_length(startIndex: 2, length: 0x40),
             .end_of_list,
         ]._ranges(
+            addressSize: 8,
             initialBaseAddress: nil,
             addressAtIndex: { index in
                 requestedIndices.append(index)
@@ -124,6 +126,7 @@ final class DWARFRangeOperationTests: XCTestCase {
             ),
             .end_of_list,
         ]._ranges(
+            addressSize: 8,
             initialBaseAddress: initialBaseAddress(),
             addressAtIndex: { _ in
                 indexedAddressWasRequested = true
@@ -139,6 +142,57 @@ final class DWARFRangeOperationTests: XCTestCase {
         XCTAssertFalse(indexedAddressWasRequested)
     }
 
+    func testRejectsAddressesOutsideUnitWidth() {
+        for size in [1, 2, 4, 8] {
+            let maximum: UInt64 = size == 8
+                ? UInt64.max : (UInt64(1) << (size * 8)) - 1
+            let operations: [DWARFRangeOperation] = [
+                .offset_pair(startOffset: 0, endOffset: 1),
+                .start_length(start: address(maximum), length: 1),
+                .startx_length(startIndex: 0, length: 1),
+            ]
+            for operation in operations {
+                XCTAssertNil([operation, .end_of_list]._ranges(
+                    addressSize: size,
+                    initialBaseAddress: address(maximum),
+                    addressAtIndex: { _ in self.address(maximum) }
+                ))
+            }
+            XCTAssertEqual([
+                DWARFRangeOperation.start_length(
+                    start: address(maximum - 1), length: 1
+                ), .end_of_list,
+            ]._ranges(
+                addressSize: size,
+                initialBaseAddress: nil,
+                addressAtIndex: { _ in nil }
+            ), [.init(start: address(maximum - 1), end: address(maximum))])
+        }
+        XCTAssertNil([
+            DWARFRangeOperation.startx_endx(startIndex: 0, endIndex: 1),
+            .end_of_list,
+        ]._ranges(
+            addressSize: 4,
+            initialBaseAddress: nil,
+            addressAtIndex: { _ in self.address(0x1_0000_0000) }
+        ))
+    }
+
+    func testRejectsReversedRanges() {
+        let operations: [DWARFRangeOperation] = [
+            .start_end(start: address(0x20), end: address(0x10)),
+            .startx_endx(startIndex: 0, endIndex: 1),
+            .offset_pair(startOffset: 0x20, endOffset: 0x10),
+        ]
+        for operation in operations {
+            XCTAssertNil([operation, .end_of_list]._ranges(
+                addressSize: 4,
+                initialBaseAddress: address(0x1000),
+                addressAtIndex: { self.address($0 == 0 ? 0x20 : 0x10) }
+            ))
+        }
+    }
+
     func testRequiresBaseForOffsetPair() {
         XCTAssertNil(
             [
@@ -148,6 +202,7 @@ final class DWARFRangeOperationTests: XCTestCase {
                 ),
                 .end_of_list,
             ]._ranges(
+                addressSize: 8,
                 initialBaseAddress: nil,
                 addressAtIndex: { _ in nil }
             )
@@ -160,6 +215,7 @@ final class DWARFRangeOperationTests: XCTestCase {
                 DWARFRangeOperation.startx_endx(startIndex: 0, endIndex: 1),
                 .end_of_list,
             ]._ranges(
+                addressSize: 8,
                 initialBaseAddress: nil,
                 addressAtIndex: { index in
                     index == 0 ? self.address(0x1000) : nil
@@ -177,6 +233,7 @@ final class DWARFRangeOperationTests: XCTestCase {
                 ),
                 .end_of_list,
             ]._ranges(
+                addressSize: 8,
                 initialBaseAddress: nil,
                 addressAtIndex: { _ in nil }
             )
@@ -188,6 +245,7 @@ final class DWARFRangeOperationTests: XCTestCase {
                     end: address(0x2000)
                 ),
             ]._ranges(
+                addressSize: 8,
                 initialBaseAddress: nil,
                 addressAtIndex: { _ in nil }
             )
@@ -204,6 +262,24 @@ final class DWARFRangeOperationTests: XCTestCase {
 }
 
 final class DWARF3RangeListEntryResolutionTests: XCTestCase {
+    func testRejectsAddressesOutsideUnitWidth() {
+        for size in [1, 2, 4, 8] {
+            let maximum: UInt64 = size == 8
+                ? UInt64.max : (UInt64(1) << (size * 8)) - 1
+            let entries: [DWARF3RangeListEntry] = [
+                .range(beginningOffset: 0, endOffset: 1), .endOfList,
+            ]
+            XCTAssertNil(entries._ranges(
+                addressSize: size,
+                initialBaseAddress: address(maximum)
+            ))
+            XCTAssertEqual(entries._ranges(
+                addressSize: size,
+                initialBaseAddress: address(maximum - 1)
+            ), [.init(start: address(maximum - 1), end: address(maximum))])
+        }
+    }
+
     func testResolvesInitialAndSelectedBasesAndIgnoresEmptyRanges() {
         let ranges = [
             DWARF3RangeListEntry.range(
@@ -215,7 +291,7 @@ final class DWARF3RangeListEntryResolutionTests: XCTestCase {
             .range(beginningOffset: 0x20, endOffset: 0x40),
             .endOfList,
             .range(beginningOffset: 0x50, endOffset: 0x60),
-        ]._ranges(initialBaseAddress: address(0x1000))
+        ]._ranges(addressSize: 8, initialBaseAddress: address(0x1000))
 
         XCTAssertEqual(
             ranges,
@@ -238,7 +314,7 @@ final class DWARF3RangeListEntryResolutionTests: XCTestCase {
             DWARF3RangeListEntry.baseAddressSelection(address: 0x5000),
             .range(beginningOffset: 0x10, endOffset: 0x20),
             .endOfList,
-        ]._ranges(initialBaseAddress: initialBaseAddress())
+        ]._ranges(addressSize: 8, initialBaseAddress: initialBaseAddress())
 
         XCTAssertEqual(
             ranges,
@@ -255,7 +331,7 @@ final class DWARF3RangeListEntryResolutionTests: XCTestCase {
                     endOffset: 0x20
                 ),
                 .endOfList,
-            ]._ranges(initialBaseAddress: nil)
+            ]._ranges(addressSize: 8, initialBaseAddress: nil)
         )
         XCTAssertNil(
             [
@@ -264,12 +340,12 @@ final class DWARF3RangeListEntryResolutionTests: XCTestCase {
                     endOffset: 1
                 ),
                 .endOfList,
-            ]._ranges(initialBaseAddress: address(UInt64.max))
+            ]._ranges(addressSize: 8, initialBaseAddress: address(UInt64.max))
         )
         XCTAssertNil(
             [
                 DWARF3RangeListEntry.baseAddressSelection(address: 0x1000),
-            ]._ranges(initialBaseAddress: nil)
+            ]._ranges(addressSize: 8, initialBaseAddress: nil)
         )
     }
 

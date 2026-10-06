@@ -26,7 +26,10 @@ extension DWARF3RangeList {
         guard unit.header.version == .v3 || unit.header.version == .v4,
               addressSize == unit.header.addressSize,
               let entries = _entries(in: binary) else { return nil }
-        return entries._ranges(initialBaseAddress: unit._lowPC(in: binary))
+        return entries._ranges(
+            addressSize: addressSize,
+            initialBaseAddress: unit._lowPC(in: binary)
+        )
     }
 
     package static func _parseEntries(

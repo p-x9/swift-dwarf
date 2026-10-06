@@ -174,6 +174,7 @@ extension DWARFRangeListTable {
 
         var addresses: [DWARFAddress]?
         return operations._ranges(
+            addressSize: unit.header.addressSize,
             initialBaseAddress: unit._lowPC(in: binary),
             addressAtIndex: { index in
                 if addresses == nil {
