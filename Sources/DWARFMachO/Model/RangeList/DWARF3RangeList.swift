@@ -4,6 +4,14 @@
 //
 
 extension DWARF3RangeList {
+    /// Resolves this DWARF3/4 list using the compilation unit's initial base.
+    public func ranges(
+        for unit: DWARFCompilationUnit,
+        in machO: MachOFile
+    ) -> [DWARFRange]? {
+        _ranges(for: unit, in: machO)
+    }
+
     public func entries(in machO: MachOFile) -> [DWARF3RangeListEntry]? {
         _entries(in: machO)
     }

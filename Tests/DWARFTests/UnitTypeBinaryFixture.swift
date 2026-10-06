@@ -10,6 +10,8 @@ import DWARFELF
 enum UnitTypeBinaryFixture {
     private static let infoOffset = 0x200
     private static let abbrevOffset = 0x300
+    private static let rangesOffset = 0x400
+    private static let rnglistsOffset = 0x500
 
     static func withUnits(
         header: DWARFCompilationUnitHeader,
@@ -29,6 +31,56 @@ enum UnitTypeBinaryFixture {
             header: header,
             rootTag: rootTag,
             rootAttributes: attributes,
+            debugRanges: nil,
+            debugRnglists: nil,
+            body: body
+        )
+    }
+
+    static func withLegacyRanges(
+        header: DWARFCompilationUnitHeader,
+        lowPC: UInt64,
+        debugRanges: Data,
+        body: (MachOFile, DWARFCompilationUnit, ELFFile, DWARFCompilationUnit) throws -> Void
+    ) throws {
+        let lowPCData: Data
+        switch header.addressSize {
+        case 4: lowPCData = bytes(UInt32(lowPC))
+        case 8: lowPCData = bytes(lowPC)
+        default: throw CocoaError(.fileReadCorruptFile)
+        }
+        let rangeOffset: (DWARFAttributeFormatType, Data)
+        switch (header.version, header.format) {
+        case (.v3, ._32bit): rangeOffset = (.data4, bytes(UInt32(0)))
+        case (.v3, ._64bit): rangeOffset = (.data8, bytes(UInt64(0)))
+        case (.v4, ._32bit): rangeOffset = (.sec_offset, bytes(UInt32(0)))
+        case (.v4, ._64bit): rangeOffset = (.sec_offset, bytes(UInt64(0)))
+        default: throw CocoaError(.fileReadCorruptFile)
+        }
+        try withUnit(
+            header: header,
+            rootTag: .compile_unit,
+            rootAttributes: [
+                (.low_pc, .addr, lowPCData),
+                (.ranges, rangeOffset.0, rangeOffset.1),
+            ],
+            debugRanges: debugRanges,
+            debugRnglists: nil,
+            body: body
+        )
+    }
+
+    static func withDWARF5Ranges(
+        header: DWARFCompilationUnitHeader,
+        debugRnglists: Data,
+        body: (MachOFile, DWARFCompilationUnit, ELFFile, DWARFCompilationUnit) throws -> Void
+    ) throws {
+        try withUnit(
+            header: header,
+            rootTag: .compile_unit,
+            rootAttributes: [],
+            debugRanges: nil,
+            debugRnglists: debugRnglists,
             body: body
         )
     }
@@ -42,6 +94,8 @@ enum UnitTypeBinaryFixture {
             header: header,
             rootTag: .compile_unit,
             rootAttributes: [(.const_value, .data16, bytes(value))],
+            debugRanges: nil,
+            debugRnglists: nil,
             body: body
         )
     }
@@ -50,6 +104,8 @@ enum UnitTypeBinaryFixture {
         header: DWARFCompilationUnitHeader,
         rootTag: DWARFTag?,
         rootAttributes: [(DWARFAttribute, DWARFAttributeFormatType, Data)],
+        debugRanges: Data?,
+        debugRnglists: Data?,
         body: (MachOFile, DWARFCompilationUnit, ELFFile, DWARFCompilationUnit) throws -> Void
     ) throws {
         var info = headerData(header)
@@ -75,8 +131,18 @@ enum UnitTypeBinaryFixture {
         defer { try? FileManager.default.removeItem(at: directory) }
         let machOURL = directory.appendingPathComponent("unit.macho")
         let elfURL = directory.appendingPathComponent("unit.elf")
-        try machOData(info: info, abbrev: abbrev).write(to: machOURL)
-        try elfData(info: info, abbrev: abbrev).write(to: elfURL)
+        try machOData(
+            info: info,
+            abbrev: abbrev,
+            debugRanges: debugRanges,
+            debugRnglists: debugRnglists
+        ).write(to: machOURL)
+        try elfData(
+            info: info,
+            abbrev: abbrev,
+            debugRanges: debugRanges,
+            debugRnglists: debugRnglists
+        ).write(to: elfURL)
 
         let machO = try MachOFile(url: machOURL)
         let elf = try ELFFile(url: elfURL)
@@ -87,7 +153,12 @@ enum UnitTypeBinaryFixture {
 
     // MARK: - Object File Containers
 
-    private static func machOData(info: Data, abbrev: Data?) -> Data {
+    private static func machOData(
+        info: Data,
+        abbrev: Data?,
+        debugRanges: Data?,
+        debugRnglists: Data?
+    ) -> Data {
         var header = mach_header_64()
         header.magic = MH_MAGIC_64
         header.cputype = CPU_TYPE_ARM64
@@ -97,7 +168,13 @@ enum UnitTypeBinaryFixture {
 
         var segment = segment_command_64()
         segment.cmd = numericCast(LC_SEGMENT_64)
-        segment.nsects = abbrev == nil ? 1 : 2
+        let dwarfSections = sections(
+            info: info,
+            abbrev: abbrev,
+            debugRanges: debugRanges,
+            debugRnglists: debugRnglists
+        )
+        segment.nsects = numericCast(dwarfSections.count)
         segment.cmdsize = numericCast(
             MemoryLayout<segment_command_64>.size
                 + Int(segment.nsects) * MemoryLayout<section_64>.size
@@ -107,13 +184,15 @@ enum UnitTypeBinaryFixture {
         }
         header.sizeofcmds = segment.cmdsize
         segment.fileoff = numericCast(infoOffset)
-        let contentEnd = abbrev.map { abbrevOffset + $0.count } ?? (infoOffset + info.count)
+        let contentEnd = dwarfSections.map { _, offset, contents in
+            offset + contents.count
+        }.max() ?? (infoOffset + info.count)
         segment.filesize = numericCast(contentEnd - infoOffset)
         segment.vmsize = segment.filesize
 
         var data = bytes(header)
         data.append(bytes(segment))
-        for (name, offset, contents) in sections(info: info, abbrev: abbrev) {
+        for (name, offset, contents) in dwarfSections {
             var section = section_64()
             withUnsafeMutableBytes(of: &section.segname) {
                 $0.copyBytes(from: "__DWARF".utf8)
@@ -125,12 +204,25 @@ enum UnitTypeBinaryFixture {
             section.size = numericCast(contents.count)
             data.append(bytes(section))
         }
-        appendSections(to: &data, info: info, abbrev: abbrev)
+        appendSections(
+            to: &data,
+            info: info,
+            abbrev: abbrev,
+            debugRanges: debugRanges,
+            debugRnglists: debugRnglists
+        )
         return data
     }
 
-    private static func elfData(info: Data, abbrev: Data?) -> Data {
-        let names = Data("\0.shstrtab\0.debug_info\0.debug_abbrev\0".utf8)
+    private static func elfData(
+        info: Data,
+        abbrev: Data?,
+        debugRanges: Data?,
+        debugRnglists: Data?
+    ) -> Data {
+        let names = Data(
+            "\0.shstrtab\0.debug_info\0.debug_abbrev\0.debug_ranges\0.debug_rnglists\0".utf8
+        )
         let namesOffset = 0x180
         var header = ELF64Header.Layout()
         header.e_ident = (0x7f, 0x45, 0x4c, 0x46, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
@@ -140,12 +232,18 @@ enum UnitTypeBinaryFixture {
         header.e_ehsize = numericCast(MemoryLayout<ELF64Header.Layout>.size)
         header.e_shoff = numericCast(header.e_ehsize)
         header.e_shentsize = numericCast(MemoryLayout<ELF64SectionHeader.Layout>.size)
-        header.e_shnum = abbrev == nil ? 3 : 4
+        let dwarfSections = sections(
+            info: info,
+            abbrev: abbrev,
+            debugRanges: debugRanges,
+            debugRnglists: debugRnglists
+        )
+        header.e_shnum = numericCast(2 + dwarfSections.count)
         header.e_shstrndx = 1
 
         var data = bytes(header)
         data.append(bytes(ELF64SectionHeader.Layout())) // Null section.
-        let entries = [(".shstrtab", namesOffset, names)] + sections(info: info, abbrev: abbrev)
+        let entries = [(".shstrtab", namesOffset, names)] + dwarfSections
         for (name, offset, contents) in entries {
             var section = ELF64SectionHeader.Layout()
             section.sh_name = numericCast(names.range(of: Data(name.utf8))!.lowerBound)
@@ -157,20 +255,48 @@ enum UnitTypeBinaryFixture {
         }
         data.append(Data(repeating: 0, count: namesOffset - data.count))
         data.append(names)
-        appendSections(to: &data, info: info, abbrev: abbrev)
+        appendSections(
+            to: &data,
+            info: info,
+            abbrev: abbrev,
+            debugRanges: debugRanges,
+            debugRnglists: debugRnglists
+        )
         return data
     }
 
     // MARK: - DWARF Contributions
 
-    private static func sections(info: Data, abbrev: Data?) -> [(String, Int, Data)] {
+    private static func sections(
+        info: Data,
+        abbrev: Data?,
+        debugRanges: Data?,
+        debugRnglists: Data?
+    ) -> [(String, Int, Data)] {
         var sections = [(".debug_info", infoOffset, info)]
         if let abbrev { sections.append((".debug_abbrev", abbrevOffset, abbrev)) }
+        if let debugRanges {
+            sections.append((".debug_ranges", rangesOffset, debugRanges))
+        }
+        if let debugRnglists {
+            sections.append((".debug_rnglists", rnglistsOffset, debugRnglists))
+        }
         return sections
     }
 
-    private static func appendSections(to data: inout Data, info: Data, abbrev: Data?) {
-        for (_, offset, contents) in sections(info: info, abbrev: abbrev) {
+    private static func appendSections(
+        to data: inout Data,
+        info: Data,
+        abbrev: Data?,
+        debugRanges: Data?,
+        debugRnglists: Data?
+    ) {
+        for (_, offset, contents) in sections(
+            info: info,
+            abbrev: abbrev,
+            debugRanges: debugRanges,
+            debugRnglists: debugRnglists
+        ) {
             data.append(Data(repeating: 0, count: offset - data.count))
             data.append(contents)
         }

@@ -19,6 +19,16 @@ public struct DWARF3RangeList: Sendable, Equatable {
 }
 
 extension DWARF3RangeList {
+    package func _ranges(
+        for unit: DWARFCompilationUnit,
+        in binary: some _DWARFBinary
+    ) -> [DWARFRange]? {
+        guard unit.header.version == .v3 || unit.header.version == .v4,
+              addressSize == unit.header.addressSize,
+              let entries = _entries(in: binary) else { return nil }
+        return entries._ranges(initialBaseAddress: unit._lowPC(in: binary))
+    }
+
     package static func _parseEntries(
         data: Data,
         addressSize: Int,

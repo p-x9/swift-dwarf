@@ -158,6 +158,42 @@ extension DWARFRangeListTable.Operations {
 }
 
 extension DWARFRangeListTable {
+    package func _ranges(
+        at entryOffset: Int,
+        for unit: DWARFCompilationUnit,
+        in binary: some _DWARFBinary
+    ) -> [DWARFRange]? {
+        guard unit.header.version == .v5,
+              header.addressSize == unit.header.addressSize,
+              let operations = try? _operations(
+                  for: binary,
+                  entryOffset: entryOffset
+              ) else {
+            return nil
+        }
+
+        var addresses: [DWARFAddress]?
+        return operations._ranges(
+            initialBaseAddress: unit._lowPC(in: binary),
+            addressAtIndex: { index in
+                if addresses == nil {
+                    guard let addressTable = unit._addresses(in: binary) else {
+                        return nil
+                    }
+                    addresses = Array(addressTable._addresses(in: binary))
+                }
+                guard let index = Int(exactly: index),
+                      let addresses,
+                      addresses.indices.contains(index) else {
+                    return nil
+                }
+                return addresses[index]
+            }
+        )
+    }
+}
+
+extension DWARFRangeListTable {
     package static func _load(
         at offset: Int,
         in binary: some _DWARFBinary

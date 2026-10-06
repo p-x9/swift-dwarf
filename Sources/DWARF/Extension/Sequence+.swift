@@ -118,6 +118,14 @@ fileprivate struct RangeOperationsState {
     var ranges: [DWARFRange] = []
 }
 
+fileprivate func addingRangeOffset(
+    _ offset: UInt64,
+    to address: UInt64
+) -> UInt64? {
+    let (result, overflow) = address.addingReportingOverflow(offset)
+    return overflow ? nil : result
+}
+
 extension Sequence<DWARFRangeOperation> {
     package func _ranges(
         initialBaseAddress: @autoclosure () -> DWARFAddress?,
@@ -147,7 +155,7 @@ extension Sequence<DWARFRangeOperation> {
 
             case .startx_length(let startIndex, let length):
                 guard let start = addressAtIndex(startIndex),
-                      let endAddress = adding(
+                      let endAddress = addingRangeOffset(
                           length,
                           to: start.address
                       ) else {
@@ -168,11 +176,11 @@ extension Sequence<DWARFRangeOperation> {
                     state.base = initialBaseAddress()
                 }
                 guard let base = state.base,
-                      let startAddress = adding(
+                      let startAddress = addingRangeOffset(
                           startOffset,
                           to: base.address
                       ),
-                      let endAddress = adding(
+                      let endAddress = addingRangeOffset(
                           endOffset,
                           to: base.address
                       ) else {
@@ -200,7 +208,7 @@ extension Sequence<DWARFRangeOperation> {
                 )
 
             case .start_length(let start, let length):
-                guard let endAddress = adding(
+                guard let endAddress = addingRangeOffset(
                     length,
                     to: start.address
                 ) else {
@@ -220,13 +228,60 @@ extension Sequence<DWARFRangeOperation> {
 
         return nil
     }
+}
 
-    private func adding(
-        _ offset: UInt64,
-        to address: UInt64
-    ) -> UInt64? {
-        let (result, overflow) = address.addingReportingOverflow(offset)
-        return overflow ? nil : result
+// MARK: - DWARF3RangeListEntry
+extension Sequence<DWARF3RangeListEntry> {
+    package func _ranges(
+        initialBaseAddress: @autoclosure () -> DWARFAddress?
+    ) -> [DWARFRange]? {
+        var state = RangeOperationsState()
+
+        for entry in self {
+            switch entry {
+            case .endOfList:
+                return state.ranges
+
+            case .baseAddressSelection(let address):
+                state.base = .init(
+                    segmentSelector: nil,
+                    address: address
+                )
+
+            case .range(let beginningOffset, let endOffset):
+                if state.base == nil {
+                    state.base = initialBaseAddress()
+                }
+                guard let base = state.base,
+                      let startAddress = addingRangeOffset(
+                          beginningOffset,
+                          to: base.address
+                      ),
+                      let endAddress = addingRangeOffset(
+                          endOffset,
+                          to: base.address
+                      ) else {
+                    return nil
+                }
+                if startAddress == endAddress {
+                    continue
+                }
+                state.ranges.append(
+                    .init(
+                        start: .init(
+                            segmentSelector: base.segmentSelector,
+                            address: startAddress
+                        ),
+                        end: .init(
+                            segmentSelector: base.segmentSelector,
+                            address: endAddress
+                        )
+                    )
+                )
+            }
+        }
+
+        return nil
     }
 }
 

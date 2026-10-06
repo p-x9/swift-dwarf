@@ -1,7 +1,51 @@
 import XCTest
 @testable import DWARF
+import DWARFC
+import DWARFMachO
+import DWARFELF
 
 final class DWARFRangeOperationTests: XCTestCase {
+    func testTableResolvesOneRangeListInMachOAndELF() throws {
+        var unitLayout = dwarf5_cu_header32_t()
+        unitLayout.version = DWARFVersion.v5.rawValue
+        unitLayout.unit_type = DWARFUnitType.compile.rawValue
+        unitLayout.address_size = 4
+        let header = DWARFCompilationUnitHeader.version5_32(
+            .init(layout: unitLayout, offset: 0)
+        )
+
+        var rangeListHeader = dwarf5_rnglist_header32_t()
+        rangeListHeader.unit_length.value = 22
+        rangeListHeader.version = DWARFVersion.v5.rawValue
+        rangeListHeader.address_size = 4
+        rangeListHeader.offset_entry_count = 1
+        var data = withUnsafeBytes(of: rangeListHeader) { Data($0) }
+        append(4, to: &data)
+        data.append(0x06) // DW_RLE_start_end
+        append(0x1000, to: &data)
+        append(0x1040, to: &data)
+        data.append(0x00) // DW_RLE_end_of_list
+
+        try UnitTypeBinaryFixture.withDWARF5Ranges(
+            header: header,
+            debugRnglists: data
+        ) { machO, machOUnit, elf, elfUnit in
+            let machOTable = try XCTUnwrap(machO.dwarf.rangeListTables.first)
+            let elfTable = try XCTUnwrap(elf.dwarf.rangeListTables.first)
+            let expected: [DWARFRange] = [
+                .init(start: address(0x1000), end: address(0x1040)),
+            ]
+            XCTAssertEqual(
+                machOTable.ranges(for: machOUnit, in: machO, entryOffset: 4),
+                expected
+            )
+            XCTAssertEqual(
+                elfTable.ranges(for: elfUnit, in: elf, entryOffset: 4),
+                expected
+            )
+        }
+    }
+
     func testResolvesOneListUsingInitialAndSelectedBases() {
         var indexedAddressWasRequested = false
         let ranges = [
@@ -147,6 +191,85 @@ final class DWARFRangeOperationTests: XCTestCase {
                 initialBaseAddress: nil,
                 addressAtIndex: { _ in nil }
             )
+        )
+    }
+
+    private func address(_ value: UInt64) -> DWARFAddress {
+        .init(segmentSelector: nil, address: value)
+    }
+
+    private func append(_ value: UInt32, to data: inout Data) {
+        withUnsafeBytes(of: value) { data.append(contentsOf: $0) }
+    }
+}
+
+final class DWARF3RangeListEntryResolutionTests: XCTestCase {
+    func testResolvesInitialAndSelectedBasesAndIgnoresEmptyRanges() {
+        let ranges = [
+            DWARF3RangeListEntry.range(
+                beginningOffset: 0x10,
+                endOffset: 0x30
+            ),
+            .range(beginningOffset: 0x40, endOffset: 0x40),
+            .baseAddressSelection(address: 0x5000),
+            .range(beginningOffset: 0x20, endOffset: 0x40),
+            .endOfList,
+            .range(beginningOffset: 0x50, endOffset: 0x60),
+        ]._ranges(initialBaseAddress: address(0x1000))
+
+        XCTAssertEqual(
+            ranges,
+            [
+                .init(start: address(0x1010), end: address(0x1030)),
+                .init(start: address(0x5020), end: address(0x5040)),
+            ]
+        )
+    }
+
+    func testSelectedBaseDoesNotRequestInitialBase() {
+        var initialBaseWasRequested = false
+
+        func initialBaseAddress() -> DWARFAddress? {
+            initialBaseWasRequested = true
+            return nil
+        }
+
+        let ranges = [
+            DWARF3RangeListEntry.baseAddressSelection(address: 0x5000),
+            .range(beginningOffset: 0x10, endOffset: 0x20),
+            .endOfList,
+        ]._ranges(initialBaseAddress: initialBaseAddress())
+
+        XCTAssertEqual(
+            ranges,
+            [.init(start: address(0x5010), end: address(0x5020))]
+        )
+        XCTAssertFalse(initialBaseWasRequested)
+    }
+
+    func testRejectsMissingBaseOverflowAndMissingTerminator() {
+        XCTAssertNil(
+            [
+                DWARF3RangeListEntry.range(
+                    beginningOffset: 0x10,
+                    endOffset: 0x20
+                ),
+                .endOfList,
+            ]._ranges(initialBaseAddress: nil)
+        )
+        XCTAssertNil(
+            [
+                DWARF3RangeListEntry.range(
+                    beginningOffset: 0,
+                    endOffset: 1
+                ),
+                .endOfList,
+            ]._ranges(initialBaseAddress: address(UInt64.max))
+        )
+        XCTAssertNil(
+            [
+                DWARF3RangeListEntry.baseAddressSelection(address: 0x1000),
+            ]._ranges(initialBaseAddress: nil)
         )
     }
 
