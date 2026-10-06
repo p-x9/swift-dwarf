@@ -131,6 +131,25 @@ enum UnitTypeBinaryFixture {
         )
     }
 
+    static func withListReference(
+        header: DWARFCompilationUnitHeader,
+        attribute: DWARFAttribute,
+        form: DWARFAttributeFormatType,
+        value: Data,
+        sectionName: String,
+        body: (MachOFile, DWARFCompilationUnit, ELFFile, DWARFCompilationUnit) throws -> Void
+    ) throws {
+        try withUnit(
+            header: header,
+            rootTag: .compile_unit,
+            rootAttributes: [(attribute, form, value)],
+            debugRanges: Data(repeating: 0, count: 32),
+            rangesSectionName: sectionName,
+            debugRnglists: nil,
+            body: body
+        )
+    }
+
     private static func withUnit(
         header: DWARFCompilationUnitHeader,
         rootTag: DWARFTag?,
