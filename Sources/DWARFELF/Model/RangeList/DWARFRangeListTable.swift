@@ -7,6 +7,16 @@
 //
 
 extension DWARFRangeListTable {
+    /// Resolves one DWARF5 list. The offset is relative to the offset array,
+    /// matching the coordinate system used by `operations(for:entryOffset:)`.
+    public func ranges(
+        for unit: DWARFCompilationUnit,
+        in elf: ELFFile,
+        entryOffset: Int
+    ) -> [DWARFRange]? {
+        _ranges(at: entryOffset, for: unit, in: elf)
+    }
+
     public func offsets(for elf: ELFFile) throws -> [Int] {
         try _offsets(for: elf)
     }

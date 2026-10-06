@@ -114,59 +114,87 @@ extension Sequence<DWARFLineOperation> {
 
 // MARK: - DWARFRangeOperation
 fileprivate struct RangeOperationsState {
-    var base: DWARFAddress = .init(segmentSelector: nil, address: 0)
+    var base: DWARFAddress?
     var ranges: [DWARFRange] = []
+}
+
+fileprivate func addingRangeOffset(
+    _ offset: UInt64,
+    to address: UInt64
+) -> UInt64? {
+    let (result, overflow) = address.addingReportingOverflow(offset)
+    return overflow ? nil : result
 }
 
 extension Sequence<DWARFRangeOperation> {
     package func _ranges(
-        addressTable: DWARFAddressTable,
-        in binary: some _DWARFBinary
-    ) -> [[DWARFRange]] {
-        var rangeLists: [[DWARFRange]] = []
-        var state: RangeOperationsState = .init()
-
-        let addresses = Array(addressTable._addresses(in: binary))
+        initialBaseAddress: @autoclosure () -> DWARFAddress?,
+        addressAtIndex: (UInt64) -> DWARFAddress?
+    ) -> [DWARFRange]? {
+        var state = RangeOperationsState()
 
         for operation in self {
             switch operation {
             case .end_of_list:
-                rangeLists.append(state.ranges)
-                state = .init()
+                return state.ranges
 
             case .base_addressx(let addressIndex):
-                state.base = addresses[numericCast(addressIndex)]
+                guard let address = addressAtIndex(addressIndex) else {
+                    return nil
+                }
+                state.base = address
 
             case .startx_endx(let startIndex, let endIndex):
+                guard let start = addressAtIndex(startIndex),
+                      let end = addressAtIndex(endIndex) else {
+                    return nil
+                }
                 state.ranges.append(
-                    .init(
-                        start: addresses[numericCast(startIndex)],
-                        end: addresses[numericCast(endIndex)]
-                    )
+                    .init(start: start, end: end)
                 )
 
             case .startx_length(let startIndex, let length):
-                let start = addresses[numericCast(startIndex)]
+                guard let start = addressAtIndex(startIndex),
+                      let endAddress = addingRangeOffset(
+                          length,
+                          to: start.address
+                      ) else {
+                    return nil
+                }
                 state.ranges.append(
                     .init(
                         start: start,
                         end: .init(
                             segmentSelector: start.segmentSelector,
-                            address: start.address + numericCast(length)
+                            address: endAddress
                         )
                     )
                 )
 
             case .offset_pair(let startOffset, let endOffset):
+                if state.base == nil {
+                    state.base = initialBaseAddress()
+                }
+                guard let base = state.base,
+                      let startAddress = addingRangeOffset(
+                          startOffset,
+                          to: base.address
+                      ),
+                      let endAddress = addingRangeOffset(
+                          endOffset,
+                          to: base.address
+                      ) else {
+                    return nil
+                }
                 state.ranges.append(
                     .init(
                         start: .init(
-                            segmentSelector: state.base.segmentSelector,
-                            address: state.base.address + startOffset
+                            segmentSelector: base.segmentSelector,
+                            address: startAddress
                         ),
                         end: .init(
-                            segmentSelector: state.base.segmentSelector,
-                            address: state.base.address + endOffset
+                            segmentSelector: base.segmentSelector,
+                            address: endAddress
                         )
                     )
                 )
@@ -180,19 +208,80 @@ extension Sequence<DWARFRangeOperation> {
                 )
 
             case .start_length(let start, let length):
+                guard let endAddress = addingRangeOffset(
+                    length,
+                    to: start.address
+                ) else {
+                    return nil
+                }
                 state.ranges.append(
                     .init(
                         start: start,
                         end: .init(
                             segmentSelector: start.segmentSelector,
-                            address: start.address + length
+                            address: endAddress
                         )
                     )
                 )
             }
         }
 
-        return rangeLists
+        return nil
+    }
+}
+
+// MARK: - DWARF3RangeListEntry
+extension Sequence<DWARF3RangeListEntry> {
+    package func _ranges(
+        initialBaseAddress: @autoclosure () -> DWARFAddress?
+    ) -> [DWARFRange]? {
+        var state = RangeOperationsState()
+
+        for entry in self {
+            switch entry {
+            case .endOfList:
+                return state.ranges
+
+            case .baseAddressSelection(let address):
+                state.base = .init(
+                    segmentSelector: nil,
+                    address: address
+                )
+
+            case .range(let beginningOffset, let endOffset):
+                if state.base == nil {
+                    state.base = initialBaseAddress()
+                }
+                guard let base = state.base,
+                      let startAddress = addingRangeOffset(
+                          beginningOffset,
+                          to: base.address
+                      ),
+                      let endAddress = addingRangeOffset(
+                          endOffset,
+                          to: base.address
+                      ) else {
+                    return nil
+                }
+                if startAddress == endAddress {
+                    continue
+                }
+                state.ranges.append(
+                    .init(
+                        start: .init(
+                            segmentSelector: base.segmentSelector,
+                            address: startAddress
+                        ),
+                        end: .init(
+                            segmentSelector: base.segmentSelector,
+                            address: endAddress
+                        )
+                    )
+                )
+            }
+        }
+
+        return nil
     }
 }
 

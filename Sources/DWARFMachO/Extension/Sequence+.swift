@@ -6,15 +6,6 @@
 //  
 //
 
-extension Sequence<DWARFRangeOperation> {
-    public func ranges(
-        addressTable: DWARFAddressTable,
-        in machO: MachOFile
-    ) -> [[DWARFRange]] {
-        _ranges(addressTable: addressTable, in: machO)
-    }
-}
-
 extension Sequence<DWARFLocationOperation> {
     public func locations(
         addressTable: DWARFAddressTable,

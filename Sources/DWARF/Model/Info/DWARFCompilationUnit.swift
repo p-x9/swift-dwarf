@@ -192,6 +192,22 @@ extension DWARFCompilationUnit {
 }
 
 extension DWARFCompilationUnit {
+    package func _lowPC(
+        in binary: some _DWARFBinary
+    ) -> DWARFAddress? {
+        guard let entry = unitRootDebugInfoEntry(in: binary),
+              let attribute = entry.attributes.first(
+                  where: { $0.attribute == .low_pc }
+              ),
+              case .address(let address) = attribute.value._value(
+                  for: self,
+                  in: binary
+              ) else {
+            return nil
+        }
+        return address
+    }
+
     private func unitRootDebugInfoEntry(
         in binary: some _DWARFBinary
     ) -> DWARFDebugInfoEntry? {
