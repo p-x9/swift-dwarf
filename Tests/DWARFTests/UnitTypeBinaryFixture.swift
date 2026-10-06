@@ -70,6 +70,22 @@ enum UnitTypeBinaryFixture {
         )
     }
 
+    static func withLegacyLocations(
+        header: DWARFCompilationUnitHeader,
+        debugLoc: Data,
+        body: (MachOFile, DWARFCompilationUnit, ELFFile, DWARFCompilationUnit) throws -> Void
+    ) throws {
+        try withUnit(
+            header: header,
+            rootTag: .compile_unit,
+            rootAttributes: [],
+            debugRanges: debugLoc,
+            rangesSectionName: ".debug_loc",
+            debugRnglists: nil,
+            body: body
+        )
+    }
+
     static func withDWARF5Ranges(
         header: DWARFCompilationUnitHeader,
         debugRnglists: Data,
@@ -105,6 +121,7 @@ enum UnitTypeBinaryFixture {
         rootTag: DWARFTag?,
         rootAttributes: [(DWARFAttribute, DWARFAttributeFormatType, Data)],
         debugRanges: Data?,
+        rangesSectionName: String = ".debug_ranges",
         debugRnglists: Data?,
         body: (MachOFile, DWARFCompilationUnit, ELFFile, DWARFCompilationUnit) throws -> Void
     ) throws {
@@ -135,12 +152,14 @@ enum UnitTypeBinaryFixture {
             info: info,
             abbrev: abbrev,
             debugRanges: debugRanges,
+            rangesSectionName: rangesSectionName,
             debugRnglists: debugRnglists
         ).write(to: machOURL)
         try elfData(
             info: info,
             abbrev: abbrev,
             debugRanges: debugRanges,
+            rangesSectionName: rangesSectionName,
             debugRnglists: debugRnglists
         ).write(to: elfURL)
 
@@ -157,6 +176,7 @@ enum UnitTypeBinaryFixture {
         info: Data,
         abbrev: Data?,
         debugRanges: Data?,
+        rangesSectionName: String = ".debug_ranges",
         debugRnglists: Data?
     ) -> Data {
         var header = mach_header_64()
@@ -172,6 +192,7 @@ enum UnitTypeBinaryFixture {
             info: info,
             abbrev: abbrev,
             debugRanges: debugRanges,
+            rangesSectionName: rangesSectionName,
             debugRnglists: debugRnglists
         )
         segment.nsects = numericCast(dwarfSections.count)
@@ -209,6 +230,7 @@ enum UnitTypeBinaryFixture {
             info: info,
             abbrev: abbrev,
             debugRanges: debugRanges,
+            rangesSectionName: rangesSectionName,
             debugRnglists: debugRnglists
         )
         return data
@@ -218,10 +240,11 @@ enum UnitTypeBinaryFixture {
         info: Data,
         abbrev: Data?,
         debugRanges: Data?,
+        rangesSectionName: String = ".debug_ranges",
         debugRnglists: Data?
     ) -> Data {
         let names = Data(
-            "\0.shstrtab\0.debug_info\0.debug_abbrev\0.debug_ranges\0.debug_rnglists\0".utf8
+            "\0.shstrtab\0.debug_info\0.debug_abbrev\0.debug_ranges\0.debug_rnglists\0.debug_loc\0".utf8
         )
         let namesOffset = 0x180
         var header = ELF64Header.Layout()
@@ -236,6 +259,7 @@ enum UnitTypeBinaryFixture {
             info: info,
             abbrev: abbrev,
             debugRanges: debugRanges,
+            rangesSectionName: rangesSectionName,
             debugRnglists: debugRnglists
         )
         header.e_shnum = numericCast(2 + dwarfSections.count)
@@ -260,6 +284,7 @@ enum UnitTypeBinaryFixture {
             info: info,
             abbrev: abbrev,
             debugRanges: debugRanges,
+            rangesSectionName: rangesSectionName,
             debugRnglists: debugRnglists
         )
         return data
@@ -271,12 +296,13 @@ enum UnitTypeBinaryFixture {
         info: Data,
         abbrev: Data?,
         debugRanges: Data?,
+        rangesSectionName: String = ".debug_ranges",
         debugRnglists: Data?
     ) -> [(String, Int, Data)] {
         var sections = [(".debug_info", infoOffset, info)]
         if let abbrev { sections.append((".debug_abbrev", abbrevOffset, abbrev)) }
         if let debugRanges {
-            sections.append((".debug_ranges", rangesOffset, debugRanges))
+            sections.append((rangesSectionName, rangesOffset, debugRanges))
         }
         if let debugRnglists {
             sections.append((".debug_rnglists", rnglistsOffset, debugRnglists))
@@ -289,12 +315,14 @@ enum UnitTypeBinaryFixture {
         info: Data,
         abbrev: Data?,
         debugRanges: Data?,
+        rangesSectionName: String = ".debug_ranges",
         debugRnglists: Data?
     ) {
         for (_, offset, contents) in sections(
             info: info,
             abbrev: abbrev,
             debugRanges: debugRanges,
+            rangesSectionName: rangesSectionName,
             debugRnglists: debugRnglists
         ) {
             data.append(Data(repeating: 0, count: offset - data.count))

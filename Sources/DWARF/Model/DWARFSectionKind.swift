@@ -20,6 +20,8 @@ public enum DWARFSectionKind: String, Sendable {
     /// Range lists in the format introduced in DWARF3 and retained by DWARF4.
     case debug_ranges
     case debug_rnglists
+    /// Location lists using the pre-DWARF5 format.
+    case debug_loc
     case debug_loclists
     case debug_aranges
     case debug_names
