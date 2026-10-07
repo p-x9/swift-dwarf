@@ -201,7 +201,8 @@ extension DWARFCompilationUnit {
               ),
               case .address(let address) = attribute.value._value(
                   for: self,
-                  in: binary
+                  in: binary,
+                  attribute: .low_pc
               ) else {
             return nil
         }
