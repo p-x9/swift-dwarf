@@ -107,11 +107,11 @@ final class DWARF3ListReferenceTests: XCTestCase {
                 ]
                 for (index, value) in values.enumerated() {
                     let validForm = (version == .v3 && index == (format == ._32bit ? 0 : 1)) ||
-                        (version == .v4 && index == 2)
+                        ((version == .v4 || version == .v5) && index == 2)
                     for attribute in attributes {
                         let isList = validForm && (
                             attribute == .ranges ||
-                            (attribute == .start_scope && version == .v4) ||
+                            (attribute == .start_scope && (version == .v4 || version == .v5)) ||
                             locationAttributes.contains(attribute)
                         )
                         let resolved = value.__value(for: unit, in: nil, attribute: attribute)
