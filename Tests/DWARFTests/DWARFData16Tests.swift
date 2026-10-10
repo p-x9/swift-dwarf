@@ -14,7 +14,7 @@ final class DWARFData16Tests: XCTestCase {
         XCTAssertNil(attribute.constantIntValue)
 
         guard case .unsignedInteger(let resolved) = attribute.__value(
-            for: nil, in: nil
+            for: nil, in: nil, attribute: .const_value
         ) else {
             return XCTFail("Expected a resolved 128-bit unsigned integer")
         }
@@ -52,7 +52,7 @@ final class DWARFData16Tests: XCTestCase {
         XCTAssertNil(attribute.constantIntValue)
 
         guard case .sectionOffset(let resolved) = attribute.__value(
-            for: nil, in: nil
+            for: nil, in: nil, attribute: .rnglists_base
         ) else {
             return XCTFail("Expected a resolved section offset")
         }

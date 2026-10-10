@@ -25,17 +25,21 @@ extension DWARFAttributeValue {
 }
 
 extension DWARFAttributeValue {
+    /// Resolves this value using its attribute kind and compilation unit.
+    /// Attribute context distinguishes list references from constants and base offsets.
     public func value(
         for unit: DWARFCompilationUnit,
-        in elf: ELFFile
+        in elf: ELFFile,
+        attribute: DWARFAttribute
     ) -> DWARFAttributeResolvedValue? {
-        _value(for: unit, in: elf)
+        _value(for: unit, in: elf, attribute: attribute)
     }
 
     public func _value(
         for unit: DWARFCompilationUnit?,
-        in elf: ELFFile?
+        in elf: ELFFile?,
+        attribute: DWARFAttribute
     ) -> DWARFAttributeResolvedValue? {
-        __value(for: unit, in: elf)
+        __value(for: unit, in: elf, attribute: attribute)
     }
 }

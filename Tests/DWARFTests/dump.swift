@@ -50,7 +50,8 @@ func dump<Binary: _DWARFBinary>(
     let format = _value.format
     let value = if let value = _value._value(
         for: unit,
-        in: binary
+        in: binary,
+        attribute: attribute
     ) {
         "\(value)"
     } else { "\(_value)" }
@@ -130,7 +131,8 @@ func dump<Binary: _DWARFBinary>(
                     content.type,
                     content.value.__value(
                         for: nil,
-                        in: binary
+                        in: binary,
+                        attribute: nil
                     ) ?? ""
                 )
             }
@@ -153,7 +155,8 @@ func dump<Binary: _DWARFBinary>(
                     content.type,
                     content.value.__value(
                         for: nil,
-                        in: binary
+                        in: binary,
+                        attribute: nil
                     ) ?? ""
                 )
             }

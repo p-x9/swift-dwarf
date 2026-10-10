@@ -342,7 +342,7 @@ extension DWARFAttributeValue {
     }
 
     public var constantUInt128Value: UInt128? {
-        guard let value = __value(for: nil, in: nil) else {
+        guard let value = __value(for: nil, in: nil, attribute: nil) else {
             return nil
         }
         switch value {
@@ -372,7 +372,7 @@ extension DWARFAttributeValue {
     }
 
     public var constantInt128Value: Int128? {
-        guard let value = __value(for: nil, in: nil) else {
+        guard let value = __value(for: nil, in: nil, attribute: nil) else {
             return nil
         }
         switch value {
@@ -705,14 +705,16 @@ extension DWARFAttributeValue {
 extension DWARFAttributeValue {
     package func _value(
         for unit: DWARFCompilationUnit,
-        in binary: some _DWARFBinary
+        in binary: some _DWARFBinary,
+        attribute: DWARFAttribute
     ) -> DWARFAttributeResolvedValue? {
-        __value(for: unit, in: binary)
+        __value(for: unit, in: binary, attribute: attribute)
     }
 
     package func __value(
         for unit: DWARFCompilationUnit?,
-        in binary: (any _DWARFBinary)?
+        in binary: (any _DWARFBinary)?,
+        attribute: DWARFAttribute?
     ) -> DWARFAttributeResolvedValue? {
         switch self {
         case .addr(let address):
@@ -723,8 +725,20 @@ extension DWARFAttributeValue {
             return .data(block.data)
         case .data2(let constant):
             return .unsignedInteger(numericCast(constant.value))
+        case .data4(let constant) where unit?.header.version == .v3 && unit?.header.format == ._32bit:
+            guard let unit else { return nil }
+            return _legacyListValue(
+                at: UInt64(constant.value), for: unit, in: binary,
+                attribute: attribute, fallback: .unsignedInteger(numericCast(constant.value))
+            )
         case .data4(let constant):
             return .unsignedInteger(numericCast(constant.value))
+        case .data8(let constant) where unit?.header.version == .v3 && unit?.header.format == ._64bit:
+            guard let unit else { return nil }
+            return _legacyListValue(
+                at: constant.value, for: unit, in: binary,
+                attribute: attribute, fallback: .unsignedInteger(numericCast(constant.value))
+            )
         case .data8(let constant):
             return .unsignedInteger(numericCast(constant.value))
         case .string(let string):
@@ -777,7 +791,13 @@ extension DWARFAttributeValue {
         case .indirect(let dWARFAttributeValue):
             guard let binary else { return nil }
             guard let unit else { return nil }
-            return dWARFAttributeValue._value(for: unit, in: binary)
+            return dWARFAttributeValue.__value(for: unit, in: binary, attribute: attribute)
+        case .sec_offset(let sectionOffset) where unit?.header.version == .v4:
+            guard let unit else { return nil }
+            return _legacyListValue(
+                at: sectionOffset.offset, for: unit, in: binary,
+                attribute: attribute, fallback: .sectionOffset(sectionOffset.offset)
+            )
         case .sec_offset(let sectionOffset):
             return .sectionOffset(sectionOffset.offset)
         case .exprloc(let exprLoc):
@@ -1140,5 +1160,61 @@ extension DWARFAttributeValue {
             isInSameUnit: isInSameUnit
         ) else { return nil }
         return .debugInfoEntry(entry)
+    }
+}
+
+extension DWARFAttributeValue {
+    private func _legacyListValue(
+        at sectionOffset: UInt64,
+        for unit: DWARFCompilationUnit,
+        in binary: (any _DWARFBinary)?,
+        attribute: DWARFAttribute?,
+        fallback: DWARFAttributeResolvedValue
+    ) -> DWARFAttributeResolvedValue? {
+        // DWARF3/4 Figure 20: start_scope gains rangelistptr in DWARF4.
+        // Only eligible pointer forms call this helper.
+        switch attribute {
+        case .ranges, .start_scope:
+            if attribute == .start_scope, unit.header.version != .v4 { return fallback }
+            guard let binary,
+                  let list = _rangeList(at: sectionOffset, for: unit, in: binary),
+                  let ranges = list._ranges(for: unit, in: binary) else { return nil }
+            return .ranges(ranges)
+        case .location, .string_length, .return_addr, .data_member_location,
+             .frame_base, .segment, .static_link, .use_location,
+             .vtable_elem_location:
+            guard let binary,
+                  let list = _locationList(at: sectionOffset, for: unit, in: binary),
+                  let locations = list._locations(for: unit, in: binary) else { return nil }
+            return .locations(locations)
+        default:
+            return fallback
+        }
+    }
+
+    func _rangeList(
+        at sectionOffset: UInt64,
+        for unit: DWARFCompilationUnit,
+        in binary: some _DWARFBinary
+    ) -> DWARF3RangeList? {
+        guard let dwarf = binary.dwarfSegment,
+              let section = dwarf.debug_ranges(in: binary),
+              let sectionOffset = Int(exactly: sectionOffset) else { return nil }
+        let (offset, overflow) = section.offset.addingReportingOverflow(sectionOffset)
+        guard !overflow else { return nil }
+        return ._load(at: offset, addressSize: unit.header.addressSize, from: binary)
+    }
+
+    func _locationList(
+        at sectionOffset: UInt64,
+        for unit: DWARFCompilationUnit,
+        in binary: some _DWARFBinary
+    ) -> DWARF3LocationList? {
+        guard let dwarf = binary.dwarfSegment,
+              let section = dwarf.debug_loc(in: binary),
+              let sectionOffset = Int(exactly: sectionOffset) else { return nil }
+        let (offset, overflow) = section.offset.addingReportingOverflow(sectionOffset)
+        guard !overflow else { return nil }
+        return ._load(at: offset, addressSize: unit.header.addressSize, from: binary)
     }
 }
