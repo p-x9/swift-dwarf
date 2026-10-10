@@ -7,6 +7,26 @@
 //
 
 extension DWARFLocationListTable {
+    /// Resolves all completed lists using the supplied unit's address context.
+    /// Stops before the first invalid or unterminated list.
+    /// Returns nil for an incompatible unit or an unreadable table.
+    public func locations(
+        for unit: DWARFCompilationUnit,
+        in elf: ELFFile
+    ) -> [[DWARFLocation]]? {
+        _locations(for: unit, in: elf)
+    }
+
+    /// Resolves one DWARF5 list. The offset is relative to the offset array,
+    /// matching the coordinate system used by operations(for:entryOffset:).
+    public func locations(
+        for unit: DWARFCompilationUnit,
+        in elf: ELFFile,
+        entryOffset: Int
+    ) -> [DWARFLocation]? {
+        _locations(at: entryOffset, for: unit, in: elf)
+    }
+
     public func offsets(for elf: ELFFile) throws -> [Int] {
         try _offsets(for: elf)
     }

@@ -116,6 +116,42 @@ enum UnitTypeBinaryFixture {
         )
     }
 
+    static func withDWARF5Lists(
+        header: DWARFCompilationUnitHeader,
+        sectionName: String,
+        data: Data,
+        rootAttributes: [(DWARFAttribute, DWARFAttributeFormatType, Data)] = [],
+        body: (MachOFile, DWARFCompilationUnit, ELFFile, DWARFCompilationUnit) throws -> Void
+    ) throws {
+        try withUnit(
+            header: header, rootTag: .compile_unit, rootAttributes: rootAttributes,
+            debugRanges: data, rangesSectionName: sectionName,
+            debugRnglists: nil, body: body
+        )
+    }
+
+    static func withDWARF5Addresses(
+        body: (MachOFile, DWARFCompilationUnit, ELFFile, DWARFCompilationUnit) throws -> Void
+    ) throws {
+        var unit = dwarf5_cu_header32_t()
+        unit.version = 5
+        unit.unit_type = DWARFUnitType.compile.rawValue
+        unit.address_size = 4
+        var addresses = dwarf5_addrs_header32_t()
+        addresses.unit_length.value = 12
+        addresses.version = 5
+        addresses.address_size = 4
+        try withDWARF5Lists(
+            header: .version5_32(.init(layout: unit, offset: 0)),
+            sectionName: ".debug_addr",
+            data: bytes(addresses) + bytes(UInt32(0x1000)) + bytes(UInt32(0x2000)),
+            rootAttributes: [
+                (.addr_base, .sec_offset, bytes(UInt32(8))),
+                (.low_pc, .addr, bytes(UInt32(0x5000))),
+            ], body: body
+        )
+    }
+
     static func withData16(
         header: DWARFCompilationUnitHeader,
         value: UInt128,
@@ -278,7 +314,7 @@ enum UnitTypeBinaryFixture {
         debugRnglists: Data?
     ) -> Data {
         let names = Data(
-            "\0.shstrtab\0.debug_info\0.debug_abbrev\0.debug_ranges\0.debug_rnglists\0.debug_loc\0".utf8
+            "\0.shstrtab\0.debug_info\0.debug_abbrev\0.debug_ranges\0.debug_rnglists\0.debug_loc\0.debug_loclists\0.debug_addr\0".utf8
         )
         let namesOffset = 0x180
         var header = ELF64Header.Layout()
