@@ -6,11 +6,24 @@
 //  
 //
 
+extension Sequence<DWARFRangeOperation> {
+    /// Resolves completed lists in order using the supplied unit's address context.
+    /// Stops before the first invalid or unterminated list.
+    public func ranges(
+        for unit: DWARFCompilationUnit,
+        in machO: MachOFile
+    ) -> [[DWARFRange]] {
+        _ranges(for: unit, in: machO)
+    }
+}
+
 extension Sequence<DWARFLocationOperation> {
+    /// Resolves completed lists in order using the supplied unit's address context.
+    /// Stops before the first invalid or unterminated list.
     public func locations(
-        addressTable: DWARFAddressTable,
+        for unit: DWARFCompilationUnit,
         in machO: MachOFile
     ) -> [[DWARFLocation]] {
-        _locations(addressTable: addressTable, in: machO)
+        _locations(for: unit, in: machO)
     }
 }

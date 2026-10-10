@@ -167,6 +167,35 @@ extension DWARFLocationListTable.Operations {
 }
 
 extension DWARFLocationListTable {
+    package func _locations(
+        for unit: DWARFCompilationUnit,
+        in binary: some _DWARFBinary
+    ) -> [[DWARFLocation]]? {
+        guard unit.header.version == .v5,
+              header.addressSize == unit.header.addressSize,
+              let operations = try? _operations(for: binary) else { return nil }
+        return operations._locations(for: unit, in: binary)
+    }
+
+    package func _locations(
+        at entryOffset: Int,
+        for unit: DWARFCompilationUnit,
+        in binary: some _DWARFBinary
+    ) -> [DWARFLocation]? {
+        guard unit.header.version == .v5,
+              header.addressSize == unit.header.addressSize,
+              let operations = try? _operations(
+                  for: binary, entryOffset: entryOffset
+              ) else { return nil }
+
+        var context = DWARFListResolutionContext(unit: unit, binary: binary)
+        return operations._locations(
+            addressSize: unit.header.addressSize,
+            initialBaseAddress: context.initialBaseAddress,
+            addressAtIndex: { context.address(at: $0) }
+        )
+    }
+
     package static func _load(
         at offset: Int,
         in binary: some _DWARFBinary
