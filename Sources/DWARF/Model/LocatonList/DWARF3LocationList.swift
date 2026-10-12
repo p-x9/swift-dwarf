@@ -31,43 +31,12 @@ extension DWARF3LocationList {
             addressSize: addressSize,
             initialBaseAddress: unit._lowPC(in: binary),
             descriptions: {
-                Self._parseDescriptions(
+                DWARFOperation._parse(
                     data: $0, addressSize: addressSize,
                     format: unit.header.format, endian: binary.endian
                 )
             }
         )
-    }
-
-    package static func _parseDescriptions(
-        data: Data,
-        addressSize: Int,
-        format: DWARFFormat,
-        endian: Endian
-    ) -> [DWARFOperation]? {
-        if data.isEmpty { return [] }
-        return data.withUnsafeBytes { buffer in
-            guard let pointer = buffer.baseAddress else { return nil }
-            var offset = 0
-            var operations: [DWARFOperation] = []
-            while offset < buffer.count {
-                let previousOffset = offset
-                var done = false
-                guard let operation = DWARFOperation.readNext(
-                    basePointer: pointer.assumingMemoryBound(to: UInt8.self),
-                    operaionsSize: buffer.count,
-                    addressSize: addressSize,
-                    format: format,
-                    endian: endian,
-                    nextOffset: &offset,
-                    done: &done
-                ), offset > previousOffset, offset <= buffer.count else {
-                    return nil
-                }
-                operations.append(operation)
-            }
-            return operations
-        }
     }
 
     package static func _parseEntries(

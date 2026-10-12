@@ -719,10 +719,8 @@ extension DWARFAttributeValue {
         switch self {
         case .addr(let address):
             return .address(.init(address: address))
-        case .block2(let block):
-            return .data(block.data)
-        case .block4(let block):
-            return .data(block.data)
+        case .block(let block), .block1(let block), .block2(let block), .block4(let block):
+            return _blockValue(block, for: unit, in: binary, attribute: attribute)
         case .data2(let constant):
             return .unsignedInteger(numericCast(constant.value))
         case .data4(let constant) where unit?.header.version == .v3 && unit?.header.format == ._32bit:
@@ -743,10 +741,6 @@ extension DWARFAttributeValue {
             return .unsignedInteger(numericCast(constant.value))
         case .string(let string):
             return .string(string)
-        case .block(let block):
-            return .data(block.data)
-        case .block1(let block):
-            return .data(block.data)
         case .data1(let constant):
             return .unsignedInteger(numericCast(constant.value))
         case .flag(let flag):
@@ -809,26 +803,9 @@ extension DWARFAttributeValue {
         case .exprloc(let exprLoc):
             guard let unit else { return nil }
             guard let binary else { return nil }
-            return exprLoc.data.withUnsafeBytes {
-                var next = 0
-                var done = false
-                var result: [DWARFOperation] = []
-                while next < exprLoc.length, !done {
-                    guard let operation: DWARFOperation = .readNext(
-                        basePointer: $0
-                            .baseAddress!
-                            .assumingMemoryBound(to: UInt8.self),
-                        operaionsSize: numericCast(exprLoc.length),
-                        addressSize: unit.header.addressSize,
-                        format: unit.header.format,
-                        endian: binary.endian,
-                        nextOffset: &next,
-                        done: &done
-                    ) else { break }
-                    result.append(operation)
-                }
-                return .expressions(result)
-            }
+            return _expressionValue(
+                data: exprLoc.data, length: exprLoc.length, for: unit, in: binary
+            )
         case .flag_present:
             return .bool(true)
         case .strx(let indexedString):
@@ -1152,6 +1129,51 @@ extension DWARFAttributeValue {
 }
 
 extension DWARFAttributeValue {
+    private func _blockValue(
+        _ block: Block,
+        for unit: DWARFCompilationUnit?,
+        in binary: (any _DWARFBinary)?,
+        attribute: DWARFAttribute?
+    ) -> DWARFAttributeResolvedValue? {
+        guard let unit,
+              unit.header.version == .v2 || unit.header.version == .v3 else {
+            return .data(block.data)
+        }
+        // DWARF2 Figures 17–18 and DWARF3 Figure 20.
+        // Not every attribute allowing class block contains a DWARF expression.
+        switch attribute {
+        case .location, .string_length, .return_addr, .data_member_location,
+             .frame_base, .segment, .static_link, .use_location, .vtable_elem_location:
+            break
+        case .byte_size, .bit_offset, .bit_size, .lower_bound, .upper_bound,
+             .count, .allocated, .associated, .data_location, .byte_stride:
+            guard unit.header.version == .v3 else { return .data(block.data) }
+        default:
+            return .data(block.data)
+        }
+        guard let binary else { return nil }
+        return _expressionValue(
+            data: block.data,
+            length: block.length,
+            for: unit,
+            in: binary
+        )
+    }
+
+    private func _expressionValue(
+        data: Data,
+        length: UInt64,
+        for unit: DWARFCompilationUnit,
+        in binary: some _DWARFBinary
+    ) -> DWARFAttributeResolvedValue? {
+        guard length == UInt64(data.count),
+              let operations = DWARFOperation._parse(
+                  data: data, addressSize: unit.header.addressSize,
+                  format: unit.header.format, endian: binary.endian
+              ) else { return nil }
+        return .expressions(operations)
+    }
+
     private func _listValue(
         at sectionOffset: UInt64,
         for unit: DWARFCompilationUnit,
