@@ -798,6 +798,12 @@ extension DWARFAttributeValue {
                 at: sectionOffset.offset, for: unit, in: binary,
                 attribute: attribute, fallback: .sectionOffset(sectionOffset.offset)
             )
+        case .sec_offset(let sectionOffset) where unit?.header.version == .v5:
+            guard let unit else { return nil }
+            return _listValue(
+                at: sectionOffset.offset, for: unit, in: binary,
+                attribute: attribute
+            )
         case .sec_offset(let sectionOffset):
             return .sectionOffset(sectionOffset.offset)
         case .exprloc(let exprLoc):
@@ -1002,28 +1008,10 @@ extension DWARFAttributeValue {
               let offsets = try? table._offsets(for: binary) else {
             return nil
         }
-        guard let addressTable = unit._addresses(in: binary) else {
-            return nil
-        }
         guard offsets.indices.contains(index) else {
             return nil
         }
-        let offset = offsets[index]
-        guard let _operations = try? table._operations(
-            for: binary,
-            entryOffset: offset
-        ) else {
-            return nil
-        }
-        var operations = Array(_operations)
-        guard let end = operations.firstIndex(where: { $0 == .end_of_list }) else {
-            return nil
-        }
-        operations = Array(operations[..<end])
-        return operations._locations(
-            addressTable: addressTable,
-            in: binary
-        ).first
+        return table._locations(at: offsets[index], for: unit, in: binary)
     }
 
     @inline(__always)
@@ -1164,6 +1152,86 @@ extension DWARFAttributeValue {
 }
 
 extension DWARFAttributeValue {
+    private func _listValue(
+        at sectionOffset: UInt64,
+        for unit: DWARFCompilationUnit,
+        in binary: (any _DWARFBinary)?,
+        attribute: DWARFAttribute?
+    ) -> DWARFAttributeResolvedValue? {
+        // DWARF5 Table 7.5: sec_offset selects rnglist/loclist by attribute class.
+        switch attribute {
+        case .ranges, .start_scope:
+            guard let binary,
+                  let ranges = _ranges(at: sectionOffset, for: unit, in: binary) else { return nil }
+            return .ranges(ranges)
+        case .location, .string_length, .return_addr, .data_member_location,
+             .frame_base, .segment, .static_link, .use_location,
+             .vtable_elem_location:
+            guard let binary,
+                  let locations = _locations(at: sectionOffset, for: unit, in: binary) else { return nil }
+            return .locations(locations)
+        default:
+            return .sectionOffset(sectionOffset)
+        }
+    }
+
+    private func _ranges(
+        at sectionOffset: UInt64,
+        for unit: DWARFCompilationUnit,
+        in binary: some _DWARFBinary
+    ) -> [DWARFRange]? {
+        guard let dwarf = binary.dwarfSegment,
+              let section = dwarf.debug_rnglists(in: binary) else { return nil }
+        for table in binary.dwarf.rangeListTables {
+            let layout = DWARFListTableLayout(
+                contributionSize: table.layoutSize, headerSize: table.header.layoutSize,
+                offsetEntryCount: table.header.offsetEntryCount, format: table.header.format
+            )
+            guard let entryOffset = _listEntryOffset(
+                at: sectionOffset, sectionOffset: section.offset, sectionSize: section.size,
+                tableOffset: table.offset, layout: layout
+            ) else { continue }
+            return table._ranges(at: entryOffset, for: unit, in: binary)
+        }
+        return nil
+    }
+
+    private func _locations(
+        at sectionOffset: UInt64,
+        for unit: DWARFCompilationUnit,
+        in binary: some _DWARFBinary
+    ) -> [DWARFLocation]? {
+        guard let dwarf = binary.dwarfSegment,
+              let section = dwarf.debug_loclists(in: binary) else { return nil }
+        for table in binary.dwarf.locationListTables {
+            let layout = DWARFListTableLayout(
+                contributionSize: table.layoutSize, headerSize: table.header.layoutSize,
+                offsetEntryCount: table.header.offsetEntryCount, format: table.header.format
+            )
+            guard let entryOffset = _listEntryOffset(
+                at: sectionOffset, sectionOffset: section.offset, sectionSize: section.size,
+                tableOffset: table.offset, layout: layout
+            ) else { continue }
+            return table._locations(at: entryOffset, for: unit, in: binary)
+        }
+        return nil
+    }
+
+    private func _listEntryOffset(
+        at offset: UInt64,
+        sectionOffset: Int,
+        sectionSize: Int,
+        tableOffset: Int,
+        layout: DWARFListTableLayout
+    ) -> Int? {
+        guard let offset = Int(exactly: offset),
+              offset >= 0, offset < sectionSize else { return nil }
+        let (tableStart, overflow) = tableOffset.subtractingReportingOverflow(sectionOffset)
+        guard !overflow, tableStart >= 0, tableStart <= offset,
+              layout.contributionSize <= sectionSize - tableStart else { return nil }
+        return try? layout.entryOffset(at: offset - tableStart)
+    }
+
     private func _legacyListValue(
         at sectionOffset: UInt64,
         for unit: DWARFCompilationUnit,

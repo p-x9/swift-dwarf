@@ -2,6 +2,25 @@ import XCTest
 @testable import DWARF
 
 final class DWARFListTableLayoutTests: XCTestCase {
+    func testConvertsContributionOffsetToEntryOffset() throws {
+        for format: DWARFFormat in [._32bit, ._64bit] {
+            let headerSize = format == ._32bit ? 12 : 20
+            let width = format == ._32bit ? 4 : 8
+            for count in [0, 2] {
+                let listStart = headerSize + count * width
+                let layout = DWARFListTableLayout(
+                    contributionSize: listStart + 3, headerSize: headerSize,
+                    offsetEntryCount: count, format: format
+                )
+                XCTAssertEqual(try layout.entryOffset(at: listStart), count * width)
+                XCTAssertEqual(try layout.entryOffset(at: listStart + 2), count * width + 2)
+                for offset in [-1, 0, listStart - 1, listStart + 3] {
+                    XCTAssertThrowsError(try layout.entryOffset(at: offset))
+                }
+            }
+        }
+    }
+
     func testDWARF32UsesFourByteOffsetEntries() throws {
         let layout = DWARFListTableLayout(
             contributionSize: 25,

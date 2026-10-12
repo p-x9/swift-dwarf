@@ -7,6 +7,16 @@
 //
 
 extension DWARFRangeListTable {
+    /// Resolves all completed lists using the supplied unit's address context.
+    /// Stops before the first invalid or unterminated list.
+    /// Returns nil for an incompatible unit or an unreadable table.
+    public func ranges(
+        for unit: DWARFCompilationUnit,
+        in machO: MachOFile
+    ) -> [[DWARFRange]]? {
+        _ranges(for: unit, in: machO)
+    }
+
     /// Resolves one DWARF5 list. The offset is relative to the offset array,
     /// matching the coordinate system used by `operations(for:entryOffset:)`.
     public func ranges(

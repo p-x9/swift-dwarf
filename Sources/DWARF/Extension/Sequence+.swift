@@ -127,8 +127,9 @@ fileprivate func addingRangeOffset(
     return !overflow && result <= maximumAddress ? result : nil
 }
 
-extension Sequence<DWARFRangeOperation> {
-    package func _ranges(
+extension IteratorProtocol<DWARFRangeOperation> {
+    /// Consumes one list, including its terminator, leaving subsequent lists unread.
+    fileprivate mutating func _nextRanges(
         addressSize: Int,
         initialBaseAddress: @autoclosure () -> DWARFAddress?,
         addressAtIndex: (UInt64) -> DWARFAddress?
@@ -138,7 +139,7 @@ extension Sequence<DWARFRangeOperation> {
         ) else { return nil }
         var state = RangeOperationsState()
 
-        for operation in self {
+        while let operation = next() {
             switch operation {
             case .end_of_list:
                 return state.ranges
@@ -247,6 +248,41 @@ extension Sequence<DWARFRangeOperation> {
         }
 
         return nil
+    }
+}
+
+extension Sequence<DWARFRangeOperation> {
+    package func _ranges(
+        addressSize: Int,
+        initialBaseAddress: @autoclosure () -> DWARFAddress?,
+        addressAtIndex: (UInt64) -> DWARFAddress?
+    ) -> [DWARFRange]? {
+        var iterator = makeIterator()
+        return iterator._nextRanges(
+            addressSize: addressSize,
+            initialBaseAddress: initialBaseAddress(),
+            addressAtIndex: addressAtIndex
+        )
+    }
+
+    /// Resolves completed lists in order, stopping before the first invalid or unterminated list.
+    package func _ranges(
+        for unit: DWARFCompilationUnit,
+        in binary: some _DWARFBinary
+    ) -> [[DWARFRange]] {
+        guard unit.header.version == .v5 else { return [] }
+        var lists: [[DWARFRange]] = []
+        var iterator = makeIterator()
+        var context = DWARFListResolutionContext(unit: unit, binary: binary)
+
+        while let ranges = iterator._nextRanges(
+            addressSize: unit.header.addressSize,
+            initialBaseAddress: context.initialBaseAddress,
+            addressAtIndex: { context.address(at: $0) }
+        ) {
+            lists.append(ranges)
+        }
+        return lists
     }
 }
 
@@ -360,111 +396,124 @@ extension Sequence<DWARF3LocationListEntry> {
 }
 
 // MARK: - DWARFLocationOperation
-fileprivate struct LocationOperationsState {
-    var base: DWARFAddress = .init(segmentSelector: nil, address: 0)
-    var locations: [DWARFLocation] = []
+extension IteratorProtocol<DWARFLocationOperation> {
+    /// Consumes one list, including its terminator, leaving subsequent lists unread.
+    fileprivate mutating func _nextLocations(
+        addressSize: Int,
+        initialBaseAddress: @autoclosure () -> DWARFAddress?,
+        addressAtIndex: (UInt64) -> DWARFAddress?
+    ) -> [DWARFLocation]? {
+        guard let maximumAddress = DWARFAddress.maximumValue(
+            addressSize: addressSize
+        ) else { return nil }
+        var base: DWARFAddress?
+        var locations: [DWARFLocation] = []
+
+        func location(
+            start: DWARFAddress, end: DWARFAddress,
+            descriptions: [DWARFOperation]
+        ) -> DWARFLocation? {
+            guard start.address <= maximumAddress, end.address <= maximumAddress,
+                  start.segmentSelector != end.segmentSelector
+                    || end.address >= start.address else { return nil }
+            return .init(range: .init(start: start, end: end), descriptions: descriptions)
+        }
+
+        func endAddress(start: DWARFAddress, length: UInt64) -> DWARFAddress? {
+            guard let end = addingRangeOffset(
+                length, to: start.address, maximumAddress: maximumAddress
+            ) else { return nil }
+            return .init(segmentSelector: start.segmentSelector, address: end)
+        }
+
+        while let operation = next() {
+            switch operation {
+            case .end_of_list:
+                return locations
+            case .base_addressx(let index):
+                guard let address = addressAtIndex(index) else { return nil }
+                base = address
+            case .base_address(let address):
+                base = address
+            case .startx_endx(let startIndex, let endIndex, let descriptions):
+                guard let start = addressAtIndex(startIndex),
+                      let end = addressAtIndex(endIndex),
+                      let value = location(start: start, end: end, descriptions: descriptions) else {
+                    return nil
+                }
+                locations.append(value)
+            case .startx_length(let index, let length, let descriptions):
+                guard let start = addressAtIndex(index),
+                      let end = endAddress(start: start, length: length),
+                      let value = location(start: start, end: end, descriptions: descriptions) else {
+                    return nil
+                }
+                locations.append(value)
+            case .offset_pair(let startOffset, let endOffset, let descriptions):
+                guard endOffset >= startOffset else { return nil }
+                if base == nil { base = initialBaseAddress() }
+                guard let base,
+                      let start = endAddress(start: base, length: startOffset),
+                      let end = endAddress(start: base, length: endOffset),
+                      let value = location(start: start, end: end, descriptions: descriptions) else {
+                    return nil
+                }
+                locations.append(value)
+            case .default_location(let descriptions):
+                // Preserve the existing DWARFLocation.isDefault representation.
+                locations.append(.init(
+                    range: .init(start: .init(address: 0), end: .init(address: 0)),
+                    descriptions: descriptions
+                ))
+            case .start_end(let start, let end, let descriptions):
+                guard let value = location(start: start, end: end, descriptions: descriptions) else {
+                    return nil
+                }
+                locations.append(value)
+            case .start_length(let start, let length, let descriptions):
+                guard let end = endAddress(start: start, length: length),
+                      let value = location(start: start, end: end, descriptions: descriptions) else {
+                    return nil
+                }
+                locations.append(value)
+            }
+        }
+        return nil
+    }
 }
 
 extension Sequence<DWARFLocationOperation> {
+    /// Resolves one list, stopping at its terminator just like the range resolver.
     package func _locations(
-        addressTable: DWARFAddressTable,
+        addressSize: Int,
+        initialBaseAddress: @autoclosure () -> DWARFAddress?,
+        addressAtIndex: (UInt64) -> DWARFAddress?
+    ) -> [DWARFLocation]? {
+        var iterator = makeIterator()
+        return iterator._nextLocations(
+            addressSize: addressSize,
+            initialBaseAddress: initialBaseAddress(),
+            addressAtIndex: addressAtIndex
+        )
+    }
+
+    /// Resolves completed lists in order, stopping before the first invalid or unterminated list.
+    package func _locations(
+        for unit: DWARFCompilationUnit,
         in binary: some _DWARFBinary
     ) -> [[DWARFLocation]] {
+        guard unit.header.version == .v5 else { return [] }
         var locationLists: [[DWARFLocation]] = []
-        var state: LocationOperationsState = .init()
+        var iterator = makeIterator()
+        var context = DWARFListResolutionContext(unit: unit, binary: binary)
 
-        let addresses = Array(addressTable._addresses(in: binary))
-
-        for operation in self {
-            switch operation {
-            case .end_of_list:
-                locationLists.append(state.locations)
-                state = .init()
-
-            case .base_addressx(let addressIndex):
-                state.base = addresses[numericCast(addressIndex)]
-
-            case .startx_endx(let startIndex, let endIndex, let descriptions):
-                state.locations.append(
-                    .init(
-                        range: .init(
-                            start: addresses[numericCast(startIndex)],
-                            end: addresses[numericCast(endIndex)]
-                        ),
-                        descriptions: descriptions
-                    )
-                )
-
-            case .startx_length(let startIndex, let length, let descriptions):
-                let start = addresses[numericCast(startIndex)]
-                state.locations.append(
-                    .init(
-                        range: .init(
-                            start: start,
-                            end: .init(
-                                segmentSelector: start.segmentSelector,
-                                address: start.address + numericCast(length)
-                            )
-                        ),
-                        descriptions: descriptions
-                    )
-                )
-
-            case .offset_pair(let startOffset, let endOffset, let descriptions):
-                state.locations.append(
-                    .init(
-                        range: .init(
-                            start: .init(
-                                segmentSelector: state.base.segmentSelector,
-                                address: state.base.address + startOffset
-                            ),
-                            end: .init(
-                                segmentSelector: state.base.segmentSelector,
-                                address: state.base.address + endOffset
-                            )
-                        ),
-                        descriptions: descriptions
-                    )
-                )
-
-            case .default_location(let descriptions):
-                state.locations.append(
-                    .init(
-                        range: .init(
-                            start: .init(address: 0),
-                            end: .init(address: 0)
-                        ), // dummy
-                        descriptions: descriptions
-                    )
-                )
-
-            case .base_address(let address):
-                state.base = address
-
-            case .start_end(let start, let end, let descriptions):
-                state.locations.append(
-                    .init(
-                        range: .init(start: start, end: end),
-                        descriptions: descriptions
-                    )
-                )
-
-            case .start_length(let start, let length, let descriptions):
-                state.locations.append(
-                    .init(
-                        range: .init(
-                            start: start,
-                            end: .init(
-                                segmentSelector: start.segmentSelector,
-                                address: start.address + length
-                            )
-                        ),
-                        descriptions: descriptions
-                    )
-                )
-            }
+        while let locations = iterator._nextLocations(
+            addressSize: unit.header.addressSize,
+            initialBaseAddress: context.initialBaseAddress,
+            addressAtIndex: { context.address(at: $0) }
+        ) {
+            locationLists.append(locations)
         }
-
         return locationLists
     }
 }

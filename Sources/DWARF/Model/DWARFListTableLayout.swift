@@ -69,4 +69,13 @@ internal struct DWARFListTableLayout {
         }
         return start ..< contributionSize
     }
+
+    /// Converts a contribution-relative list position to an offset-array-relative offset.
+    func entryOffset(at contributionOffset: Int) throws -> Int {
+        let lists = try operationsRange(entryOffset: nil)
+        guard lists.contains(contributionOffset) else {
+            throw DWARFListTableLayoutError.invalidEntryOffset
+        }
+        return contributionOffset - headerSize
+    }
 }
