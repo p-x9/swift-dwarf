@@ -21,7 +21,7 @@ final class DWARF3LocationResolutionTests: XCTestCase {
         let locations = try XCTUnwrap(entries._locations(
             addressSize: 4, initialBaseAddress: address(0x1000),
             descriptions: {
-                DWARF3LocationList._parseDescriptions(
+                DWARFOperation._parse(
                     data: $0, addressSize: 4, format: ._32bit, endian: .little
                 )
             }
@@ -79,20 +79,20 @@ final class DWARF3LocationResolutionTests: XCTestCase {
         for endian: Endian in [.little, .big] {
             let operand: [UInt8] = endian == .little
                 ? [0x78, 0x56, 0x34, 0x12] : [0x12, 0x34, 0x56, 0x78]
-            XCTAssertEqual(DWARF3LocationList._parseDescriptions(
+            XCTAssertEqual(DWARFOperation._parse(
                 data: Data([0x03] + operand), addressSize: 4,
                 format: ._32bit, endian: endian
             ), [.addr(0x12345678)])
         }
         for format: DWARFFormat in [._32bit, ._64bit] {
             let size = format == ._32bit ? 4 : 8
-            XCTAssertEqual(DWARF3LocationList._parseDescriptions(
+            XCTAssertEqual(DWARFOperation._parse(
                 data: Data([0x9a, 0x12] + Array(repeating: UInt8(0), count: size - 1)),
                 addressSize: 4, format: format, endian: .little
             ), [.call_ref(0x12)])
         }
         for data in [Data([0xff]), Data([0x03, 1])] {
-            XCTAssertNil(DWARF3LocationList._parseDescriptions(
+            XCTAssertNil(DWARFOperation._parse(
                 data: data, addressSize: 4, format: ._32bit, endian: .little
             ))
         }

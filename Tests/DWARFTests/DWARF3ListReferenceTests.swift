@@ -117,7 +117,11 @@ final class DWARF3ListReferenceTests: XCTestCase {
                         let resolved = value.__value(for: unit, in: nil, attribute: attribute)
                         // A recognized list reference needs a binary, and must not
                         // fall back to a constant or section offset when absent.
-                        if isList || index == 7 { // exprloc also needs a binary.
+                        let isBlockExpression = index == 6 && (
+                            ((version == .v2 || version == .v3) && locationAttributes.contains(attribute)) ||
+                            (version == .v3 && [.data_location, .allocated, .byte_size].contains(attribute))
+                        )
+                        if isList || isBlockExpression || index == 7 { // Expressions also need a binary.
                             XCTAssertNil(resolved)
                         } else {
                             XCTAssertNotNil(resolved)

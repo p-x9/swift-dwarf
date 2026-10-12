@@ -801,6 +801,37 @@ extension DWARFOperation: CustomStringConvertible {
 }
 
 extension DWARFOperation {
+    internal static func _parse(
+        data: Data,
+        addressSize: Int,
+        format: DWARFFormat,
+        endian: Endian
+    ) -> [DWARFOperation]? {
+        if data.isEmpty { return [] }
+        return data.withUnsafeBytes { buffer in
+            guard let pointer = buffer.baseAddress else { return nil }
+            var offset = 0
+            var operations: [DWARFOperation] = []
+            while offset < buffer.count {
+                let previousOffset = offset
+                var done = false
+                guard let operation = readNext(
+                    basePointer: pointer.assumingMemoryBound(to: UInt8.self),
+                    operaionsSize: buffer.count,
+                    addressSize: addressSize,
+                    format: format,
+                    endian: endian,
+                    nextOffset: &offset,
+                    done: &done
+                ), offset > previousOffset, offset <= buffer.count else {
+                    return nil
+                }
+                operations.append(operation)
+            }
+            return operations
+        }
+    }
+
     internal static func readNext(
         basePointer: UnsafePointer<UInt8>,
         operaionsSize: Int,
